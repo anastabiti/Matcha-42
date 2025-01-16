@@ -118,6 +118,22 @@ registrationRouter.post(
 registrationRouter.get("/verify-email", async (req: Request, res: Response) => {
     const token = req.query.token;
     console.log(token)
+    if(token)
+    {
+
+        await session.run(
+            `
+            MATCH (a:User {verfication_token: $token}) 
+            SET a.verification_token = null
+            SET a.verified = true
+            RETURN a.verification_token, a.verified
+            `,
+            { token }
+          );
+          await session.close();
+
+
+    }
   console.log("verification called");
   res.send("Hello Welcome to Matcha verify-email!");
 });
