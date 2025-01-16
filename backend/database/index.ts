@@ -6,7 +6,7 @@ const driver = neo4j.driver('neo4j://localhost:7687', neo4j.auth.basic(process.e
 const session = driver.session()
 
 
-// #test database connection
+// #test database connection 
 // http://localhost:7474/browser/preview/
 session.run('MATCH (n) return n')
   .then((res:any) => {
