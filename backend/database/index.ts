@@ -15,3 +15,8 @@ session.run('MATCH (n) return n')
   .catch((error:any) => {
     console.error("database connection falied checki password and username, and env file");
   })
+
+
+// create a save user function
+// this function will save a user to the database
+export { session, driver }
