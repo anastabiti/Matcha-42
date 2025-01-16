@@ -5,19 +5,27 @@ const bcrypt = require("bcrypt");
 const app: Application = express();
 import { session } from "../database";
 const crypto = import("crypto");
-const Mailgun = require('mailgun.js');
 const formData = require('form-data');
 
+import nodemailer from 'nodemailer';
 
-const mailgun = new Mailgun(formData);
 
 require("../database/index.ts");
-const mg = mailgun.client({username: 'api', key: process.env.MAILGUN_API_KEY });
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Hello Welcome to Matcha!");
 });
 
+const transporter = nodemailer.createTransport({
+  service: "Gmail",
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.google_mail,
+    pass: process.env.google_app_password,
+  },
+});
 // Use body-parser middleware
 // app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -78,13 +86,21 @@ app.post(
             user
           );
 
-          mg.messages.create('sandboxd16a52ba96624379966963a74b241632.mailgun.org', {
-            from: "matcha verification <mailgun@sandboxd16a52ba96624379966963a74b241632.mailgun.org>",
-            to: ["anastabiti@gmail.com"],
-            subject: "Hello",
-            text: "Testing some Mailgun awesomeness!",
-            html: "<h1>Testing some Mailgun awesomeness!</h1>"
-          })
+          const mailOptions = {
+            from: "anastabiti@gmail.com",
+            to: "anasbitoo@gmail.com",
+            subject: "Hello from Nodemailer",
+            text: "This is a test email sent using Nodemailer.",
+          };
+          transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+              console.error("Error sending email: ", error);
+            } else {
+              console.log("Email sent: ", info.response);
+            }
+          });
+
+      
         
           res.send("Hello Welcome to Matcha registration!");
         }
