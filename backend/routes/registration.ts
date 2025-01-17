@@ -59,15 +59,25 @@ registrationRouter.post(
       if (session) {
         // First check if email exists
         const _check_email_ = await session.run(
-          "MATCH (u:User {email: $email}) RETURN u",
+          // "MATCH (u:User {email: $email}) RETURN u",
+          "MATCH (u:User) WHERE u.email = $email RETURN u",
           { email: user.email }
+        );
+        const check_username = await session.run(
+          "MATCH (u:User) WHERE u.username = $username RETURN u",
+          { username: user.username }
         );
         // console.log(_check_email_, "check email");
 
-        if (_check_email_.records.length > 0) {
+        if (_check_email_.records.length > 0 ) {
           res.status(400);
           res.send("Email already exists");
-        } else {
+        } 
+        else if (check_username.records.length > 0) {
+          res.status(400);
+          res.send("Username already exists");
+        }
+        else {
           console.log("new User");
           user.verfication_token = (await crypto)
             .randomBytes(20)
