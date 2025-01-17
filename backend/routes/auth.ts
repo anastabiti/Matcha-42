@@ -6,7 +6,19 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const authRouter = express.Router();
+const crypto = import("crypto");
+import nodemailer from "nodemailer";
 
+const transporter = nodemailer.createTransport({
+  service: "Gmail",
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.google_mail,
+    pass: process.env.google_app_password,
+  },
+});
 function generateAccessToken(username: String) {
   if (username) {
     const token = jwt.sign({ userId: username }, process.env.JWT_TOKEN_SECRET, {
@@ -14,8 +26,7 @@ function generateAccessToken(username: String) {
     });
     console.log(token, " token");
     return token;
-  }
-  else {
+  } else {
     console.log("error in generating jwt");
     return null;
   }
@@ -49,9 +60,9 @@ authRouter.post("/login", async (req: Request, res: Response) => {
                 if (user_) {
                   const token = generateAccessToken(user_);
                   console.log(token, " token");
-                    // res.json(token);
-                    res.cookie("jwt_token", token, { httpOnly: true });
-                    res.send("login successful");
+                  // res.json(token);
+                  res.cookie("jwt_token", token, { httpOnly: true });
+                  res.send("login successful");
                 }
                 // res.json(token);
                 // res.send("login successful");
@@ -62,11 +73,79 @@ authRouter.post("/login", async (req: Request, res: Response) => {
           );
       }
     }
-
   } catch {
     console.log("error");
     res.status(400).send("Error in login");
   }
 });
+
+authRouter.post(
+  "/password_reset",
+
+  body("email").isEmail(),
+  async (req: Request, res: Response) => {
+    const errors = validationResult(req);
+    console.log(errors, "errors");
+
+    if (!errors.isEmpty()) res.status(400).json({ errors: errors.array() });
+    else {
+        try {
+      console.log(req.body.email, " email");
+      const email = req.body.email;
+      if (email) {
+        if (session) {
+          const url_token = jwt.sign({email: email}, process.env.JWT_TOKEN_SECRET, { expiresIn: "10min" });
+
+          const res_ = await session.run(
+            `MATCH (n:User) WHERE n.email = $email
+             SET n.password_reset_token = $url_token 
+             RETURN n.email`,
+            { email: email, url_token: url_token }
+          );
+          console.log(res_.records, " res_");
+          if (res_.records.length > 0) {
+            console.log(
+              "password reset successful, check your email for further instructions"
+            );
+            ///////////////////
+
+            const mailOptions = {
+              from: "anastabiti@gmail.com",
+              to: email,
+              subject: "Reset Your password ,Tinder! 💖",
+              text: `Hi ${email},
+        
+        Welcome use the link below to reset your password! 🎉        
+        🔗 Reset Your Password: http://localhost:3000/api/reset_it?token=${url_token}
+        
+        
+        Best regards,  
+        The Tinder Team`,
+            };
+
+            transporter.sendMail(mailOptions, (error, info) => {
+              if (error) {
+                console.error("Error sending email: ", error);
+              } else {
+                console.log("Email sent: password reset ", info.response);
+              }
+            });
+
+            res.send(
+              "password reset successful, check your email for further instructions"
+            );
+          }
+        } else {
+          console.log("email does not exist");
+          res.status(400).send("email does not exist");
+        }
+      }
+        } catch (Error) {
+          console.log("error");
+          res.status(400).send("Error in password reset");
+        }
+    }
+  }
+);
 
 export default authRouter;

@@ -54,6 +54,7 @@ registrationRouter.post(
         last_name: req.body.last_name,
         verfication_token: "",
         verified: false,
+        password_reset_token: "",
       };
 
       if (session) {
@@ -84,7 +85,7 @@ registrationRouter.post(
             .toString("hex");
           console.log(user.verfication_token, "verfication_token");
           await session.run(
-            "CREATE (a:User {username: $username, email: $email, password: $password, first_name: $first_name, last_name: $last_name,verified:false, verfication_token:$verfication_token}) RETURN a",
+            "CREATE (a:User {username: $username, email: $email, password: $password, first_name: $first_name, last_name: $last_name,verified:false, verfication_token:$verfication_token, password_reset_token:$password_reset_token}) RETURN a",
             user
           );
 
