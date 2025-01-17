@@ -53,6 +53,7 @@ registrationRouter.post(
         first_name: req.body.first_name,
         last_name: req.body.last_name,
         verfication_token: "",
+        verified: false,
       };
 
       if (session) {
@@ -87,7 +88,7 @@ registrationRouter.post(
             
             Before you get started, please verify your email address to activate your account. Click the link below to complete the process:
             
-            🔗 Verify Your Email: http://localhost:3000/verify-email?token=${user.verfication_token}
+            🔗 Verify Your Email: http://localhost:3000/api/verify-email?token=${user.verfication_token}
             
             If you didn’t create an account on Tinder, you can safely ignore this email.
             
@@ -97,13 +98,26 @@ registrationRouter.post(
             The Tinder Team`,
           };
 
+
           transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
               console.error("Error sending email: ", error);
+              //try agin after 5 seconds
+              setTimeout(() => {
+                transporter.sendMail(mailOptions, (error, info) => {
+                  if (error) {
+                    console.error("Error sending email: ", error);
+                  } else {
+                    console.log("Email sent: ", info.response);
+                  }
+                });
+              }, 5000);
+              
             } else {
               console.log("Email sent: ", info.response);
             }
-          });
+          })
+
 
           res.send("Hello Welcome to Matcha registration!");
         }
@@ -112,34 +126,40 @@ registrationRouter.post(
   }
 );
 
-
-
 // Verify email route
 registrationRouter.get("/verify-email", async (req: Request, res: Response) => {
+  try {
     const token = req.query.token;
-    console.log(token)
-    if(token)
-    {
+    console.log(token, " token");
+    if (token) {
+      const updates = await session.run(
+        `
+          MATCH (a:User {verfication_token: $token})
+          WHERE a.verified = false
+          SET a.verification_token = null
+          SET a.verified = true
+          RETURN a.verfication_token , a.verified, a.email, a.username, a.first_name, a.last_name
+          `,
+        { token }
+      );
 
-        await session.run(
-            `
-            MATCH (a:User {verfication_token: $token}) 
-            SET a.verification_token = null
-            SET a.verified = true
-            RETURN a.verification_token, a.verified
-            `,
-            { token }
-          );
-          await session.close();
-
-
+      if (updates.records.length > 0) {
+        const updatedUser = updates.records[0];
+        console.log("User verified:", updatedUser);
+        console.log("User verified:", updatedUser);
+        res.send("Hello! Welcome to Matcha. Email verified successfully!");
+      } else {
+        res.status(400).send("Invalid or expired token");
+      }
+    } else {
+      res.status(400);
+      res.send("Invalid token");
     }
-  console.log("verification called");
-  res.send("Hello Welcome to Matcha verify-email!");
+  } catch (error) {
+    console.log(error, " error occured");
+    res.status(400);
+    res.send("Error occured");
+  }
 });
-
-
-
-
 
 export default registrationRouter;
