@@ -326,6 +326,16 @@ authRouter.get(
     // res.send("auth/google");
   }
 );
+
+
+//define user type
+type User = {
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  verified: boolean;
+};
 authRouter.get(
   "/auth/google/callback",
   passport.authenticate("google", {
@@ -334,8 +344,17 @@ authRouter.get(
   }),
   (req: Request, res: Response) => {
     //print user
-    console.log(req.user, " user");
+    console.log("-----------------", req.user, " user ---------------------------");
     console.log("auth/google/callback");
+    const user = req.user as User;
+    //gnerate jwt token
+    if (user.username) {
+      const token = generateAccessToken(user.username);
+      console.log(token, " token");
+      //set cookie
+      res.cookie("jwt_token", token, { httpOnly: true });
+    }
+
     res.json("Logged in with google");
   }
 );
