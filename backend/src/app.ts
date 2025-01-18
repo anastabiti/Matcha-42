@@ -7,6 +7,7 @@ import authRouter from "../routes/auth";
 require("../database/index.ts");
 
 
+import passport from "passport";
 
 // fix cors issues
 const corsOptions = {
@@ -16,7 +17,9 @@ const corsOptions = {
   credentials: true,
 };
 
+app.use(passport.initialize());
 app.use(cors(corsOptions));
+
 
 
 app.get("/", (req: Request, res: Response) => {

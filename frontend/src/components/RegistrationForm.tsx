@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import GoogleButton from "react-google-button";
 
 const RegistrationForm = () => {
   const [formData, setFormData] = useState({
@@ -47,10 +48,9 @@ const RegistrationForm = () => {
           password: "",
         });
       } else {
-        console.log(data  , " error" );
-       
-          setError(data || "Registration failed. Please try again.");
-        
+        console.log(data, " error");
+
+        setError(data || "Registration failed. Please try again.");
       }
     } catch (error) {
       console.log(error);
@@ -68,7 +68,6 @@ const RegistrationForm = () => {
             <h2 className="text-2xl font-semibold text-white mb-8">
               Create Your Account
             </h2>
-
             <form onSubmit={handleSubmit} className="space-y-4">
               <input
                 type="email"
@@ -143,6 +142,14 @@ const RegistrationForm = () => {
                 {isLoading ? "Creating Account..." : "Create Account"}
               </button>
             </form>
+            <div className="flex items-center justify-center">
+              <GoogleButton
+                label="Sign up"
+                onClick={() => {
+                  console.log("Google button clicked");
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>

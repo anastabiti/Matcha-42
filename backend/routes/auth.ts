@@ -177,4 +177,42 @@ async (req: Request, res: Response) => {
   }
 });
 
+const passport = require('passport');
+
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+
+
+passport.use(new GoogleStrategy({
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  callbackURL: "http://localhost:3000/api/auth/google/callback"
+},
+
+function(accessToken:any, refreshToken:any, profile:any, cb:any) {
+  console.log(profile, " profile");
+  // User.findOrCreate({ googleId: profile.id }, function (err, user) {
+  //   return cb(err, user);
+  // });
+  return "hello";
+}
+));
+
+//omni auth
+authRouter.get("/auth/google",  passport.authenticate('google', { scope: ['profile']}),(req: Request, res: Response) => {
+  console.log("auth/google");
+ 
+  res.send("auth/google");
+}
+);
+authRouter.get("/auth/google/callback",  passport.authenticate('google', { scope: ['profile']}),(req: Request, res: Response) => {
+  console.log("auth/google/callback");
+  res.send("auth/google/callback");
+}
+);
+
+
+
+
+
+
 export default authRouter;
