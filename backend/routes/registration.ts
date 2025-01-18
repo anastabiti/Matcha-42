@@ -30,9 +30,29 @@ registrationRouter.post(
 
   async (req: Request, res: Response) => {
     const errors = validationResult(req);
-    console.log(errors, "errors");
+    
+    // console.log(errors.array()[0].msg, errors.array()[0].path, "errors");
+    // {
+    //   type: 'field',
+    //   value: 'e',
+    //   msg: 'Invalid value',
+    //   path: 'password',
+    //   location: 'body'
+    // } 
+    if (!errors.isEmpty())
+    {
 
-    if (!errors.isEmpty()) res.status(400).json({ errors: errors.array() });
+      if (errors.array()[0].path === "email")
+        res.status(400).json("Invalid email");
+      else if (errors.array()[0].path === "password")
+        res.status(400).json("Password must be between 6 and 30 characters");
+      else if (errors.array()[0].path === "username")
+        res.status(400).json("Username must be between 6 and 20 characters");
+      else if (errors.array()[0].path === "first_name")
+        res.status(400).json("First name must be between 3 and 30 characters");
+      else if (errors.array()[0].path === "last_name")
+        res.status(400).json("Last name must be between 3 and 30 characters");
+    }
     else {
       // console.log(req.body, 'req.body');
       // console.log(req.body.username, " username");
@@ -71,8 +91,8 @@ registrationRouter.post(
         // console.log(_check_email_, "check email");
 
         if (_check_email_.records.length > 0 ) {
-          res.status(400);
-          res.send("Email already exists");
+          res.status(400).json("Email already exists");
+          // res.send("Email already exists");
         } 
         else if (check_username.records.length > 0) {
           res.status(400);
@@ -130,7 +150,7 @@ registrationRouter.post(
           })
 
 
-          res.send("Hello Welcome to Matcha registration!");
+          res.status(200).json("User created successfully");
         }
       }
     }
