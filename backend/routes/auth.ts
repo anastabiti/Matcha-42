@@ -210,15 +210,25 @@ passport.use(
         console.log(profile?.emails?.[0].value || "email not found");
         if (profile?.emails?.[0].value) {
           const resu_ = await new_session.run(
-            `MATCH (n:User) WHERE n.email = $email RETURN n.email`,
+            // `MATCH (n:User) WHERE n.email = $email RETURN {n.username, n.email, n.first_name, n.last_name, n.verified} as n`,
+            `MATCH (n:User) WHERE n.email = $email
+          RETURN {
+          username: n.username,
+          email: n.email,
+          first_name: n.first_name,
+          last_name: n.last_name,
+          verified: n.verified
+            } as user`,
             {
               email: profile.emails[0].value,
             }
           );
           if (resu_.records?.length > 0) {
-            console.log("user exists");
-            //cannot create user
-
+            console.log("user exists", resu_.records[0].get("user"));
+            const user_x = resu_.records[0]?.get("user");
+            console.log(user_x, " user_x");
+            await session.close();
+            return cb(null, user_x);
           } else {
             // {
             //   id: '333333',
@@ -264,7 +274,7 @@ passport.use(
             // };
             if (profile.emails?.[0].value) {
               console.log("creating user");
-              await new_session.run(
+              const user_ = await new_session.run(
                 `CREATE (n:User {
                   username: $username,
                   email: $email,
@@ -277,22 +287,25 @@ passport.use(
                 }) 
                 RETURN n.username`,
                 {
-                  username: profile.displayName || (await crypto).randomBytes(10).toString() ,
+                  username:
+                    profile.displayName ||
+                    (await crypto).randomBytes(10).toString(),
                   email: profile.emails[0].value,
                   password: (await crypto).randomBytes(25).toString("hex"),
-                  first_name:  profile?.name?.givenName || "",
-                  last_name:  profile?.name?.familyName || "",
+                  first_name: profile?.name?.givenName || "",
+                  last_name: profile?.name?.familyName || "",
                   verfication_token: "",
-                  verified: false,
+                  verified: true,
                   password_reset_token: "",
                 }
               );
               console.log("user does not exist");
+              await session.close();
+              return cb(null, user_);
             }
           }
         }
       }
-      cb(null, profile);
     }
   )
 );
@@ -303,19 +316,27 @@ passport.use(
 //omni auth
 authRouter.get(
   "/auth/google",
-  passport.authenticate("google", { scope: ["profile", "email"] }),
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    session: false,
+  }),
   (req: Request, res: Response) => {
     console.log("auth/google");
 
-    res.send("auth/google");
+    // res.send("auth/google");
   }
 );
 authRouter.get(
   "/auth/google/callback",
-  passport.authenticate("google", { scope: ["profile", "email"] }),
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    session: false,
+  }),
   (req: Request, res: Response) => {
+    //print user
+    console.log(req.user, " user");
     console.log("auth/google/callback");
-    res.send("auth/google/callback");
+    res.json("Logged in with google");
   }
 );
 
