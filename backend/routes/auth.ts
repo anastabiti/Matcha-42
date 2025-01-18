@@ -9,6 +9,12 @@ const authRouter = express.Router();
 const crypto = import("crypto");
 import nodemailer from "nodemailer";
 import { auth } from "neo4j-driver-core";
+import { Profile, VerifyCallback } from "passport-google-oauth20";
+const neo4j = require("neo4j-driver");
+const driver = neo4j.driver(
+  "neo4j://localhost:7687",
+  neo4j.auth.basic(process.env.database_username, process.env.database_password)
+);
 
 const transporter = nodemailer.createTransport({
   service: "Gmail",
@@ -153,66 +159,164 @@ authRouter.post(
   }
 );
 
-// 
-authRouter.get("/reset_it", 
-// authRouter.patch("/reset_it",   body("password").isLength({ min: 6, max: 30 }),
-async (req: Request, res: Response) => {
-  // console.log(req.query.token, " token");
-//   console.log(req.body.password, "password");
-  try {
-    const token = req.query.token;
-    if (token) {
-      const jwt_ = await jwt.verify(token, process.env.JWT_TOKEN_SECRET);
+//
+authRouter.get(
+  "/reset_it",
+  // authRouter.patch("/reset_it",   body("password").isLength({ min: 6, max: 30 }),
+  async (req: Request, res: Response) => {
+    // console.log(req.query.token, " token");
+    //   console.log(req.body.password, "password");
+    try {
+      const token = req.query.token;
+      if (token) {
+        const jwt_ = await jwt.verify(token, process.env.JWT_TOKEN_SECRET);
 
-      console.log(jwt_, " jwt_");
+        console.log(jwt_, " jwt_");
 
-      res.send("password reset api is called");
+        res.send("password reset api is called");
+      } //empty token
+      else res.status(400).send("invalid token");
+    } catch {
+      console.log("error in reset_it");
+      res.status(400).send("Expired or invalid token");
     }
-
-    else //empty token
-    res.status(400).send("invalid token");
-  } catch {
-    console.log("error in reset_it");
-    res.status(400).send("Expired or invalid token");
   }
-});
+);
 
-const passport = require('passport');
+// ----------------------------------------------------------------------------------
+const passport = require("passport");
 
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
 
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: "http://localhost:3000/api/auth/google/callback",
+    },
 
-passport.use(new GoogleStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: "http://localhost:3000/api/auth/google/callback"
-},
+    async function (
+      accessToken: string,
+      refreshToken: string,
+      profile: Profile,
+      cb: VerifyCallback
+    ) {
+      console.log(profile, " profile");
+      console.log(accessToken, " accessToken");
+      console.log(refreshToken, " refreshToken");
+      const new_session = await driver.session();
+      if (new_session) {
+        console.log(profile?.emails?.[0].value || "email not found");
+        if (profile?.emails?.[0].value) {
+          const resu_ = await new_session.run(
+            `MATCH (n:User) WHERE n.email = $email RETURN n.email`,
+            {
+              email: profile.emails[0].value,
+            }
+          );
+          if (resu_.records?.length > 0) {
+            console.log("user exists");
+            //cannot create user
 
-function(accessToken:any, refreshToken:any, profile:any, cb:any) {
-  console.log(profile, " profile");
-  // User.findOrCreate({ googleId: profile.id }, function (err, user) {
-  //   return cb(err, user);
-  // });
-  return "hello";
-}
-));
+          } else {
+            // {
+            //   id: '333333',
+            //   displayName: 'Anas TB',
+            //   name: { familyName: 'TB', givenName: 'Anas' },
+            //   emails: [ { value: 'anasbitoo@gmail.com', verified: true } ],
+            //   photos: [
+            //     {
+            //       value: 'https://lh3.googleusercontent.com/a/ACg8ocKUs3odyO6AIVCpNfG8QwW9pqkk9YaRykdBFpcWVp_Uqad_DWpH=s96-c'
+            //     }
+            //   ],
+            //   provider: 'google',
+            //   _raw: '{\n' +
+            //     '  "sub": "333",\n' +
+            //     '  "name": "Anas TB",\n' +
+            //     '  "given_name": "Anas",\n' +
+            //     '  "family_name": "TB",\n' +
+            //     '  "picture": "https://lh3.googleusercontent.com/a/ACg8ocKUs3odyO6AIVCpNfG8QwW9pqkk9YaRykdBFpcWVp_Uqad_DWpH\\u003ds96-c",\n' +
+            //     '  "email": "anasbitoo@gmail.com",\n' +
+            //     '  "email_verified": true\n' +
+            //     '}',
+            //   _json: {
+            //     sub: '333',
+            //     name: 'Anas TB',
+            //     given_name: 'Anas',
+            //     family_name: 'TB',
+            //     picture: 'https://lh3.googleusercontent.com/a/ACg8ocKUs3odyO6AIVCpNfG8QwW9pqkk9YaRykdBFpcWVp_Uqad_DWpH=s96-c',
+            //     email: 'anasbitoo@gmail.com',
+            //     email_verified: true
+            //   }
+            // }
+            // profile
 
+            // const user = {
+            //   username: req.body.username,
+            //   email: req.body.email,
+            //   password: hashedPassword,
+            //   first_name: req.body.first_name,
+            //   last_name: req.body.last_name,
+            //   verfication_token: "",
+            //   verified: false,
+            //   password_reset_token: "",
+            // };
+            if (profile.emails?.[0].value) {
+              console.log("creating user");
+              await new_session.run(
+                `CREATE (n:User {
+                  username: $username,
+                  email: $email,
+                  password: $password,
+                  first_name: $first_name,
+                  last_name: $last_name,
+                  verfication_token: $verfication_token,
+                  verified: $verified,
+                  password_reset_token: $password_reset_token
+                }) 
+                RETURN n.username`,
+                {
+                  username: profile.displayName || (await crypto).randomBytes(10).toString() ,
+                  email: profile.emails[0].value,
+                  password: (await crypto).randomBytes(25).toString("hex"),
+                  first_name:  profile?.name?.givenName || "",
+                  last_name:  profile?.name?.familyName || "",
+                  verfication_token: "",
+                  verified: false,
+                  password_reset_token: "",
+                }
+              );
+              console.log("user does not exist");
+            }
+          }
+        }
+      }
+      cb(null, profile);
+    }
+  )
+);
+
+// ----------------------------------------------------------------------------------
+
+// https://developers.google.com/identity/openid-connect/openid-connect
 //omni auth
-authRouter.get("/auth/google",  passport.authenticate('google', { scope: ['profile']}),(req: Request, res: Response) => {
-  console.log("auth/google");
- 
-  res.send("auth/google");
-}
+authRouter.get(
+  "/auth/google",
+  passport.authenticate("google", { scope: ["profile", "email"] }),
+  (req: Request, res: Response) => {
+    console.log("auth/google");
+
+    res.send("auth/google");
+  }
 );
-authRouter.get("/auth/google/callback",  passport.authenticate('google', { scope: ['profile']}),(req: Request, res: Response) => {
-  console.log("auth/google/callback");
-  res.send("auth/google/callback");
-}
+authRouter.get(
+  "/auth/google/callback",
+  passport.authenticate("google", { scope: ["profile", "email"] }),
+  (req: Request, res: Response) => {
+    console.log("auth/google/callback");
+    res.send("auth/google/callback");
+  }
 );
-
-
-
-
-
 
 export default authRouter;

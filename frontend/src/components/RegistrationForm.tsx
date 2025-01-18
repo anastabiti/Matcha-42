@@ -146,7 +146,8 @@ const RegistrationForm = () => {
               <GoogleButton
                 label="Sign up"
                 onClick={() => {
-                  console.log("Google button clicked");
+                  //new link
+                  window.location.href = "http://localhost:3000/api/auth/google";
                 }}
               />
             </div>
