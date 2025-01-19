@@ -1,6 +1,9 @@
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
 import GoogleButton from "react-google-button";
+import Button from "@mui/material/Button";
+import FacebookIcon from "@mui/icons-material/Facebook";
+// https://mui.com/material-ui/material-icons/?srsltid=AfmBOopJikFhdTyZ7jeW_GHSILmUTDSBVafswowgwSgwNmSJRP6PpTKQ&query=google&selected=Google
+import GoogleIcon from "@mui/icons-material/Google";
 
 const RegistrationForm = () => {
   const [formData, setFormData] = useState({
@@ -142,14 +145,50 @@ const RegistrationForm = () => {
                 {isLoading ? "Creating Account..." : "Create Account"}
               </button>
             </form>
-            <div className="flex items-center justify-center">
+            {/* <div className="flex items-center justify-center">
               <GoogleButton
                 label="Sign up"
                 onClick={() => {
                   //new link
-                  window.location.href = "http://localhost:3000/api/auth/google";
+                  window.location.href =
+                    "http://localhost:3000/api/auth/google";
                 }}
               />
+            </div> */}
+            <div className="flex items-center justify-center grid-cols-2 gap-4 ">
+              <Button variant="contained"
+               onClick={() => {
+                //new link
+                window.location.href =
+                  "http://localhost:3000/api/auth/facebook";
+              }} 
+              startIcon={<FacebookIcon />}>
+                Facebook
+              </Button>
+
+              <Button
+                onClick={() => {
+                  //new link
+                  window.location.href =
+                    "http://localhost:3000/api/auth/google";
+                }}
+                variant="contained"
+                startIcon={<GoogleIcon />}
+              >
+                Google
+              </Button>
+
+              <Button
+              onClick={() => {
+                //new link
+                window.location.href =
+                  "http://localhost:3000/api/auth/intra42";
+              }}
+                variant="contained"
+                startIcon={<img src="42-Final-sigle-seul.svg" width={25}></img>}
+              >
+                Intra
+              </Button>
             </div>
           </div>
         </div>

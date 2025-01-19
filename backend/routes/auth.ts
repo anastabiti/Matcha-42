@@ -16,7 +16,6 @@ const driver = neo4j.driver(
   neo4j.auth.basic(process.env.database_username, process.env.database_password)
 );
 
-
 //define user model
 export type User = {
   username: string;
@@ -37,6 +36,175 @@ const transporter = nodemailer.createTransport({
     pass: process.env.google_app_password,
   },
 });
+
+
+
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const FortyTwoStrategy = require('passport-42').Strategy;
+const passport = require("passport");
+
+
+
+// ----------------------------------------------------------------------------------
+//  FACEBOOK STRATEGY ---------------------------------------------------------------
+// ----------------------------------------------------------------------------------
+
+const FacebookStrategy = require("passport-facebook").Strategy;
+
+passport.use( new FacebookStrategy({
+  clientID: process.env.FACEBOOK_APP_ID,
+  clientSecret: process.env.FACEBOOK_APP_SECRET,
+  callbackURL: "http://localhost:3000/api/auth/facebook/callback",
+  profileFields: ['id', 'emails', 'name']
+},
+
+async function(accessToken: string, refreshToken: string, profile: Profile, cb: VerifyCallback) {
+
+      // {
+      //   id: '1337',
+      //   username: undefined,
+      //   displayName: undefined,
+      //   name: { familyName: 'Tabiti', givenName: 'Anas', middleName: undefined },
+      //   gender: undefined,
+      //   profileUrl: undefined,
+      //   emails: [ { value: 'anastabiti@gmail.com' } ],
+      //   provider: 'facebook',
+      //   _raw: '{"id":"1337","email":"anastabiti\\u0040gmail.com","last_name":"Tabiti","first_name":"Anas"}',
+      //   _json: {
+      //     id: '1337',
+      //     email: 'anastabiti@gmail.com',
+      //     last_name: 'Tabiti',
+      //     first_name: 'Anas'
+      //   }
+      // }  profile
+
+
+      try {
+        console.log(profile, " profile");
+
+        const new_session = await driver.session();
+        if (new_session) {
+          const email_ =  profile?._json.email
+
+          if (email_) {
+            const resu_ = await new_session.run(
+              `MATCH (n:User) WHERE n.email = $email
+          RETURN {
+          username: n.username,
+          email: n.email,
+          first_name: n.first_name,
+          last_name: n.last_name,
+          verified: n.verified
+            } as user`,
+              {
+                email: email_,
+              }
+            );
+            if (resu_.records?.length > 0) {
+              console.log("user exists", resu_.records[0].get("user"));
+              const user_x = resu_.records[0]?.get("user");
+              console.log(user_x, " user_x");
+              await session.close();
+              return cb(null, user_x);
+            } 
+          else {
+                console.log("creating user");
+                const user_ = await new_session.run(
+                  `CREATE (n:User {
+                  username: $username,
+                  email: $email,
+                  password: $password,
+                  first_name: $first_name,
+                  last_name: $last_name,
+                  verfication_token: $verfication_token,
+                  verified: $verified,
+                  password_reset_token: $password_reset_token
+                }) 
+                RETURN n.username`,
+                  {
+                    username: profile?.name?.givenName + (await crypto).randomBytes(2).toString('hex'),
+                    email: email_,
+                    password: (await crypto).randomBytes(25).toString("hex"),
+                    first_name: profile?.name?.givenName || "",
+                    last_name: profile?.name?.familyName || "",
+                    verfication_token: "",
+                    verified: true,
+                    password_reset_token: "",
+                  }
+                );
+                console.log("user does not exist");
+                await session.close();
+                return cb(null, user_);
+              
+            }
+          }
+        }
+      } catch (error) {
+        console.log("error ", error);
+        return cb(error, false);
+      }}
+));
+
+
+authRouter.get(
+  "/auth/facebook",
+  passport.authenticate("facebook", {session: false}),
+  async function (req: Request, res: Response) {
+    // console.log("auth/facebook");
+  }
+);
+
+
+
+authRouter.get("/auth/facebook/callback", function (req: Request, res: Response) {
+  passport.authenticate(
+    "facebook",
+    { session: false },
+    function (err: any, user: User, info: any) {
+      if (err) {
+        console.error("Error during authentication:", err);
+        return res
+          .status(401)
+          .json({ "Wrong credentials": "Error during authentication" });
+      }
+
+      if (!user) {
+        console.error("No user found:", info);
+        return res.status(401).json("No user found");
+      }
+
+      try {
+        const token = generateAccessToken(user.username);
+        console.log("Token generated:", token);
+
+        res.cookie("jwt_token", token, {
+          httpOnly: true, // Prevent client-side access
+          sameSite: "strict", // Mitigate CSRF attacks
+        });
+
+        console.log("User successfully logged in with Facebook:", user);
+        return res.status(200).json({
+          message: "Logged in with Facebook",
+          token,
+        });
+      } catch (tokenError) {
+        console.error("Error generating token:", tokenError);
+        return res.status(400).json("Error generating token");
+      }
+    }
+  )(req, res);
+});
+// ----------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
 function generateAccessToken(username: String) {
   if (username) {
     const token = jwt.sign({ userId: username }, process.env.JWT_TOKEN_SECRET, {
@@ -199,12 +367,6 @@ authRouter.get(
   }
 );
 
-// ----------------------------------------------------------------------------------
-const passport = require("passport");
-
-const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const FacebookStrategy = require("passport-facebook").Strategy;
-const FortyTwoStrategy = require('passport-42').Strategy;
 
 // ----------------------------------------------------------------------------------
 
@@ -225,20 +387,7 @@ function(accessToken: string, refreshToken: string, profile: Profile, cb: Verify
 // ----------------------------------------------------------------------------------
 
 
-passport.use( new FacebookStrategy({
-  clientID: process.env.FACEBOOK_APP_ID,
-  clientSecret: process.env.FACEBOOK_APP_SECRET,
-  callbackURL: "http://localhost:3000/api/auth/facebook/callback",
-  profileFields: ['id', 'emails', 'name']
-},
 
-function(accessToken: string, refreshToken: string, profile: Profile, cb: VerifyCallback) {
-  console.log(profile, " profile");
-  console.log(accessToken, " accessToken");
-  console.log(refreshToken, " refreshToken");
-  return cb(null, profile);
-}
-));
 
 
 // ----------------------------------------------------------------------------------
@@ -372,6 +521,10 @@ passport.use(
 
 
 
+
+
+
+
 // ----------------------------------------------------------------------------------
 
 authRouter.get("/auth/intra42", passport.authenticate("42"));
@@ -396,20 +549,6 @@ authRouter.get(
   }
 );
 
-authRouter.get(
-  "/auth/facebook",
-  passport.authenticate("facebook", {session: false}),
-  async function (req: Request, res: Response) {
-    // console.log("auth/facebook");
-  }
-);
-
-authRouter.get("/auth/facebook/callback",passport.authenticate('facebook', {session: false}),
-  
-  
-  function (req: Request, res: Response) {
-  console.log("auth/facebook/callback is called");
-});
 
 authRouter.get("/auth/google/callback", function (req: Request, res: Response) {
   passport.authenticate(
