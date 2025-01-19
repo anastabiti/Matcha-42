@@ -16,6 +16,17 @@ const driver = neo4j.driver(
   neo4j.auth.basic(process.env.database_username, process.env.database_password)
 );
 
+
+//define user model
+export type User = {
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  verified: boolean;
+};
+
+
 const transporter = nodemailer.createTransport({
   service: "Gmail",
   host: "smtp.gmail.com",
@@ -40,7 +51,7 @@ function generateAccessToken(username: String) {
 }
 
 authRouter.post("/login", async (req: Request, res: Response) => {
-  try {
+  // try {
     const password = req.body.password;
     console.log(password, " password");
     console.log(req.body.username, "  username");
@@ -48,11 +59,11 @@ authRouter.post("/login", async (req: Request, res: Response) => {
     //get hashedPassword
     if (session) {
       const hashedPassword = await session.run(
-        "MATCH (n:User) WHERE n.username = $username RETURN n.password",
+        "MATCH (n:User) WHERE n.username = $username AND n.verified = true RETURN n.password",
         { username: req.body.username }
       );
 
-      console.log(hashedPassword.records[0]._fields[0], " hashedPassword");
+      // console.log(hashedPassword.records[0]._fields[0], " hashedPassword");
       if (hashedPassword.records.length > 0) {
         if (hashedPassword.records[0]._fields[0])
           bcrypt.compare(
@@ -69,21 +80,27 @@ authRouter.post("/login", async (req: Request, res: Response) => {
                   console.log(token, " token");
                   // res.json(token);
                   res.cookie("jwt_token", token, { httpOnly: true });
-                  res.send("login successful");
+                  res.status(200).json("login successful");
                 }
                 // res.json(token);
                 // res.send("login successful");
               } else {
                 console.log("passwords do not match");
+                res.status(400).json("passwords do not match");
               }
             }
           );
       }
+      else {
+        console.log("username does not exist");
+        res.status(400).json("Username does not exist or Email not verified");
     }
-  } catch {
-    console.log("error");
-    res.status(400).send("Error in login");
-  }
+    }
+  // } 
+  // catch {
+  //   console.log("error");
+  //   res.status(400).send("Error in login");
+  // }
 });
 
 authRouter.post(
@@ -202,16 +219,18 @@ passport.use(
       profile: Profile,
       cb: VerifyCallback
     ) {
-      console.log(profile, " profile");
-      console.log(accessToken, " accessToken");
-      console.log(refreshToken, " refreshToken");
-      const new_session = await driver.session();
-      if (new_session) {
-        console.log(profile?.emails?.[0].value || "email not found");
-        if (profile?.emails?.[0].value) {
-          const resu_ = await new_session.run(
-            // `MATCH (n:User) WHERE n.email = $email RETURN {n.username, n.email, n.first_name, n.last_name, n.verified} as n`,
-            `MATCH (n:User) WHERE n.email = $email
+      console.log("----------------------------------------------");
+      try {
+        console.log(profile, " profile");
+        console.log(accessToken, " accessToken");
+        console.log(refreshToken, " refreshToken");
+        const new_session = await driver.session();
+        if (new_session) {
+          console.log(profile?.emails?.[0].value || "email not found");
+          if (profile?.emails?.[0].value) {
+            const resu_ = await new_session.run(
+              // `MATCH (n:User) WHERE n.email = $email RETURN {n.username, n.email, n.first_name, n.last_name, n.verified} as n`,
+              `MATCH (n:User) WHERE n.email = $email
           RETURN {
           username: n.username,
           email: n.email,
@@ -219,63 +238,63 @@ passport.use(
           last_name: n.last_name,
           verified: n.verified
             } as user`,
-            {
-              email: profile.emails[0].value,
-            }
-          );
-          if (resu_.records?.length > 0) {
-            console.log("user exists", resu_.records[0].get("user"));
-            const user_x = resu_.records[0]?.get("user");
-            console.log(user_x, " user_x");
-            await session.close();
-            return cb(null, user_x);
-          } else {
-            // {
-            //   id: '333333',
-            //   displayName: 'Anas TB',
-            //   name: { familyName: 'TB', givenName: 'Anas' },
-            //   emails: [ { value: 'anasbitoo@gmail.com', verified: true } ],
-            //   photos: [
-            //     {
-            //       value: 'https://lh3.googleusercontent.com/a/ACg8ocKUs3odyO6AIVCpNfG8QwW9pqkk9YaRykdBFpcWVp_Uqad_DWpH=s96-c'
-            //     }
-            //   ],
-            //   provider: 'google',
-            //   _raw: '{\n' +
-            //     '  "sub": "333",\n' +
-            //     '  "name": "Anas TB",\n' +
-            //     '  "given_name": "Anas",\n' +
-            //     '  "family_name": "TB",\n' +
-            //     '  "picture": "https://lh3.googleusercontent.com/a/ACg8ocKUs3odyO6AIVCpNfG8QwW9pqkk9YaRykdBFpcWVp_Uqad_DWpH\\u003ds96-c",\n' +
-            //     '  "email": "anasbitoo@gmail.com",\n' +
-            //     '  "email_verified": true\n' +
-            //     '}',
-            //   _json: {
-            //     sub: '333',
-            //     name: 'Anas TB',
-            //     given_name: 'Anas',
-            //     family_name: 'TB',
-            //     picture: 'https://lh3.googleusercontent.com/a/ACg8ocKUs3odyO6AIVCpNfG8QwW9pqkk9YaRykdBFpcWVp_Uqad_DWpH=s96-c',
-            //     email: 'anasbitoo@gmail.com',
-            //     email_verified: true
-            //   }
-            // }
-            // profile
+              {
+                email: profile.emails[0].value,
+              }
+            );
+            if (resu_.records?.length > 0) {
+              console.log("user exists", resu_.records[0].get("user"));
+              const user_x = resu_.records[0]?.get("user");
+              console.log(user_x, " user_x");
+              await session.close();
+              return cb(null, user_x);
+            } else {
+              // {
+              //   id: '333333',
+              //   displayName: 'Anas TB',
+              //   name: { familyName: 'TB', givenName: 'Anas' },
+              //   emails: [ { value: 'anasbitoo@gmail.com', verified: true } ],
+              //   photos: [
+              //     {
+              //       value: 'https://lh3.googleusercontent.com/a/ACg8ocKUs3odyO6AIVCpNfG8QwW9pqkk9YaRykdBFpcWVp_Uqad_DWpH=s96-c'
+              //     }
+              //   ],
+              //   provider: 'google',
+              //   _raw: '{\n' +
+              //     '  "sub": "333",\n' +
+              //     '  "name": "Anas TB",\n' +
+              //     '  "given_name": "Anas",\n' +
+              //     '  "family_name": "TB",\n' +
+              //     '  "picture": "https://lh3.googleusercontent.com/a/ACg8ocKUs3odyO6AIVCpNfG8QwW9pqkk9YaRykdBFpcWVp_Uqad_DWpH\\u003ds96-c",\n' +
+              //     '  "email": "anasbitoo@gmail.com",\n' +
+              //     '  "email_verified": true\n' +
+              //     '}',
+              //   _json: {
+              //     sub: '333',
+              //     name: 'Anas TB',
+              //     given_name: 'Anas',
+              //     family_name: 'TB',
+              //     picture: 'https://lh3.googleusercontent.com/a/ACg8ocKUs3odyO6AIVCpNfG8QwW9pqkk9YaRykdBFpcWVp_Uqad_DWpH=s96-c',
+              //     email: 'anasbitoo@gmail.com',
+              //     email_verified: true
+              //   }
+              // }
+              // profile
 
-            // const user = {
-            //   username: req.body.username,
-            //   email: req.body.email,
-            //   password: hashedPassword,
-            //   first_name: req.body.first_name,
-            //   last_name: req.body.last_name,
-            //   verfication_token: "",
-            //   verified: false,
-            //   password_reset_token: "",
-            // };
-            if (profile.emails?.[0].value) {
-              console.log("creating user");
-              const user_ = await new_session.run(
-                `CREATE (n:User {
+              // const user = {
+              //   username: req.body.username,
+              //   email: req.body.email,
+              //   password: hashedPassword,
+              //   first_name: req.body.first_name,
+              //   last_name: req.body.last_name,
+              //   verfication_token: "",
+              //   verified: false,
+              //   password_reset_token: "",
+              // };
+              if (profile.emails?.[0].value) {
+                console.log("creating user");
+                const user_ = await new_session.run(
+                  `CREATE (n:User {
                   username: $username,
                   email: $email,
                   password: $password,
@@ -286,25 +305,29 @@ passport.use(
                   password_reset_token: $password_reset_token
                 }) 
                 RETURN n.username`,
-                {
-                  username:
-                    profile.displayName ||
-                    (await crypto).randomBytes(10).toString(),
-                  email: profile.emails[0].value,
-                  password: (await crypto).randomBytes(25).toString("hex"),
-                  first_name: profile?.name?.givenName || "",
-                  last_name: profile?.name?.familyName || "",
-                  verfication_token: "",
-                  verified: true,
-                  password_reset_token: "",
-                }
-              );
-              console.log("user does not exist");
-              await session.close();
-              return cb(null, user_);
+                  {
+                    username:
+                      profile.displayName ||
+                      (await crypto).randomBytes(10).toString(),
+                    email: profile.emails[0].value,
+                    password: (await crypto).randomBytes(25).toString("hex"),
+                    first_name: profile?.name?.givenName || "",
+                    last_name: profile?.name?.familyName || "",
+                    verfication_token: "",
+                    verified: true,
+                    password_reset_token: "",
+                  }
+                );
+                console.log("user does not exist");
+                await session.close();
+                return cb(null, user_);
+              }
             }
           }
         }
+      } catch (error) {
+        console.log("error ", error);
+        return cb(error, false);
       }
     }
   )
@@ -318,45 +341,52 @@ authRouter.get(
   "/auth/google",
   passport.authenticate("google", {
     scope: ["profile", "email"],
+
     session: false,
   }),
-  (req: Request, res: Response) => {
-    console.log("auth/google");
-
-    // res.send("auth/google");
+  async function (req: Request, res: Response) {
+    // console.log("auth/google");
   }
 );
 
 
-//define user type
-type User = {
-  username: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  verified: boolean;
-};
-authRouter.get(
-  "/auth/google/callback",
-  passport.authenticate("google", {
-    scope: ["profile", "email"],
-    session: false,
-  }),
-  (req: Request, res: Response) => {
-    //print user
-    console.log("-----------------", req.user, " user ---------------------------");
-    console.log("auth/google/callback");
-    const user = req.user as User;
-    //gnerate jwt token
-    if (user.username) {
-      const token = generateAccessToken(user.username);
-      console.log(token, " token");
-      //set cookie
-      res.cookie("jwt_token", token, { httpOnly: true });
+authRouter.get("/auth/google/callback", function (req: Request, res: Response) {
+  passport.authenticate(
+    "google",
+    { session: false },
+    function (err: any, user: User, info: any) {
+      if (err) {
+        console.error("Error during authentication:", err);
+        return res
+          .status(401)
+          .json({ "Wrong credentials": "Error during authentication" });
+      }
+
+      if (!user) {
+        console.error("No user found:", info);
+        return res.status(401).json("No user found");
+      }
+
+      try {
+        const token = generateAccessToken(user.username);
+        console.log("Token generated:", token);
+
+        res.cookie("jwt_token", token, {
+          httpOnly: true, // Prevent client-side access
+          sameSite: "strict", // Mitigate CSRF attacks
+        });
+
+        console.log("User successfully logged in with Google:", user);
+        return res.status(200).json({
+          message: "Logged in with Google",
+          token,
+        });
+      } catch (tokenError) {
+        console.error("Error generating token:", tokenError);
+        return res.status(400).json("Error generating token");
+      }
     }
-
-    res.json("Logged in with google");
-  }
-);
+  )(req, res);
+});
 
 export default authRouter;

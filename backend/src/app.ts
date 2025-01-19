@@ -11,7 +11,7 @@ import passport from "passport";
 
 // fix cors issues
 const corsOptions = {
-  origin: "http://localhost:5173",
+  origin: "http://localhost:7070",
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   // allowedHeaders: ["Content-Type"],
   credentials: true,

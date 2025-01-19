@@ -37,6 +37,7 @@ import { Routes } from 'react-router-dom';
 
 
 import { BrowserRouter } from 'react-router-dom';
+import LoginPage from './components/LoginPage';
 
 function App() {
     const [count, setCount] = useState(0)
@@ -44,7 +45,8 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-      <Route path="/register" Component={RegistrationForm} />   
+      <Route path="/register" Component={RegistrationForm} />  
+      <Route path="/login" Component={LoginPage} />
       </Routes>
       </BrowserRouter>
   );
