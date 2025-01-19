@@ -204,7 +204,25 @@ const passport = require("passport");
 
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const FacebookStrategy = require("passport-facebook").Strategy;
+const FortyTwoStrategy = require('passport-42').Strategy;
 
+// ----------------------------------------------------------------------------------
+
+
+passport.use(new FortyTwoStrategy({
+  clientID: process.env.FORTYTWO_APP_ID,
+  clientSecret: process.env.FORTYTWO_APP_SECRET,
+  callbackURL: "http://localhost:3000/api/auth/intra42/callback",
+},
+function(accessToken: string, refreshToken: string, profile: Profile, cb: VerifyCallback) {
+  console.log(profile, " profile");
+  console.log(accessToken, " accessToken");
+  console.log(refreshToken, " refreshToken");
+  return cb(null, profile);
+
+}
+));
+// ----------------------------------------------------------------------------------
 
 
 passport.use( new FacebookStrategy({
@@ -351,6 +369,16 @@ passport.use(
     }
   )
 );
+
+
+
+// ----------------------------------------------------------------------------------
+
+authRouter.get("/auth/intra42", passport.authenticate("42"));
+
+authRouter.get("/auth/intra42/callback", passport.authenticate("42", { session: false }), function (req: Request, res: Response) {
+  console.log("auth/intra42/callback is called");
+});
 
 // ----------------------------------------------------------------------------------
 
