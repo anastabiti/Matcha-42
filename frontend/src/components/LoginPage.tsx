@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
 import GoogleButton from "react-google-button";
+import { Link } from 'react-router-dom';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -31,12 +31,8 @@ const LoginPage = () => {
       const data = await response.json();
 
       if (response.ok) {
-        console.log(
-          "Login successful!"
-        );
-        setSuccess(
-          "Logged in successfully. Redirecting to your HomePage..."
-        );
+        console.log("Login successful!");
+        setSuccess("Logged in successfully. Redirecting to your HomePage...");
         setFormData({
           username: "",
           password: "",
@@ -60,11 +56,9 @@ const LoginPage = () => {
         <div className="bg-gray-900 rounded-2xl p-6">
           <div className="space-y-6">
             <h2 className="text-2xl font-semibold text-white mb-8">
-              Login to  Your Account
+              Login to Your Account
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
-             
-
               <input
                 type="text"
                 placeholder="Username"
@@ -75,8 +69,6 @@ const LoginPage = () => {
                 }
                 required
               />
-
-            
 
               <div className="relative">
                 <input
@@ -105,14 +97,37 @@ const LoginPage = () => {
                 {isLoading ? "Welcome back  ..." : "Log in"}
               </button>
             </form>
+
             <div className="flex items-center justify-center">
               <GoogleButton
-                label="Sign up"
+                label="Sign up / Login"
                 onClick={() => {
                   //new link
-                  window.location.href = "http://localhost:3000/api/auth/google";
+                  window.location.href =
+                    "http://localhost:3000/api/auth/google";
                 }}
               />
+            </div>
+
+            {/* <div className="flex items-center justify-center  gap-4">
+              <button className="w-full bg-pink-600 hover:bg-pink-700 text-white rounded-xl py-3 font-semibold">
+                Reset password
+              </button>
+              <button className="w-full bg-pink-600 hover:bg-pink-700 text-white rounded-xl py-3 font-semibold">
+                Register
+              </button>
+            </div> */}
+            <div className="flex items-center justify-center gap-4">
+              <button  className="w-full bg-gray-600 hover:bg-gray-700 text-white rounded-xl py-2 font-semibold">
+              <Link to="/resetPassword">
+                Reset password
+              </Link>
+              </button>
+              <button className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-xl py-2 font-semibold ">
+              <Link to="/register">
+                Register
+              </Link>
+              </button>
             </div>
           </div>
         </div>

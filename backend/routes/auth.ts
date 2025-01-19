@@ -51,7 +51,7 @@ function generateAccessToken(username: String) {
 }
 
 authRouter.post("/login", async (req: Request, res: Response) => {
-  // try {
+  try {
     const password = req.body.password;
     console.log(password, " password");
     console.log(req.body.username, "  username");
@@ -96,11 +96,11 @@ authRouter.post("/login", async (req: Request, res: Response) => {
         res.status(400).json("Username does not exist or Email not verified");
     }
     }
-  // } 
-  // catch {
-  //   console.log("error");
-  //   res.status(400).send("Error in login");
-  // }
+  } 
+  catch {
+    console.log("error");
+    res.status(400).send("Error in login");
+  }
 });
 
 authRouter.post(
@@ -109,14 +109,13 @@ authRouter.post(
   body("email").isEmail(),
   async (req: Request, res: Response) => {
     const errors = validationResult(req);
-    console.log(errors, "errors");
+    console.log(errors, "errors-=-=-=---=-=-=-=-=");
 
     if (!errors.isEmpty()) res.status(400).json({ errors: errors.array() });
     else {
       try {
         console.log(req.body.email, " email");
         const email = req.body.email;
-        if (email) {
           if (session) {
             const url_token = jwt.sign(
               { email: email },
@@ -159,18 +158,18 @@ authRouter.post(
                 }
               });
 
-              res.send(
+              res.status(200).json(
                 "password reset successful, check your email for further instructions"
               );
+            }else {
+              console.log("email does not exist");
+              res.status(400).json("email does not exist");
             }
-          } else {
-            console.log("email does not exist");
-            res.status(400).send("email does not exist");
-          }
+          
         }
       } catch (Error) {
         console.log("error");
-        res.status(400).send("Error in password reset");
+        res.status(400).json("Error in password reset");
       }
     }
   }
