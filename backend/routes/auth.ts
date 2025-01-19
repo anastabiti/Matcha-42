@@ -203,7 +203,27 @@ authRouter.get(
 const passport = require("passport");
 
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const FacebookStrategy = require("passport-facebook").Strategy;
 
+
+
+passport.use( new FacebookStrategy({
+  clientID: process.env.FACEBOOK_APP_ID,
+  clientSecret: process.env.FACEBOOK_APP_SECRET,
+  callbackURL: "http://localhost:3000/api/auth/facebook/callback",
+  profileFields: ['id', 'emails', 'name']
+},
+
+function(accessToken: string, refreshToken: string, profile: Profile, cb: VerifyCallback) {
+  console.log(profile, " profile");
+  console.log(accessToken, " accessToken");
+  console.log(refreshToken, " refreshToken");
+  return cb(null, profile);
+}
+));
+
+
+// ----------------------------------------------------------------------------------
 passport.use(
   new GoogleStrategy(
     {
@@ -348,6 +368,20 @@ authRouter.get(
   }
 );
 
+authRouter.get(
+  "/auth/facebook",
+  passport.authenticate("facebook", {session: false}),
+  async function (req: Request, res: Response) {
+    // console.log("auth/facebook");
+  }
+);
+
+authRouter.get("/auth/facebook/callback",passport.authenticate('facebook', {session: false}),
+  
+  
+  function (req: Request, res: Response) {
+  console.log("auth/facebook/callback is called");
+});
 
 authRouter.get("/auth/google/callback", function (req: Request, res: Response) {
   passport.authenticate(
