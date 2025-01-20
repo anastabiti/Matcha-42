@@ -1,12 +1,31 @@
 import express, { Request, Response } from "express";
-import { session } from "../database";
 const { body, validationResult } = require("express-validator");
 const router = express.Router();
 const bcrypt = require("bcrypt");
 const crypto = import("crypto");
 
+const passwordValidator = require("password-validator");
 import nodemailer from "nodemailer";
+import { driver } from "../database";
 
+// Create a schema for password validation
+const schema = new passwordValidator();
+schema
+  .is()
+  .min(8) // Minimum length 8
+  .is()
+  .max(50) // Maximum length 100
+  .has()
+  .uppercase() // Must have uppercase letters
+  .has()
+  .lowercase() // Must have lowercase letters
+  .has()
+  .digits(2) // Must have at least 2 digits
+  .has()
+  .not()
+  .spaces() // Should not have spaces
+  .has()
+  .symbols(); // Must have at least 1 symbol
 const transporter = nodemailer.createTransport({
   service: "Gmail",
   host: "smtp.gmail.com",
@@ -23,14 +42,22 @@ const registrationRouter = express.Router();
 registrationRouter.post(
   "/registration",
   body("email").isEmail(),
-  body("password").isLength({ min: 6, max: 30 }),
+  body("password").isLength({ min: 8, max: 50 }),
   body("username").isLength({ min: 6, max: 20 }),
   body("first_name").isLength({ min: 3, max: 30 }),
   body("last_name").isLength({ min: 3, max: 30 }),
 
   async (req: Request, res: Response) => {
+    if (schema.validate(req.body.password) === false) {
+      res
+        .status(400)
+        .json(
+          "Password must be between 8 and 50 characters, contain at least 2 digits, an uppercase letter, a lowercase letter and no spaces"
+        );
+      return;
+    }
     const errors = validationResult(req);
-    
+
     // console.log(errors.array()[0].msg, errors.array()[0].path, "errors");
     // {
     //   type: 'field',
@@ -38,10 +65,8 @@ registrationRouter.post(
     //   msg: 'Invalid value',
     //   path: 'password',
     //   location: 'body'
-    // } 
-    if (!errors.isEmpty())
-    {
-
+    // }
+    if (!errors.isEmpty()) {
       if (errors.array()[0].path === "email")
         res.status(400).json("Invalid email");
       else if (errors.array()[0].path === "password")
@@ -52,8 +77,7 @@ registrationRouter.post(
         res.status(400).json("First name must be between 3 and 30 characters");
       else if (errors.array()[0].path === "last_name")
         res.status(400).json("Last name must be between 3 and 30 characters");
-    }
-    else {
+    } else {
       // console.log(req.body, 'req.body');
       // console.log(req.body.username, " username");
       // console.log(req.body.email, " email");
@@ -76,29 +100,30 @@ registrationRouter.post(
         verified: false,
         password_reset_token: "",
       };
+      const session = await driver.session();
+      // console.log(process.env.database_username, process.env.database_password, "database");
 
-      if (session) {
+      if (session && user) {
+        console.log("session created");
         // First check if email exists
         const _check_email_ = await session.run(
           // "MATCH (u:User {email: $email}) RETURN u",
           "MATCH (u:User) WHERE u.email = $email RETURN u",
-          { email: user.email }
-        );
+          { email: user.email, username: user.username }
+        ); 
         const check_username = await session.run(
           "MATCH (u:User) WHERE u.username = $username RETURN u",
           { username: user.username }
         );
-        // console.log(_check_email_, "check email");
 
-        if (_check_email_.records.length > 0 ) {
+
+        if (_check_email_.records.length > 0) {
           res.status(400).json("Email already exists");
-          // res.send("Email already exists");
-        } 
-        else if (check_username.records.length > 0) {
-          res.status(400);
-          res.send("Username already exists");
         }
-        else {
+       
+        else if (check_username.records.length > 0) {
+          res.status(400).json("Username already exists");
+        } else {
           console.log("new User");
           user.verfication_token = (await crypto)
             .randomBytes(20)
@@ -129,7 +154,6 @@ registrationRouter.post(
             The Tinder Team`,
           };
 
-
           transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
               console.error("Error sending email: ", error);
@@ -143,15 +167,17 @@ registrationRouter.post(
                   }
                 });
               }, 5000);
-              
             } else {
               console.log("Email sent: ", info.response);
             }
-          })
+          });
 
-
+          await session.close();
           res.status(200).json("User created successfully");
         }
+      } else {
+        await session.close();
+        res.status(400).json("Error occured");
       }
     }
   }
@@ -163,11 +189,17 @@ registrationRouter.get("/verify-email", async (req: Request, res: Response) => {
     const token = req.query.token;
     console.log(token, " token");
     if (token) {
+      const session = driver.session();
+
+      if (!session) {
+        res.status(400);
+        res.send("Error occured");
+      }
       const updates = await session.run(
         `
           MATCH (a:User {verfication_token: $token})
           WHERE a.verified = false
-          SET a.verification_token = null
+          SET a.verfication_token = ""
           SET a.verified = true
           RETURN a.verfication_token , a.verified, a.email, a.username, a.first_name, a.last_name
           `,
@@ -179,7 +211,9 @@ registrationRouter.get("/verify-email", async (req: Request, res: Response) => {
         console.log("User verified:", updatedUser);
         console.log("User verified:", updatedUser);
         res.send("Hello! Welcome to Matcha. Email verified successfully!");
+        await session.close();
       } else {
+        await session.close();
         res.status(400).send("Invalid or expired token");
       }
     } else {

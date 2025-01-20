@@ -1,5 +1,4 @@
 import express, { Request, Response } from "express";
-import { session } from "../database";
 import { env } from "process";
 const { body, validationResult } = require("express-validator");
 const router = express.Router();
@@ -25,7 +24,6 @@ export type User = {
   verified: boolean;
 };
 
-
 const transporter = nodemailer.createTransport({
   service: "Gmail",
   host: "smtp.gmail.com",
@@ -37,13 +35,8 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-
-
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const FortyTwoStrategy = require('passport-42').Strategy;
 const passport = require("passport");
-
-
 
 // ----------------------------------------------------------------------------------
 //  FACEBOOK STRATEGY ---------------------------------------------------------------
@@ -51,15 +44,21 @@ const passport = require("passport");
 
 const FacebookStrategy = require("passport-facebook").Strategy;
 
-passport.use( new FacebookStrategy({
-  clientID: process.env.FACEBOOK_APP_ID,
-  clientSecret: process.env.FACEBOOK_APP_SECRET,
-  callbackURL: "http://localhost:3000/api/auth/facebook/callback",
-  profileFields: ['id', 'emails', 'name']
-},
+passport.use(
+  new FacebookStrategy(
+    {
+      clientID: process.env.FACEBOOK_APP_ID,
+      clientSecret: process.env.FACEBOOK_APP_SECRET,
+      callbackURL: "http://localhost:3000/api/auth/facebook/callback",
+      profileFields: ["id", "emails", "name"],
+    },
 
-async function(accessToken: string, refreshToken: string, profile: Profile, cb: VerifyCallback) {
-
+    async function (
+      accessToken: string,
+      refreshToken: string,
+      profile: Profile,
+      cb: VerifyCallback
+    ) {
       // {
       //   id: '1337',
       //   username: undefined,
@@ -78,13 +77,12 @@ async function(accessToken: string, refreshToken: string, profile: Profile, cb: 
       //   }
       // }  profile
 
-
       try {
         console.log(profile, " profile");
 
         const new_session = await driver.session();
         if (new_session) {
-          const email_ =  profile?._json.email
+          const email_ = profile?._json.email;
 
           if (email_) {
             const resu_ = await new_session.run(
@@ -101,16 +99,43 @@ async function(accessToken: string, refreshToken: string, profile: Profile, cb: 
               }
             );
             if (resu_.records?.length > 0) {
+              //check if user is not verified
+              console.log(
+                resu_.records[0].get("user").verified,
+                " -------------------------->"
+              );
+              //check if user is not verified
+              if (resu_.records[0].get("user").verified === false) {
+                console.log("email not verified");
+                await new_session.close();
+                return cb(null, false);
+              }
+
               console.log("user exists", resu_.records[0].get("user"));
               const user_x = resu_.records[0]?.get("user");
               console.log(user_x, " user_x");
-              await session.close();
+              await new_session.close();
               return cb(null, user_x);
             } 
-          else {
-                console.log("creating user");
+            
+            
+            else {
+              console.log("creating user");
+
+              //check if username exists
+              const check_username = await new_session.run(
+                "MATCH (u:User) WHERE u.username = $username RETURN u",
+                { username: profile?.name?.givenName }
+              );
+              let username_ = null;
+              if (check_username.records.length > 0)
+              {
+                console.log("username exists -==--=-=-=-");
+                username_ = (await crypto).randomBytes(12).toString("hex");
+              }
+    
                 const user_ = await new_session.run(
-                  `CREATE (n:User {
+                `CREATE (n:User {
                   username: $username,
                   email: $email,
                   password: $password,
@@ -121,89 +146,241 @@ async function(accessToken: string, refreshToken: string, profile: Profile, cb: 
                   password_reset_token: $password_reset_token
                 }) 
                 RETURN n.username`,
-                  {
-                    username: profile?.name?.givenName + (await crypto).randomBytes(2).toString('hex'),
-                    email: email_,
-                    password: (await crypto).randomBytes(25).toString("hex"),
-                    first_name: profile?.name?.givenName || "",
-                    last_name: profile?.name?.familyName || "",
-                    verfication_token: "",
-                    verified: true,
-                    password_reset_token: "",
-                  }
-                );
-                console.log("user does not exist");
-                await session.close();
-                return cb(null, user_);
-              
+                {
+                  username: username_ || profile?.name?.givenName,
+                  // username: profile?.name?.givenName,
+                  email: email_,
+                  password: (await crypto).randomBytes(25).toString("hex"),
+                  first_name: profile?.name?.givenName || "",
+                  last_name: profile?.name?.familyName || "",
+                  verfication_token: "",
+                  verified: true,
+                  password_reset_token: "",
+                }
+              );
+              console.log("user does not exist");
+              await new_session.close();
+              return cb(null, user_);
             }
           }
         }
       } catch (error) {
         console.log("error ", error);
         return cb(error, false);
-      }}
-));
-
+      }
+    }
+  )
+);
 
 authRouter.get(
   "/auth/facebook",
-  passport.authenticate("facebook", {session: false}),
+  passport.authenticate("facebook", { session: false }),
   async function (req: Request, res: Response) {
     // console.log("auth/facebook");
   }
 );
 
+authRouter.get(
+  "/auth/facebook/callback",
+  function (req: Request, res: Response) {
+    passport.authenticate(
+      "facebook",
+      { session: false },
+      function (err: any, user: User, info: any) {
+        if (err) {
+          return res
+            .status(401)
+            .json({ "Wrong credentials": "Error during authentication" });
+        }
 
+        if (!user) {
+          console.error("No user found:", info);
+          return res.status(401).json("No user found");
+        }
 
-authRouter.get("/auth/facebook/callback", function (req: Request, res: Response) {
-  passport.authenticate(
-    "facebook",
-    { session: false },
-    function (err: any, user: User, info: any) {
-      if (err) {
-        console.error("Error during authentication:", err);
-        return res
-          .status(401)
-          .json({ "Wrong credentials": "Error during authentication" });
+        try {
+          const token = generateAccessToken(user.username);
+          console.log("Token generated:", token);
+
+          res.cookie("jwt_token", token, {
+            httpOnly: true, // Prevent client-side access
+            sameSite: "strict", // Mitigate CSRF attacks
+          });
+
+          console.log("User successfully logged in with Facebook:", user);
+          return res.status(200).json({
+            message: "Logged in with Facebook",
+            token,
+          });
+        } catch (tokenError) {
+          return res.status(400).json("Error generating token");
+        }
       }
-
-      if (!user) {
-        console.error("No user found:", info);
-        return res.status(401).json("No user found");
-      }
-
-      try {
-        const token = generateAccessToken(user.username);
-        console.log("Token generated:", token);
-
-        res.cookie("jwt_token", token, {
-          httpOnly: true, // Prevent client-side access
-          sameSite: "strict", // Mitigate CSRF attacks
-        });
-
-        console.log("User successfully logged in with Facebook:", user);
-        return res.status(200).json({
-          message: "Logged in with Facebook",
-          token,
-        });
-      } catch (tokenError) {
-        console.error("Error generating token:", tokenError);
-        return res.status(400).json("Error generating token");
-      }
-    }
-  )(req, res);
-});
+    )(req, res);
+  }
+);
 // ----------------------------------------------------------------------------------
 
+// ----------------------------------------------------------------------------------
+//  intra42 STRATEGY ---------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 
+const FortyTwoStrategy = require("passport-42").Strategy;
+passport.use(
+  new FortyTwoStrategy(
+    {
+      clientID: process.env.FORTYTWO_APP_ID,
+      clientSecret: process.env.FORTYTWO_APP_SECRET,
+      callbackURL: "http://localhost:3000/api/auth/intra42/callback",
+    },
 
+    async function (
+      accessToken: string,
+      refreshToken: string,
+      profile: Profile,
+      cb: VerifyCallback
+    ) {
+      try {
+        //   id: '90435',
+        // username: 'atabiti',
+        // displayName: 'Anas Tabiti',
+        // name: { familyName: 'Tabiti', givenName: 'Anas' },
+        // profileUrl: 'https://api.intra.42.fr/v2/users/atabiti',
+        // emails: [ { value: 'atabiti@student.1337.ma' } ],
+        // phoneNumbers: [ { value: 'hidden' } ],
+        // photos: [ { value: undefined } ],
+        // provider: '42',
+        console.log(profile.emails?.[0]?.value, " profile._json.email");
+        console.log(profile?.name?.familyName, " familyname");
+        console.log(profile?.name?.givenName, " givenName");
+        console.log(profile.username, " username");
 
+        const new_session = await driver.session();
+        if (new_session) {
+          const email_ = profile.emails?.[0]?.value || profile._json?.email;
 
+          if (email_) {
+            const resu_ = await new_session.run(
+              `MATCH (n:User) WHERE n.email = $email
+      RETURN {
+      username: n.username,
+      email: n.email,
+      first_name: n.first_name,
+      last_name: n.last_name,
+      verified: n.verified
+        } as user`,
+              {
+                email: email_,
+              }
+            );
+            if (resu_.records?.length > 0) {
+              //check if user is not
+              console.log(
+                resu_.records[0].get("user").verified,
+                " -------------------------->"
+              );
+              //check if user is not verified
+              if (resu_.records[0].get("user").verified === false) {
+                console.log("email not verified");
+                await new_session.close();
+                return cb(null, false);
+              }
 
+              console.log("user exists", resu_.records[0].get("user"));
+              const user_x = resu_.records[0]?.get("user");
+              console.log(user_x, " user_x");
+              await new_session.close();
+              return cb(null, user_x);
+            } else {
+              console.log("creating user");
+              const user_ = await new_session.run(
+                `CREATE (n:User {
+              username: $username,
+              email: $email,
+              password: $password,
+              first_name: $first_name,
+              last_name: $last_name,
+              verfication_token: $verfication_token,
+              verified: $verified,
+              password_reset_token: $password_reset_token
+            }) 
+            RETURN n.username`,
+                {
+                  username:
+                    profile?.name?.givenName +
+                    (await crypto).randomBytes(2).toString("hex"),
+                  email: email_,
+                  password: (await crypto).randomBytes(25).toString("hex"),
+                  first_name: profile?.name?.givenName || "",
+                  last_name: profile?.name?.familyName || "",
+                  verfication_token: "",
+                  verified: true,
+                  password_reset_token: "",
+                }
+              );
+              console.log("user does not exist");
+              await new_session.close();
+              return cb(null, user_);
+            }
+          }
+        }
+      } catch (error) {
+        console.log("error ", error);
+        return cb(error, false);
+      }
+    }
+  )
+);
 
+authRouter.get("/auth/intra42", passport.authenticate("42"));
 
+// authRouter.get("/auth/intra42/callback", passport.authenticate("42", { session: false }), function (req: Request, res: Response) {
+//   console.log("auth/intra42/callback is called");
+// });
 
+authRouter.get(
+  "/auth/intra42/callback",
+  function (req: Request, res: Response) {
+    passport.authenticate(
+      "42",
+      { session: false },
+      function (err: any, user: User, info: any) {
+        if (err) {
+          console.error("Error during authentication:", err);
+          return res
+            .status(401)
+            .json({ "Wrong credentials": "Error during authentication" });
+        }
+
+        if (!user) {
+          console.error("No user found:", info);
+          return res.status(401).json("No user found");
+        }
+
+        try {
+          const token = generateAccessToken(user.username);
+          console.log("Token generated:", token);
+
+          res.cookie("jwt_token", token, {
+            httpOnly: true, // Prevent client-side access
+            sameSite: "strict", // Mitigate CSRF attacks
+          });
+
+          console.log("User successfully logged in with 42:", user);
+          return res.status(200).json({
+            message: "Logged in with 42",
+            token,
+          });
+        } catch (tokenError) {
+          console.error("Error generating token:", tokenError);
+          return res.status(400).json("Error generating token");
+        }
+      }
+    )(req, res);
+  }
+);
+
+// ------------------------------------------------------------------------------------------------
 
 function generateAccessToken(username: String) {
   if (username) {
@@ -223,7 +400,7 @@ authRouter.post("/login", async (req: Request, res: Response) => {
     const password = req.body.password;
     console.log(password, " password");
     console.log(req.body.username, "  username");
-
+    const session = driver.session();
     //get hashedPassword
     if (session) {
       const hashedPassword = await session.run(
@@ -258,14 +435,12 @@ authRouter.post("/login", async (req: Request, res: Response) => {
               }
             }
           );
-      }
-      else {
+      } else {
         console.log("username does not exist");
         res.status(400).json("Username does not exist or Email not verified");
+      }
     }
-    }
-  } 
-  catch {
+  } catch {
     console.log("error");
     res.status(400).send("Error in login");
   }
@@ -284,31 +459,32 @@ authRouter.post(
       try {
         console.log(req.body.email, " email");
         const email = req.body.email;
-          if (session) {
-            const url_token = jwt.sign(
-              { email: email },
-              process.env.JWT_TOKEN_SECRET,
-              { expiresIn: "10min" }
-            );
+        const session = driver.session();
+        if (session) {
+          const url_token = jwt.sign(
+            { email: email },
+            process.env.JWT_TOKEN_SECRET,
+            { expiresIn: "10min" }
+          );
 
-            const res_ = await session.run(
-              `MATCH (n:User) WHERE n.email = $email
+          const res_ = await session.run(
+            `MATCH (n:User) WHERE n.email = $email
              SET n.password_reset_token = $url_token 
              RETURN n.email`,
-              { email: email, url_token: url_token }
+            { email: email, url_token: url_token }
+          );
+          console.log(res_.records, " res_");
+          if (res_.records.length > 0) {
+            console.log(
+              "password reset successful, check your email for further instructions"
             );
-            console.log(res_.records, " res_");
-            if (res_.records.length > 0) {
-              console.log(
-                "password reset successful, check your email for further instructions"
-              );
-              ///////////////////
+            ///////////////////
 
-              const mailOptions = {
-                from: "anastabiti@gmail.com",
-                to: email,
-                subject: "Reset Your password ,Tinder! 💖",
-                text: `Hi ${email},
+            const mailOptions = {
+              from: "anastabiti@gmail.com",
+              to: email,
+              subject: "Reset Your password ,Tinder! 💖",
+              text: `Hi ${email},
         
         Welcome use the link below to reset your password! 🎉        
         🔗 Reset Your Password: http://localhost:3000/api/reset_it?token=${url_token}
@@ -316,24 +492,25 @@ authRouter.post(
         
         Best regards,  
         The Tinder Team`,
-              };
+            };
 
-              transporter.sendMail(mailOptions, (error, info) => {
-                if (error) {
-                  console.error("Error sending email: ", error);
-                } else {
-                  console.log("Email sent: password reset ", info.response);
-                }
-              });
+            transporter.sendMail(mailOptions, (error, info) => {
+              if (error) {
+                console.error("Error sending email: ", error);
+              } else {
+                console.log("Email sent: password reset ", info.response);
+              }
+            });
 
-              res.status(200).json(
+            res
+              .status(200)
+              .json(
                 "password reset successful, check your email for further instructions"
               );
-            }else {
-              console.log("email does not exist");
-              res.status(400).json("email does not exist");
-            }
-          
+          } else {
+            console.log("email does not exist");
+            res.status(400).json("email does not exist");
+          }
         }
       } catch (Error) {
         console.log("error");
@@ -367,28 +544,7 @@ authRouter.get(
   }
 );
 
-
 // ----------------------------------------------------------------------------------
-
-
-passport.use(new FortyTwoStrategy({
-  clientID: process.env.FORTYTWO_APP_ID,
-  clientSecret: process.env.FORTYTWO_APP_SECRET,
-  callbackURL: "http://localhost:3000/api/auth/intra42/callback",
-},
-function(accessToken: string, refreshToken: string, profile: Profile, cb: VerifyCallback) {
-  console.log(profile, " profile");
-  console.log(accessToken, " accessToken");
-  console.log(refreshToken, " refreshToken");
-  return cb(null, profile);
-
-}
-));
-// ----------------------------------------------------------------------------------
-
-
-
-
 
 // ----------------------------------------------------------------------------------
 passport.use(
@@ -429,10 +585,22 @@ passport.use(
               }
             );
             if (resu_.records?.length > 0) {
+              //check if user is not
+              console.log(
+                resu_.records[0].get("user").verified,
+                " -------------------------->"
+              );
+              //check if user is not verified
+              if (resu_.records[0].get("user").verified === false) {
+                console.log("email not verified");
+                await new_session.close();
+                return cb(null, false);
+              }
+
               console.log("user exists", resu_.records[0].get("user"));
               const user_x = resu_.records[0]?.get("user");
               console.log(user_x, " user_x");
-              await session.close();
+              await new_session.close();
               return cb(null, user_x);
             } else {
               // {
@@ -478,6 +646,21 @@ passport.use(
               //   password_reset_token: "",
               // };
               if (profile.emails?.[0].value) {
+
+                //check if username exists
+              const check_username = await new_session.run(
+                "MATCH (u:User) WHERE u.username = $username RETURN u",
+                { username: profile.displayName }
+              );
+              let username_ = null;
+              if (check_username.records.length > 0)
+              {
+                console.log("username exists -==--=-=-=- Gooooooooooooooooooooogle");
+                username_ = (await crypto).randomBytes(12).toString("hex");
+              }
+
+
+
                 console.log("creating user");
                 const user_ = await new_session.run(
                   `CREATE (n:User {
@@ -492,9 +675,9 @@ passport.use(
                 }) 
                 RETURN n.username`,
                   {
-                    username:
-                      profile.displayName ||
-                      (await crypto).randomBytes(10).toString(),
+                    username: username_  || profile.displayName,
+                      // profile.displayName ||
+                      // (await crypto).randomBytes(10).toString(),
                     email: profile.emails[0].value,
                     password: (await crypto).randomBytes(25).toString("hex"),
                     first_name: profile?.name?.givenName || "",
@@ -505,7 +688,7 @@ passport.use(
                   }
                 );
                 console.log("user does not exist");
-                await session.close();
+                await new_session.close();
                 return cb(null, user_);
               }
             }
@@ -518,20 +701,6 @@ passport.use(
     }
   )
 );
-
-
-
-
-
-
-
-// ----------------------------------------------------------------------------------
-
-authRouter.get("/auth/intra42", passport.authenticate("42"));
-
-authRouter.get("/auth/intra42/callback", passport.authenticate("42", { session: false }), function (req: Request, res: Response) {
-  console.log("auth/intra42/callback is called");
-});
 
 // ----------------------------------------------------------------------------------
 
@@ -548,7 +717,6 @@ authRouter.get(
     // console.log("auth/google");
   }
 );
-
 
 authRouter.get("/auth/google/callback", function (req: Request, res: Response) {
   passport.authenticate(
