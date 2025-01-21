@@ -1,6 +1,5 @@
 import express, { Request, Response } from "express";
 const { body, validationResult } = require("express-validator");
-const router = express.Router();
 const bcrypt = require("bcrypt");
 const crypto = import("crypto");
 
@@ -99,6 +98,9 @@ registrationRouter.post(
         verfication_token: "",
         verified: false,
         password_reset_token: "",
+        gender: "",
+        sexual_orientation: "",
+        biography: "",
       };
       const session = await driver.session();
       // console.log(process.env.database_username, process.env.database_password, "database");

@@ -1,4 +1,3 @@
-
 import passport from "passport";
 import express, { Request, Response } from "express";
 const Facebook_auth = express.Router();
@@ -10,9 +9,6 @@ const driver = neo4j.driver(
   "neo4j://localhost:7687",
   neo4j.auth.basic(process.env.database_username, process.env.database_password)
 );
-
-
-
 
 // ----------------------------------------------------------------------------------
 //  FACEBOOK STRATEGY ---------------------------------------------------------------
@@ -92,10 +88,7 @@ passport.use(
               console.log(user_x, " user_x");
               await new_session.close();
               return cb(null, user_x);
-            } 
-            
-            
-            else {
+            } else {
               console.log("creating user");
 
               //check if username exists
@@ -104,13 +97,12 @@ passport.use(
                 { username: profile?.name?.givenName }
               );
               let username_ = null;
-              if (check_username.records.length > 0)
-              {
+              if (check_username.records.length > 0) {
                 console.log("username exists -==--=-=-=-");
                 username_ = (await crypto).randomBytes(12).toString("hex");
               }
-    
-                const user_ = await new_session.run(
+
+              const user_ = await new_session.run(
                 `CREATE (n:User {
                   username: $username,
                   email: $email,
@@ -119,7 +111,10 @@ passport.use(
                   last_name: $last_name,
                   verfication_token: $verfication_token,
                   verified: $verified,
-                  password_reset_token: $password_reset_token
+                  password_reset_token: $password_reset_token,
+                  gender: "",
+                  sexual_orientation: "",
+                  biography: ""
                 }) 
                 RETURN n.username`,
                 {
@@ -175,10 +170,11 @@ Facebook_auth.get(
         }
 
         try {
-          req.session.user = {"username":user.username, "email": user.email}
+          req.session.user = { username: user.username, email: user.email };
           console.log(req.session.user, " session user");
           req.session.save();
-          return res.status(200).json("login successful");
+          // return res.status(200).json("login successful");
+          return res.status(200).redirect("http://localhost:7070/home");
 
         } catch (tokenError) {
           return res.status(400).json("Error generating token");

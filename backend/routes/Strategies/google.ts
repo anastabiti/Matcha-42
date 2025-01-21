@@ -144,7 +144,10 @@ passport.use(
                     last_name: $last_name,
                     verfication_token: $verfication_token,
                     verified: $verified,
-                    password_reset_token: $password_reset_token
+                    password_reset_token: $password_reset_token,
+                    gender: "",
+                    sexual_orientation: "",
+                    biography: ""
                   }) 
                   RETURN n.username`,
                     {
@@ -212,7 +215,9 @@ passport.use(
           req.session.user = {"username":user.username, "email": user.email}
           console.log(req.session.user, " session user");
           req.session.save();
-          return res.status(200).json("login successful");
+          // return res.status(200).json("login successful");
+          return res.status(200).redirect("http://localhost:7070/home");
+
 
         } catch (tokenError) {
           console.error("Error generating token:", tokenError);

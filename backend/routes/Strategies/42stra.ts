@@ -16,7 +16,6 @@ const driver = neo4j.driver(
   neo4j.auth.basic(process.env.database_username, process.env.database_password)
 );
 
-
 const passport = require("passport");
 
 // ----------------------------------------------------------------------------------
@@ -37,7 +36,6 @@ passport.use(
       refreshToken: string,
       profile: Profile,
       cb: VerifyCallback
-      
     ) {
       try {
         //   id: '90435',
@@ -89,7 +87,7 @@ passport.use(
               const user_x = resu_.records[0]?.get("user");
               console.log(user_x, " user_x");
               await new_session.close();
-              
+
               return cb(null, user_x);
             } else {
               console.log("creating user");
@@ -102,7 +100,10 @@ passport.use(
               last_name: $last_name,
               verfication_token: $verfication_token,
               verified: $verified,
-              password_reset_token: $password_reset_token
+              password_reset_token: $password_reset_token,
+              gender: "",
+              sexual_orientation: "",
+              biography: ""
             }) 
             RETURN n.username`,
                 {
@@ -138,13 +139,13 @@ forty_two_str.get("/auth/intra42", passport.authenticate("42"));
 //   console.log("auth/intra42/callback is called");
 // });
 
-forty_two_str.get(
-  "/auth/intra42/callback",
-  function (req: any, res: Response) {
-    passport.authenticate(
-      "42",
-      { session: false },
-      function (err: any, user: User, info: any) {
+forty_two_str.get("/auth/intra42/callback", function (req: any, res: Response) {
+  passport.authenticate(
+    "42",
+    { session: false },
+    function (err: any, user: User, info: any) {
+      try {
+        console.log("42 ----------------------=-=-=-=-=-=-=-");
         if (err) {
           console.error("Error during authentication:");
           return res
@@ -157,21 +158,17 @@ forty_two_str.get(
           return res.status(401).json("No user found");
         }
 
-        try {
-         
-          
-          req.session.user = {"username":user.username, "email": user.email}
-          
-          console.log(req.session.user, " session user");
-          req.session.save();
-           res.status(200).json("login successful");
-          return res.redirect("http://localhost:7070/login");
-        } catch (tokenError) {
-          console.error("Error generating token:", tokenError);
-          return res.status(400).json("Error generating token");
-        }
+        req.session.user = { username: user.username, email: user.email };
+
+        console.log(req.session.user, " session user");
+        req.session.save();
+        // res.status(200).json("login successful");
+        return res.status(200).redirect("http://localhost:7070/home");
+      } catch (tokenError) {
+        console.error("Error generating token:", tokenError);
+        return res.status(400).json("Error generating token");
       }
-    )(req, res);
-  }
-);
+    }
+  )(req, res);
+});
 export default forty_two_str;

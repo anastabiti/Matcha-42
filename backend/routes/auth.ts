@@ -22,6 +22,9 @@ export type User = {
   first_name: string;
   last_name: string;
   verified: boolean;
+  gender: string;
+  Sexual_preferences: string;
+  biography: string;
 };
 
 const transporter = nodemailer.createTransport({
