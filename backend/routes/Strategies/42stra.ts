@@ -37,6 +37,7 @@ passport.use(
       refreshToken: string,
       profile: Profile,
       cb: VerifyCallback
+      
     ) {
       try {
         //   id: '90435',
@@ -88,6 +89,7 @@ passport.use(
               const user_x = resu_.records[0]?.get("user");
               console.log(user_x, " user_x");
               await new_session.close();
+              
               return cb(null, user_x);
             } else {
               console.log("creating user");
@@ -138,13 +140,13 @@ forty_two_str.get("/auth/intra42", passport.authenticate("42"));
 
 forty_two_str.get(
   "/auth/intra42/callback",
-  function (req: Request, res: Response) {
+  function (req: any, res: Response) {
     passport.authenticate(
       "42",
       { session: false },
       function (err: any, user: User, info: any) {
         if (err) {
-          console.error("Error during authentication:", err);
+          console.error("Error during authentication:");
           return res
             .status(401)
             .json({ "Wrong credentials": "Error during authentication" });
@@ -156,19 +158,13 @@ forty_two_str.get(
         }
 
         try {
-          const token = generateAccessToken(user.username);
-          console.log("Token generated:", token);
+         
+          
+          req.session.user = user.username;
+          console.log(req.session.user, " session user");
+          req.session.save();
+          return res.status(200).json("login successful");
 
-          res.cookie("jwt_token", token, {
-            httpOnly: true, // Prevent client-side access
-            sameSite: "strict", // Mitigate CSRF attacks
-          });
-
-          console.log("User successfully logged in with 42:", user);
-          return res.status(200).json({
-            message: "Logged in with 42",
-            token,
-          });
         } catch (tokenError) {
           console.error("Error generating token:", tokenError);
           return res.status(400).json("Error generating token");

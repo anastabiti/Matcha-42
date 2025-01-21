@@ -36,14 +36,6 @@ const transporter = nodemailer.createTransport({
 });
 
 
-
-// ----------------------------------------------------------------------------------
-//  User/Password auth ---------------------------------------------------------------
-// ----------------------------------------------------------------------------------
-
-
-
-
 export function generateAccessToken(username: String) {
   if (username) {
     const token = jwt.sign({ userId: username }, process.env.JWT_TOKEN_SECRET, {
@@ -57,7 +49,12 @@ export function generateAccessToken(username: String) {
   }
 }
 
-authRouter.post("/login", async (req: Request, res: Response) => {
+
+// ----------------------------------------------------------------------------------
+//  User/Password auth ---------------------------------------------------------------
+// ----------------------------------------------------------------------------------
+
+authRouter.post("/login", async (req: any, res: Response) => {
   try {
     const password = req.body.password;
     console.log(password, " password");
@@ -72,25 +69,23 @@ authRouter.post("/login", async (req: Request, res: Response) => {
 
       // console.log(hashedPassword.records[0]._fields[0], " hashedPassword");
       if (hashedPassword.records.length > 0) {
-        if (hashedPassword.records[0]._fields[0])
-          bcrypt.compare(
+        if (hashedPassword.records[0]._fields[0]) 
+          await bcrypt.compare(
             password,
             hashedPassword.records[0]._fields[0],
-            function (err: Error, result: any) {
+            async function (err: Error, result: any) {
               if (result) {
                 console.log("passwords match");
                 //login successful i must generate a token
                 console.log(req.body.username, " username");
                 const user_ = req.body.username;
                 if (user_) {
-                  const token = generateAccessToken(user_);
-                  console.log(token, " token");
-                  // res.json(token);
-                  res.cookie("jwt_token", token, { httpOnly: true });
-                  res.status(200).json("login successful");
+                  req.session.user = user_;
+                  console.log(req.session.user, " session user");
+                  req.session.save();
+                  return res.status(200).json("login successful");
+                 
                 }
-                // res.json(token);
-                // res.send("login successful");
               } else {
                 console.log("passwords do not match");
                 res.status(400).json("passwords do not match");
@@ -107,6 +102,9 @@ authRouter.post("/login", async (req: Request, res: Response) => {
     res.status(400).send("Error in login");
   }
 });
+
+
+// ----------------------------------------------------------------------------------
 
 authRouter.post(
   "/password_reset",
@@ -206,6 +204,31 @@ authRouter.get(
   }
 );
 
+authRouter.post(
+  "/logout",
+  // authRouter.patch("/reset_it",   body("password").isLength({ min: 6, max: 30 }),
+  async (req: any, res: Response) => {
+    console.log("log out -+==_==+++++_=>>.......???>>>>>>")
+    console.log(req.session.user, " session user");
+    //console cookie
+    console.log(req.cookies, " cookies");
+    if( await req.session.user){
+      req.session.destroy((err: Error) => {
+        if (err) {
+          return res.status(400).json("Error logging out");
+        }
+        res.clearCookie("connect.sid"); // Clear session cookie
+        return res.status(200).json("Logged out successfully");
+      });
+    }
+    else
+    res.status(400).json("No user to log out");
+    
+  }
+);
+
+
+// ...existing code...
 // ----------------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------------

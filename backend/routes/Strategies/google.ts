@@ -191,7 +191,7 @@ passport.use(
     }
   );
   
-  Google_auth.get("/auth/google/callback", function (req: Request, res: Response) {
+  Google_auth.get("/auth/google/callback", function (req: any, res: Response) {
     passport.authenticate(
       "google",
       { session: false },
@@ -209,19 +209,11 @@ passport.use(
         }
   
         try {
-          const token = generateAccessToken(user.username);
-          console.log("Token generated:", token);
-  
-          res.cookie("jwt_token", token, {
-            httpOnly: true, // Prevent client-side access
-            sameSite: "strict", // Mitigate CSRF attacks
-          });
-  
-          console.log("User successfully logged in with Google:", user);
-          return res.status(200).json({
-            message: "Logged in with Google",
-            token,
-          });
+          req.session.user = user.username;
+          console.log(req.session.user, " session user");
+          req.session.save();
+          return res.status(200).json("login successful");
+
         } catch (tokenError) {
           console.error("Error generating token:", tokenError);
           return res.status(400).json("Error generating token");

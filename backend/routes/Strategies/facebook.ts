@@ -158,7 +158,7 @@ Facebook_auth.get(
 
 Facebook_auth.get(
   "/auth/facebook/callback",
-  function (req: Request, res: Response) {
+  function (req: any, res: Response) {
     passport.authenticate(
       "facebook",
       { session: false },
@@ -175,19 +175,11 @@ Facebook_auth.get(
         }
 
         try {
-          const token = generateAccessToken(user.username);
-          console.log("Token generated:", token);
+          req.session.user = user.username;
+          console.log(req.session.user, " session user");
+          req.session.save();
+          return res.status(200).json("login successful");
 
-          res.cookie("jwt_token", token, {
-            httpOnly: true, // Prevent client-side access
-            sameSite: "strict", // Mitigate CSRF attacks
-          });
-
-          console.log("User successfully logged in with Facebook:", user);
-          return res.status(200).json({
-            message: "Logged in with Facebook",
-            token,
-          });
         } catch (tokenError) {
           return res.status(400).json("Error generating token");
         }
