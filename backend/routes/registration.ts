@@ -186,6 +186,11 @@ registrationRouter.post(
 // Verify email route
 registrationRouter.get("/verify-email", async (req: Request, res: Response) => {
   try {
+    console.log(await req.session, " session");
+    console.log(req.session.id, " ID");
+    console.log(req.sessionStore, " store");
+    // req.session.touch = true;
+
     const token = req.query.token;
     console.log(token, " token");
     if (token) {
