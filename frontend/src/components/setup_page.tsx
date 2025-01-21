@@ -1,9 +1,5 @@
 import { useState } from "react";
-import GoogleButton from "react-google-button";
 import Button from "@mui/material/Button";
-import FacebookIcon from "@mui/icons-material/Facebook";
-// https://mui.com/material-ui/material-icons/?srsltid=AfmBOopJikFhdTyZ7jeW_GHSILmUTDSBVafswowgwSgwNmSJRP6PpTKQ&query=google&selected=Google
-import GoogleIcon from "@mui/icons-material/Google";
 
 import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
@@ -31,7 +27,7 @@ const Setup_page = () => {
     setSuccess("");
 
     try {
-      const response = await fetch("http://localhost:3000/api/registration", {
+      const response = await fetch("http://localhost:3000/api/user/information", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -42,11 +38,9 @@ const Setup_page = () => {
       const data = await response.json();
 
       if (response.ok) {
-        console.log(
-          "Registration successful! Please check your email for verification."
-        );
+       
         setSuccess(
-          "Registration successful! Please check your email for verification."
+          "Your information has been submitted successfully."
         );
         setFormData({
          gender: "",
@@ -197,10 +191,10 @@ const Setup_page = () => {
               />
               </div> 
 
-              {error && <div className="text-red-500 text-sm">{error}</div>}
+              {error && <div className="text-slate-100 text-sm">{error}</div>}
 
               {success && (
-                <div className="text-green-500 text-sm">{success}</div>
+                <div className="text-white text-sm">{success}</div>
               )}
 
               <button
@@ -208,56 +202,10 @@ const Setup_page = () => {
                 className="w-full bg-pink-600 hover:bg-pink-700 text-white rounded-xl py-3 font-semibold"
                 disabled={isLoading}
               >
-                {isLoading ? "Creating Account..." : "Create Account"}
+                {isLoading ? "Submiting..." : "Submit your information"}
               </button>
             </form>
-            {/* <div className="flex items-center justify-center">
-              <GoogleButton
-                label="Sign up"
-                onClick={() => {
-                  //new link
-                  window.location.href =
-                    "http://localhost:3000/api/auth/google";
-                }}
-              />
-            </div> */}
-            <div className="flex items-center justify-center grid-cols-2 gap-4 ">
-              <Button
-                variant="contained"
-                onClick={() => {
-                  //new link
-                  window.location.href =
-                    "http://localhost:3000/api/auth/facebook";
-                }}
-                startIcon={<FacebookIcon />}
-              >
-                Facebook
-              </Button>
-
-              <Button
-                onClick={() => {
-                  //new link
-                  window.location.href =
-                    "http://localhost:3000/api/auth/google";
-                }}
-                variant="contained"
-                startIcon={<GoogleIcon />}
-              >
-                Google
-              </Button>
-
-              <Button
-                onClick={() => {
-                  //new link
-                  window.location.href =
-                    "http://localhost:3000/api/auth/intra42";
-                }}
-                variant="contained"
-                startIcon={<img src="42-Final-sigle-seul.svg" width={25}></img>}
-              >
-                Intra
-              </Button>
-            </div>
+      
           </div>
         </div>
       </div>

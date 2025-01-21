@@ -9,6 +9,7 @@ import "../database/index";
 import Facebook_auth from "../routes/Strategies/facebook";
 import Google_auth from "../routes/Strategies/google";
 import forty_two_str from "../routes/Strategies/42stra";
+import user_information_Router from "../routes/user";
 const app: Application = express();
 // https://www.npmjs.com/package/connect-neo4j
 const neo4j = require("neo4j-driver");
@@ -64,5 +65,6 @@ app.use("/api", authRouter);
 app.use("/api", Facebook_auth);
 app.use("/api", Google_auth);
 app.use("/api", forty_two_str);
+app.use("/api", user_information_Router);
 
 export default app;
