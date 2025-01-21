@@ -209,7 +209,7 @@ passport.use(
         }
   
         try {
-          req.session.user = user.username;
+          req.session.user = {"username":user.username, "email": user.email}
           console.log(req.session.user, " session user");
           req.session.save();
           return res.status(200).json("login successful");

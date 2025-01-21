@@ -80,7 +80,7 @@ authRouter.post("/login", async (req: any, res: Response) => {
                 console.log(req.body.username, " username");
                 const user_ = req.body.username;
                 if (user_) {
-                  req.session.user = user_;
+                  req.session.user = {"username":user_.username, "email": user_.email}
                   console.log(req.session.user, " session user");
                   req.session.save();
                   return res.status(200).json("login successful");
@@ -206,7 +206,6 @@ authRouter.get(
 
 authRouter.post(
   "/logout",
-  // authRouter.patch("/reset_it",   body("password").isLength({ min: 6, max: 30 }),
   async (req: any, res: Response) => {
     console.log("log out -+==_==+++++_=>>.......???>>>>>>")
     console.log(req.session.user, " session user");
@@ -227,9 +226,6 @@ authRouter.post(
   }
 );
 
-
-// ...existing code...
-// ----------------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------------
 

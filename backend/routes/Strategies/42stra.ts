@@ -160,11 +160,12 @@ forty_two_str.get(
         try {
          
           
-          req.session.user = user.username;
+          req.session.user = {"username":user.username, "email": user.email}
+          
           console.log(req.session.user, " session user");
           req.session.save();
-          return res.status(200).json("login successful");
-
+           res.status(200).json("login successful");
+          return res.redirect("http://localhost:7070/login");
         } catch (tokenError) {
           console.error("Error generating token:", tokenError);
           return res.status(400).json("Error generating token");

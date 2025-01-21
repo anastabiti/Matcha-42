@@ -39,6 +39,7 @@ import { Routes } from 'react-router-dom';
 import { BrowserRouter } from 'react-router-dom';
 import LoginPage from './components/LoginPage';
 import resetPassword from './components/resetPassword';
+import Home_page from './components/home';
 
 function App() {
     const [count, setCount] = useState(0)
@@ -49,6 +50,7 @@ function App() {
       <Route path="/register" Component={RegistrationForm} />  
       <Route path="/login" Component={LoginPage} />
       <Route path="/resetPassword" Component={resetPassword} />
+      <Route path="/home" Component={Home_page} />
       </Routes>
       </BrowserRouter>
   );

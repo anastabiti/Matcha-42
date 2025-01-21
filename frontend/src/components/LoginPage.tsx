@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Button from "@mui/material/Button";
 import FacebookIcon from "@mui/icons-material/Facebook";
 // https://mui.com/material-ui/material-icons/?srsltid=AfmBOopJikFhdTyZ7jeW_GHSILmUTDSBVafswowgwSgwNmSJRP6PpTKQ&query=google&selected=Google
@@ -9,6 +9,7 @@ const LoginPage = () => {
     username: "",
     password: "",
   });
+  const navigate = useNavigate();
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -36,6 +37,8 @@ const LoginPage = () => {
       if (response.ok) {
         console.log("Login successful!");
         setSuccess("Logged in successfully. Redirecting to your HomePage...");
+        // Redirect to HomePage
+        navigate('/home');
         setFormData({
           username: "",
           password: "",
