@@ -46,6 +46,9 @@ function App() {
     const [count, setCount] = useState(0)
 
   return (
+    <>
+        
+      <div>
     <BrowserRouter>
       <Routes>
       <Route path="/register" Component={RegistrationForm} />  
@@ -55,6 +58,9 @@ function App() {
       <Route path="/setup" Component={Setup_page} />
       </Routes>
       </BrowserRouter>
+      </div>
+
+    </>
   );
 }
 
