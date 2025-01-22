@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Button from "@mui/material/Button";
+import axios from 'axios';
 
 import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
@@ -8,19 +9,19 @@ import FormControl from "@mui/material/FormControl";
 import FormLabel from "@mui/material/FormLabel";
 import MonochromePhotosIcon from "@mui/icons-material/MonochromePhotos";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-const availableInterests = [
-  "Photography",
-  "Shopping",
-  "Karaoke",
-  "Yoga",
-  "Cooking",
-  "Tennis",
-  "Art",
-  "Traveling",
-  "Music",
-  "Video games",
-  "Swimming",
-  "Running",
+let availableInterests = [
+  "#Photography",
+  "#Shopping",
+  "#Karaoke",
+  "#Yoga",
+  "#Cooking",
+  "#Tennis",
+  "#Art",
+  "#Traveling",
+  "#Music",
+  "#Video games",
+  "#Swimming",
+  "#Running",
 ];
 
 const Setup_page = () => {
@@ -44,6 +45,20 @@ const Setup_page = () => {
   }
   function clearInterest(interest) {
     console.log(interest, " is selected");
+    availableInterests = [
+      "Photography",
+      "Shopping",
+      "Karaoke",
+      "Yoga",
+      "Cooking",
+      "Tennis",
+      "Art",
+      "Traveling",
+      "Music",
+      "Video games",
+      "Swimming",
+      "Running",
+    ];
     setFormData(function (prev) {
       return {
         ...prev,
@@ -56,9 +71,9 @@ const Setup_page = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault(); // Prevent the form from submitting
-    }
+    // if (e.key === "Enter") {
+    //   e.preventDefault(); // Prevent the form from submitting
+    // }
   };
 
   
@@ -70,17 +85,30 @@ const Setup_page = () => {
     setSuccess("");
 
     try {
+      console.log("---------------------------->>>>>>");
+
+      // const response = await axios.post(
+      //   "http://localhost:3000/api/user/information",
+      //   formData,
+      //   {
+      //     withCredentials: true,
+      //   }
+      // )
+
       const response = await fetch(
         "http://localhost:3000/api/user/information",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          // credentials: "include",
+          // headers: {
+          //   "Content-Type": "application/json",
+          // },  
+          credentials: "include",
+
           body: JSON.stringify(formData),
         }
       );
-
+      // const data = response.data;
       const data = await response.json();
 
       if (response.ok) {
@@ -89,7 +117,7 @@ const Setup_page = () => {
           gender: "",
           sexual_preferences: "",
           biography: "",
-          interests: "",
+          interests: [],
         });
       } else {
         console.log(data, " error");
@@ -103,28 +131,22 @@ const Setup_page = () => {
       setIsLoading(false);
     }
   };
-  const addNewInterest = () => {
-    if (!new_interest.trim()) {
-      setError("Interest cannot be empty");
-      return;
-    }
-    
-    if (interests.includes(new_interest.trim())) {
-      setError("Interest already exists");
-      return;
-    }
-  
-    setInterests([...interests, new_interest.trim()]);
-    setNewInterest("");
-    setError("");
-    setSuccess("Interest added successfully");
-  };
-  
 
-  function new_interest_func(){
+
+
+
+
+  function new_interest_func(event) {
+
+    console.log(event)
     console.log("new interest is added")
     console.log(new_interest)
-    // addNewInterest()
+    if(new_interest ){
+    formData.interests.push(new_interest)
+    availableInterests.push(new_interest)
+    }
+    // reinitialize the new_interest
+    setNewInterest("")
   }
 
   //   • Once a user is connected, they must fill out their profile by providing the following
@@ -146,8 +168,10 @@ const Setup_page = () => {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <FormControl
+
                 onKeyDown={handleKeyPress} // or onKeyPress
                 onChange={(e) =>
+                  
                   // console.log(e.target.value)
                   setFormData({ ...formData, gender: e.target.value })
                 }
@@ -279,10 +303,10 @@ const Setup_page = () => {
                         }`}
                       >
                         {/* https://mui.com/material-ui/material-icons/?srsltid=AfmBOorzxu5HZpam9QMOwl9vd3YaJ-WeennL1M_wEWXUInvSUM_tcAA5&query=Shopping */}
-                        {interest === "Photography" && (
+                        {interest === "#Photography" && (
                           <MonochromePhotosIcon className="mr-2" />
                         )}
-                        {interest == "Shopping" && (
+                        {interest == "#Shopping" && (
                           <ShoppingCartIcon className="mr-2" />
                         )}
                         {interest}
@@ -291,7 +315,7 @@ const Setup_page = () => {
                   })}
                   <input
                     type="text"
-                    placeholder="First Name"
+                    placeholder="New Interest"
                     className="px-4 py-2 rounded-full text-sm font-medium transition-colors bg-gray-800 text-gray-300 hover:bg-gray-700"
                     value={new_interest}
                     onChange={(e) =>
@@ -313,9 +337,9 @@ const Setup_page = () => {
               <button
                 type="submit"
                 className="w-full bg-pink-600 hover:bg-pink-700 text-white rounded-xl py-3 font-semibold"
-                disabled={isLoading}
+                // disabled={isLoading}
               >
-                {isLoading ? "Submiting..." : "Submit your information"}
+                {"Submit your information"}
               </button>
             </form>
           </div>

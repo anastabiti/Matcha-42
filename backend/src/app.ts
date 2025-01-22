@@ -22,12 +22,12 @@ let Neo4jStore = require('connect-neo4j')(session)
 
 app.use(session({
   store: new Neo4jStore({ client: driver }),
-  secret: 'keyboard cat',
+  secret: process.env.session_secret as string,
   resave: false,
   saveUninitialized: false, //to avoid storing all sessions even not looged in users
      cookie: {
       // secure: true,
-      httpOnly: false, // Prevent JavaScript access to cookies
+      // httpOnly: false, // Prevent JavaScript access to cookies
       sameSite: 'lax', // Ensures cookies are sent with requests from the same site
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
