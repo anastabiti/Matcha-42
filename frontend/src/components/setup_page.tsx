@@ -6,8 +6,8 @@ import RadioGroup from "@mui/material/RadioGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import FormControl from "@mui/material/FormControl";
 import FormLabel from "@mui/material/FormLabel";
-import MonochromePhotosIcon from '@mui/icons-material/MonochromePhotos';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import MonochromePhotosIcon from "@mui/icons-material/MonochromePhotos";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 const availableInterests = [
   "Photography",
   "Shopping",
@@ -24,6 +24,7 @@ const availableInterests = [
 ];
 
 const Setup_page = () => {
+  const [new_interest, setNewInterest] = useState("");
   const [formData, setFormData] = useState({
     gender: "",
     sexual_preferences: "",
@@ -34,28 +35,33 @@ const Setup_page = () => {
   function toggleInterest(interest) {
     console.log(interest, " is selected");
     console.log(formData.interests, " is selected");
-    setFormData(function(prev) {
+    setFormData(function (prev) {
       return {
         ...prev,
         interests: prev.interests.concat(interest), //  add the interest
       };
     });
-  }  
-function clearInterest(interest) {
+  }
+  function clearInterest(interest) {
     console.log(interest, " is selected");
-    setFormData(function(prev) {
+    setFormData(function (prev) {
       return {
         ...prev,
-        interests: ""
+        interests: "",
       };
     });
   }
-  
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault(); // Prevent the form from submitting
+    }
+  };
 
+  
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -97,6 +103,29 @@ function clearInterest(interest) {
       setIsLoading(false);
     }
   };
+  const addNewInterest = () => {
+    if (!new_interest.trim()) {
+      setError("Interest cannot be empty");
+      return;
+    }
+    
+    if (interests.includes(new_interest.trim())) {
+      setError("Interest already exists");
+      return;
+    }
+  
+    setInterests([...interests, new_interest.trim()]);
+    setNewInterest("");
+    setError("");
+    setSuccess("Interest added successfully");
+  };
+  
+
+  function new_interest_func(){
+    console.log("new interest is added")
+    console.log(new_interest)
+    // addNewInterest()
+  }
 
   //   • Once a user is connected, they must fill out their profile by providing the following
   // information:
@@ -117,6 +146,7 @@ function clearInterest(interest) {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <FormControl
+                onKeyDown={handleKeyPress} // or onKeyPress
                 onChange={(e) =>
                   // console.log(e.target.value)
                   setFormData({ ...formData, gender: e.target.value })
@@ -178,6 +208,7 @@ function clearInterest(interest) {
               */}
               <div className="relative">
                 <FormControl
+                  onKeyDown={handleKeyPress} // or onKeyPress
                   onChange={(e) =>
                     // console.log(e.target.value)
                     setFormData({ ...formData, gender: e.target.value })
@@ -216,6 +247,7 @@ function clearInterest(interest) {
                 </FormControl>
                 <div className=""> Biography</div>
                 <input
+                  onKeyDown={handleKeyPress} // or onKeyPress
                   type="text"
                   placeholder="Biography"
                   className="w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-400"
@@ -227,61 +259,57 @@ function clearInterest(interest) {
                 />
               </div>
               <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-white mb-8">
-              Your Interests
-            </h2>
+                <h2 className="text-2xl font-semibold text-white mb-8">
+                  Your Interests
+                </h2>
 
-            <div className="grid grid-cols-2 gap-3">
-              {availableInterests.map(function (interest) {
-                return (
-                  
-                  <button
-                  key={interest}
-                  onClick={() => toggleInterest(interest)}
-                  
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors
+                <div className="grid grid-cols-2 gap-3">
+                  {availableInterests.map(function (interest) {
+                    return (
+                      <button
+                        onKeyDown={handleKeyPress}
+                        key={interest}
+                        onMouseDown={() => toggleInterest(interest)}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors
                 
                         ${
-                    formData.interests.includes(interest)
-                    ? "bg-pink-600 text-white"
-                    : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-                  }`
-                }
-                
+                          formData.interests.includes(interest)
+                            ? "bg-pink-600 text-white"
+                            : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                        }`}
+                      >
+                        {/* https://mui.com/material-ui/material-icons/?srsltid=AfmBOorzxu5HZpam9QMOwl9vd3YaJ-WeennL1M_wEWXUInvSUM_tcAA5&query=Shopping */}
+                        {interest === "Photography" && (
+                          <MonochromePhotosIcon className="mr-2" />
+                        )}
+                        {interest == "Shopping" && (
+                          <ShoppingCartIcon className="mr-2" />
+                        )}
+                        {interest}
+                      </button>
+                    );
+                  })}
+                  <input
+                    type="text"
+                    placeholder="First Name"
+                    className="px-4 py-2 rounded-full text-sm font-medium transition-colors bg-gray-800 text-gray-300 hover:bg-gray-700"
+                    value={new_interest}
+                    onChange={(e) =>
+                      setNewInterest(e.target.value)
+                    }
+                    />
+                    <Button onClick={new_interest_func} >Add new interest</Button>
+                </div>
+
+                <button
+                  onClick={clearInterest}
+                  className="w-full bg-pink-600 hover:bg-pink-700 text-white rounded-xl py-3 font-semibold"
                 >
-                  
-                  {/* https://mui.com/material-ui/material-icons/?srsltid=AfmBOorzxu5HZpam9QMOwl9vd3YaJ-WeennL1M_wEWXUInvSUM_tcAA5&query=Shopping */}
-                 {interest === "Photography" && <MonochromePhotosIcon className="mr-2" />} 
-                 {interest == "Shopping" && <ShoppingCartIcon className="mr-2" />}
-                      {interest}
-                    </button>
-                );
-              })
-            }
-             <input
-                  type="text"
-                  placeholder="First Name"
-                  className="px-4 py-2 rounded-full text-sm font-medium transition-colors bg-gray-800 text-gray-300 hover:bg-gray-700"
-                  value={formData.first_name}
-                  // onChange={(e) =>
-                  //   setFormData({ ...formData, first_name: e.target.value })
-                  // }
-                  
-                />
-         </div>
-
-            <button
-              onClick={clearInterest}
-              className="w-full bg-pink-600 hover:bg-pink-700 text-white rounded-xl py-3 font-semibold"
-            >
-              { "Clear Interest"}
-            </button>
-          </div>
-
+                  {"Clear Interest"}
+                </button>
+              </div>
               {error && <div className="text-slate-100 text-sm">{error}</div>}
-
               {success && <div className="text-white text-sm">{success}</div>}
-
               <button
                 type="submit"
                 className="w-full bg-pink-600 hover:bg-pink-700 text-white rounded-xl py-3 font-semibold"
@@ -291,7 +319,6 @@ function clearInterest(interest) {
               </button>
             </form>
           </div>
-          
         </div>
       </div>
     </div>
