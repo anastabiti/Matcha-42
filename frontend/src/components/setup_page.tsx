@@ -6,7 +6,8 @@ import RadioGroup from "@mui/material/RadioGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import FormControl from "@mui/material/FormControl";
 import FormLabel from "@mui/material/FormLabel";
-
+import MonochromePhotosIcon from '@mui/icons-material/MonochromePhotos';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 const availableInterests = [
   "Photography",
   "Shopping",
@@ -234,17 +235,24 @@ function clearInterest(interest) {
               {availableInterests.map(function (interest) {
                 return (
                   
-                    <button
-                      key={interest}
-                      onClick={() => toggleInterest(interest)}
+                  <button
+                  key={interest}
+                  onClick={() => toggleInterest(interest)}
+                  
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-colors
-                  ${
+                
+                        ${
                     formData.interests.includes(interest)
-                      ? "bg-pink-600 text-white"
-                      : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                    ? "bg-pink-600 text-white"
+                    : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                   }`
                 }
-                    >
+                
+                >
+                  
+                  {/* https://mui.com/material-ui/material-icons/?srsltid=AfmBOorzxu5HZpam9QMOwl9vd3YaJ-WeennL1M_wEWXUInvSUM_tcAA5&query=Shopping */}
+                 {interest === "Photography" && <MonochromePhotosIcon className="mr-2" />} 
+                 {interest == "Shopping" && <ShoppingCartIcon className="mr-2" />}
                       {interest}
                     </button>
                 );
