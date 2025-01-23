@@ -192,10 +192,10 @@ const LoginPage = () => {
                 Intra
               </Button>
             </div>
-              <button onClick={handlelogout} className="w-full bg-pink-600 hover:bg-pink-700 text-white rounded-xl py-3 font-semibold">
+              {/* <button onClick={handlelogout} className="w-full bg-pink-600 hover:bg-pink-700 text-white rounded-xl py-3 font-semibold">
 
               log out
-              </button>
+              </button> */}
             {/* <div className="flex items-center justify-center  gap-4">
               <button className="w-full bg-pink-600 hover:bg-pink-700 text-white rounded-xl py-3 font-semibold">
                 Reset password
