@@ -108,8 +108,7 @@ passport.use(
             RETURN n.username`,
                 {
                   username:
-                    profile?.name?.givenName +
-                    (await crypto).randomBytes(2).toString("hex"),
+                  profile.username,
                   email: email_,
                   password: (await crypto).randomBytes(25).toString("hex"),
                   first_name: profile?.name?.givenName || "",
