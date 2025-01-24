@@ -51,6 +51,9 @@ passport.use(
         console.log(profile?.name?.familyName, " familyname");
         console.log(profile?.name?.givenName, " givenName");
         console.log(profile.username, " username");
+        console.log("----------------------------------------------");
+        console.log(profile )
+        console.log("----------------------------------------------");
 
         const new_session = await driver.session();
         if (new_session) {

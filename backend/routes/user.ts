@@ -15,42 +15,84 @@ const user_information_Router = express.Router();
 //   }
 user_information_Router.post(
   "/user/information",
-  //   body("gender").isEmpty(),
-  //   body("biography").isEmpty(),
+  body("gender").notEmpty().withMessage("Gender cannot be empty"),
+  body("biography").notEmpty().withMessage("Biography cannot be empty"),
 
-  async (req: any, res: Response) => {
+  async (req: any, res: any) => {
     const errors = validationResult(req);
-    // if (!errors.isEmpty())
-    //    res.status(400).json({ errors: errors.array() });
-    // else {
-    //get user looged in
-    // console.log(req.session.user.username, "  ===}}}}}}}]]]]]");
+    if (!errors.isEmpty())
+      return res.status(400).json({ errors: errors.array() });
+
     const _user = req.session.user;
-    if (!_user) res.status(401).json("Unauthorized");
+    if (!_user) return res.status(401).json("Unauthorized");
     else {
-      console.log("user information route");
-      console.log(_user , "------------------------------------------------------");
-      console.log(req.body.interests);
-      if (req.body && req.session.user.username) {
+      console.log("------------------------------------------------------");
+      console.log(_user, " 1");
+      console.log("------------------------------------------------------");
+      console.log(req.body.interests, " 2");
+      console.log("------------------------------------------------------");
+      console.log(req.body.gender, "3");
+      console.log("------------------------------------------------------");
+
+      if (req.session.user.username) {
         const session = driver.session();
         if (session) {
-          for (const interest of req.body.interests) {
-            await session.run(
-              `MATCH (u:User {username: $username})
-              MERGE (t:Tags {interests: $interests})
-              MERGE (u)-[:has_this_interest]->(t)`,
-              {
-                username: req.session.user.username,
-                interests: interest,
+          if (req.body.interests) {
+            for (const interest of req.body.interests) {
+              await session.run(
+                `MATCH (u:User {username: $username})
+                MERGE (t:Tags {interests: $interests})
+                MERGE (u)-[:has_this_interest]->(t)`,
+                {
+                  username: req.session.user.username,
+                  interests: interest,
+                }
+              );
+            }
+          }
+          console.log(_user.username, " _user.username--=-=-==--=");
+          if (req.body.biography) {
+            // "MATCH (n:User) WHERE n.username = $username AND n.verified = true RETURN n.password",
+            console.log(
+              typeof {
+                _username: _user.username,
+                biography: req.body.biography,
               }
+            );
+
+            await session.run(
+              `MATCH (n:User) WHERE n.username = $username
+                        SET n.biography = $biography
+                        RETURN n.username
+              `,
+              { username: _user.username, biography: req.body.biography }
+            );
+          }
+          if (req.body.gender) {
+            //delete old gender
+            await session.run(
+              `MATCH (u:User {username: $username})-[r:onta_wla_dakar]->(g:Sex)
+              DELETE r`,
+              { username: _user.username}
+            );
+
+            await session.run(
+              `MATCH (U:User) WHERE U.username = $username
+              MATCH (G:Sex) WHERE G.gender = $gender
+              MERGE (U)-[:onta_wla_dakar]->(G)
+
+    `,
+
+              { username: _user.username, gender: req.body.gender }
             );
           }
         }
 
         await session.close();
+        return res.status(200).json("User information route");
       }
-      res.status(200).json("User information route");
     }
+    return res.status(401).json("Unauthorized");
   }
   //   }
 );

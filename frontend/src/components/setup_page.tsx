@@ -32,7 +32,7 @@ function Setup_page() {
   const [new_interest, setNewInterest] = useState("");
   const [formData, setFormData] = useState({
     gender: "",
-    sexual_preferences: "",
+    // sexual_preferences: "",
     biography: "",
     interests: [],
     profilePicture: null,
@@ -158,14 +158,15 @@ function Setup_page() {
         // Reset form
         setFormData({
           gender: "",
-          sexual_preferences: "",
+          // sexual_preferences: "",
           biography: "",
           interests: [],
           profilePicture: null,
           additionalPictures: [],
         });
       } else {
-        setError(data.message || "Submission failed. Please try again.");
+        console.log(data.errors[0].msg, " |||")
+        setError(data.errors[0].msg || "Submission failed. Please try again.");
       }
     } catch (error) {
       setError("Unable to connect to server. Please try again later.");
@@ -253,11 +254,11 @@ function Setup_page() {
                 </RadioGroup>
               </FormControl>
 
-              <FormControl>
-                <FormLabel id="sexual_preferences">
+              {/* <FormControl> */}
+                {/* <FormLabel id="sexual_preferences">
                   Sexual preferences
-                </FormLabel>
-                <RadioGroup
+                </FormLabel> */}
+                {/* <RadioGroup
                   aria-labelledby="sexual_preferences"
                   value={formData.sexual_preferences}
                   name="sexual_preferences"
@@ -285,8 +286,8 @@ function Setup_page() {
                     control={<Radio />}
                     label="Other"
                   />
-                </RadioGroup>
-              </FormControl>
+                </RadioGroup> */}
+              {/* </FormControl> */}
 
               {/* <div className="relative">
                 <div className="text-white mb-2">Biography</div>

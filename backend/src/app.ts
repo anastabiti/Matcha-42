@@ -1,11 +1,11 @@
 import express, { Application, Request, Response } from "express";
-import cors from "cors"; 
-import bodyParser from "body-parser"; 
+import cors from "cors";
+import bodyParser from "body-parser";
 import session from "express-session";
-import passport from "passport"; 
+import passport from "passport";
 import registrationRouter from "../routes/registration";
 import authRouter from "../routes/auth";
-import "../database/index"; 
+import "../database/index";
 import Facebook_auth from "../routes/Strategies/facebook";
 import Google_auth from "../routes/Strategies/google";
 import forty_two_str from "../routes/Strategies/42stra";
@@ -17,22 +17,37 @@ const driver = neo4j.driver(
   "neo4j://localhost:7687",
   neo4j.auth.basic(process.env.database_username, process.env.database_password)
 );
-let Neo4jStore = require('connect-neo4j')(session)
+let Neo4jStore = require("connect-neo4j")(session);
 
-
-app.use(session({
-  store: new Neo4jStore({ client: driver }),
-  secret: process.env.session_secret as string,
-  resave: false,
-  saveUninitialized: false, //to avoid storing all sessions even not looged in users
-     cookie: {
+app.use(
+  session({
+    store: new Neo4jStore({ client: driver }),
+    secret: process.env.session_secret as string,
+    resave: false,
+    saveUninitialized: false, //to avoid storing all sessions even not looged in users
+    cookie: {
       // secure: true,
       // httpOnly: false, // Prevent JavaScript access to cookies
-      sameSite: 'lax', // Ensures cookies are sent with requests from the same site
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
-}))
+      sameSite: "lax", // Ensures cookies are sent with requests from the same site
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    },
+  })
+);
 
+async function init_gender() {
+  const new_session = driver.session();
+
+  if (new_session) {
+    await new_session.run(
+      `
+    MERGE (m:Sex {gender: "male"})
+    MERGE (f:Sex {gender: "female"})        `,
+    
+    );
+    console.log("init_gender is called ----------------------------");
+  }
+}
+init_gender();
 // app.use(session({
 //   genid: function(req) {
 //     return genuuid() // use UUIDs for session IDs
@@ -50,12 +65,9 @@ const corsOptions = {
 app.use(passport.initialize());
 app.use(cors(corsOptions));
 
-
-
 app.get("/", (req: Request, res: Response) => {
   res.send("Hello Welcome to Matcha!");
 });
-
 
 // Use body-parser middleware
 // app.use(bodyParser.urlencoded({ extended: true }));
