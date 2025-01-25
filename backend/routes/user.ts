@@ -1,4 +1,5 @@
 import express, { Request, Response } from "express";
+import { imagekitUploader } from "../src/app";
 const { body, validationResult } = require("express-validator");
 const neo4j = require("neo4j-driver");
 const driver = neo4j.driver(
@@ -73,7 +74,7 @@ user_information_Router.post(
             await session.run(
               `MATCH (u:User {username: $username})-[r:onta_wla_dakar]->(g:Sex)
               DELETE r`,
-              { username: _user.username}
+              { username: _user.username }
             );
 
             await session.run(
@@ -96,6 +97,25 @@ user_information_Router.post(
   }
   //   }
 );
+
+user_information_Router.post(
+  "/user/upload",
+  async function (req: any, res: any) {
+    console.log("---------------- UPLOAD ---------------------");
+    // console.log(await req.files.file.name); // the uploaded file object
+    console.log(await req.files); // the uploaded file object
+    console.log("-------------------------------------");
+    if (req.files.image_hna) {
+      await imagekitUploader.upload({
+        file: await req.files.image_hna.data,
+        fileName: await req.files.image_hna.name,
+      });
+      return res.status(200).json("SUCESS");
+    }
+    return res.status(200).json("FAILED");
+  }
+);
+
 export default user_information_Router;
 // tmpuser
 //sklsdkKkd78*&KJ

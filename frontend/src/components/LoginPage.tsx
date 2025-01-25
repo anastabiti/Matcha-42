@@ -59,45 +59,6 @@ const LoginPage = () => {
 
 
 
-  const handlelogout = async (e) => {
-
-    setError("");
-    setSuccess("");
-
-    try {
-      const response = await fetch("http://localhost:3000/api/logout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-        credentials: 'include',//need it to save the session  cookie in the browser
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        console.log("Logout successful!");
-        setSuccess("Logout successfully.");
-        setFormData({
-          username: "",
-          password: "",
-        });
-      } else {
-        console.log(data, " error");
-
-        setError(data || "Logout failed. Please try again.");
-      }
-    } catch (error) {
-      console.log(error);
-      setError("Unable to connect to server. Please try again later.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-
-
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center">
       <div className="w-full max-w-md">

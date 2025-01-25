@@ -38,6 +38,7 @@ function Setup_page() {
     profilePicture: null,
     additionalPictures: [],
   });
+  const [images_p, setimages] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -130,7 +131,11 @@ function Setup_page() {
     }
     setFormData(updateFormData);
   }
-
+  async function handle_image_change(event) {
+    const file = event.target.files[0];
+    setimages(file);
+    console.log(file);
+  }
   // Function to handle form submission
   async function handleSubmit(event) {
     event.preventDefault();
@@ -139,6 +144,7 @@ function Setup_page() {
     setSuccess("");
 
     try {
+      
       const response = await fetch(
         "http://localhost:3000/api/user/information",
         {
@@ -154,6 +160,15 @@ function Setup_page() {
       const data = await response.json();
 
       if (response.ok) {
+        if (images_p) {
+          const new_data = new FormData();
+          new_data.append('image_hna',images_p)
+          const res = await fetch("http://localhost:3000/api/user/upload", {
+            method: "POST",
+            credentials: "include",
+            body: new_data,
+          });
+        }
         setSuccess("Your information has been submitted successfully.");
         // Reset form
         setFormData({
@@ -165,7 +180,7 @@ function Setup_page() {
           additionalPictures: [],
         });
       } else {
-        console.log(data.errors[0].msg, " |||")
+        console.log(data.errors[0].msg, " |||");
         setError(data.errors[0].msg || "Submission failed. Please try again.");
       }
     } catch (error) {
@@ -174,53 +189,7 @@ function Setup_page() {
 
     setIsLoading(false);
   }
-  function handleImageUpload(event, isProfile) {
-    const file = event.target.files[0];
-    if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      if (isProfile) {
-        setFormData(function (prevData) {
-          return {
-            ...prevData,
-            profilePicture: e.target.result,
-          };
-        });
-      } else {
-        setFormData(function (prevData) {
-          if (prevData.additionalPictures.length >= 4) {
-            alert("You can only upload up to 4 additional pictures");
-            return prevData;
-          }
-          return {
-            ...prevData,
-            additionalPictures: [
-              ...prevData.additionalPictures,
-              e.target.result,
-            ],
-          };
-        });
-      }
-    };
-    reader.readAsDataURL(file);
-  }
-  function removeImage(index, isProfile) {
-    setFormData(function (prevData) {
-      if (isProfile) {
-        return {
-          ...prevData,
-          profilePicture: null,
-        };
-      }
-      const newPictures = [...prevData.additionalPictures];
-      newPictures.splice(index, 1);
-      return {
-        ...prevData,
-        additionalPictures: newPictures,
-      };
-    });
-  }
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center">
       <div className="w-full max-w-md">
@@ -255,10 +224,10 @@ function Setup_page() {
               </FormControl>
 
               {/* <FormControl> */}
-                {/* <FormLabel id="sexual_preferences">
+              {/* <FormLabel id="sexual_preferences">
                   Sexual preferences
                 </FormLabel> */}
-                {/* <RadioGroup
+              {/* <RadioGroup
                   aria-labelledby="sexual_preferences"
                   value={formData.sexual_preferences}
                   name="sexual_preferences"
@@ -365,98 +334,16 @@ function Setup_page() {
                   </div>
                 </div>
 
-                {/* Photo upload */}
-                <div className="space-y-6">
-                  {/* <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-white">
-                      Profile Picture
-                    </h3>
-                    <div className="flex items-center space-x-4">
-                      {formData.profilePicture ? (
-                        <div className="relative">
-                          <img
-                            src={formData.profilePicture}
-                            alt="Profile"
-                            className="w-24 h-24 rounded-full object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={function () {
-                              removeImage(0, true);
-                            }}
-                            className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 text-white"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="w-24 h-24 border-2 border-dashed border-gray-300 rounded-full flex items-center justify-center">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={function (e) {
-                              handleImageUpload(e, true);
-                            }}
-                            className="hidden"
-                            id="profile-upload"
-                          />
-                          <label
-                            htmlFor="profile-upload"
-                            className="cursor-pointer text-gray-400 text-sm text-center"
-                          >
-                            Upload Profile Picture
-                          </label>
-                        </div>
-                      )}
-                    </div>
-                  </div> */}
-
-                  {/* <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-white">
-                      Additional Pictures
-                    </h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      {formData.additionalPictures.map(function (pic, index) {
-                        return (
-                          <div key={index} className="relative">
-                            <img
-                              src={pic}
-                              alt={`Additional ${index + 1}`}
-                              className="w-full h-32 object-cover rounded-lg"
-                            />
-                            <button
-                              type="button"
-                              onClick={function () {
-                                removeImage(index, false);
-                              }}
-                              className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 text-white"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        );
-                      })}
-                      {formData.additionalPictures.length < 4 && (
-                        <div className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={function (e) {
-                              handleImageUpload(e, false);
-                            }}
-                            className="hidden"
-                            id="additional-upload"
-                          />
-                          <label
-                            htmlFor="additional-upload"
-                            className="cursor-pointer text-gray-400 text-sm text-center"
-                          >
-                            Upload Picture
-                          </label>
-                        </div>
-                      )}
-                    </div>
-                  </div> */}
+                <div>
+                  Profile Image
+                  <input
+                    accept="image/*"
+                    onChange={function (e) {
+                      handle_image_change(e);
+                    }}
+                    type="file"
+                    name="image_file"
+                  ></input>
                 </div>
 
                 <button

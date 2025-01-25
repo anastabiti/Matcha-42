@@ -10,6 +10,9 @@ import Facebook_auth from "../routes/Strategies/facebook";
 import Google_auth from "../routes/Strategies/google";
 import forty_two_str from "../routes/Strategies/42stra";
 import user_information_Router from "../routes/user";
+const fileUpload = require('express-fileupload');
+
+
 const app: Application = express();
 // https://www.npmjs.com/package/connect-neo4j
 const neo4j = require("neo4j-driver");
@@ -18,6 +21,10 @@ const driver = neo4j.driver(
   neo4j.auth.basic(process.env.database_username, process.env.database_password)
 );
 let Neo4jStore = require("connect-neo4j")(session);
+
+app.use(fileUpload({limites:{
+  fileSize: 10000000 //byte, // Around 10MB
+}})); // Use the express-fileupload middleware
 
 app.use(
   session({
@@ -33,6 +40,20 @@ app.use(
     },
   })
 );
+
+
+
+// IMagekit initialization
+
+const ImageKit = require("imagekit");
+// ImageKit initialization
+export const imagekitUploader = new ImageKit({
+  publicKey: process.env.imagekit_publicKey,
+  privateKey: process.env.imagekit_privateKey,
+  urlEndpoint: process.env.imagekit_urlEndpoint
+});
+
+
 
 async function init_gender() {
   const new_session = driver.session();
