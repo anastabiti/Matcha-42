@@ -101,18 +101,38 @@ user_information_Router.post(
 user_information_Router.post(
   "/user/upload",
   async function (req: any, res: any) {
-    console.log("---------------- UPLOAD ---------------------");
-    // console.log(await req.files.file.name); // the uploaded file object
-    console.log(await req.files); // the uploaded file object
-    console.log("-------------------------------------");
-    if (req.files.image_hna) {
-      await imagekitUploader.upload({
-        file: await req.files.image_hna.data,
-        fileName: await req.files.image_hna.name,
-      });
-      return res.status(200).json("SUCESS");
+    try {
+      const _user = req.session.user;
+      if (!_user) return res.status(401).json("Unauthorized");
+      else {
+        console.log("---------------- UPLOAD ---------------------");
+        // console.log(await req.files.file.name); // the uploaded file object
+        console.log(await req.files); // the uploaded file object
+        console.log("-------------------------------------");
+        if (req.files.image_hna) {
+          const ret = await imagekitUploader.upload({
+            file: await req.files.image_hna.data,
+            fileName: await req.files.image_hna.name,
+          });
+          console.log(ret, " <-ret");
+          //get user from db
+          const session = driver.session();
+          if (session) {
+            await session.run(
+              `MATCH (u:User {username: $username})
+              SET u.profile_picture = $profile_picture
+              RETURN u.profile_picture
+              `,
+              { username: _user.username, profile_picture: ret.url }
+            );
+          }
+          return res.status(200).json("image uploaded successfully");
+        }
+      }
+      return res.status(200).json("FAILED");
+    } catch {
+      return res.status(400).json("Image upload failed");
     }
-    return res.status(200).json("FAILED");
   }
 );
 
