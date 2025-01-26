@@ -107,16 +107,21 @@ user_information_Router.post(
       else {
         console.log("---------------- UPLOAD ---------------------");
         // console.log(await req.files.file.name); // the uploaded file object
-        console.log(await req.files, " --=--"); // the uploaded file object
+        console.log(await req.files.image_hna[0], " --=--"); // the uploaded file object
+        console.log(await req.files.image_hna[1], " --=--"); // the uploaded file object
         console.log("-------------------------------------");
-        if (req.files.image_hna) {
+        let images_count =  req.files.image_hna.length;
+        console.log(images_count, " images_count");
+        let i  = 0;
+        while(i < images_count){
           const ret = await imagekitUploader.upload({
-            file: await req.files.image_hna.data,
-            fileName: await req.files.image_hna.name,
+            file: await req.files.image_hna[i].data,
+            fileName: await req.files.image_hna[i].name,
           });
           console.log(ret, " <-ret");
           //get user from db
           const session = driver.session();
+          if(i == 0){
           if (session) {
             await session.run(
               `MATCH (u:User {username: $username})
@@ -126,10 +131,41 @@ user_information_Router.post(
               { username: _user.username, profile_picture: ret.url }
             );
           }
-          return res.status(200).json("image uploaded successfully");
         }
+        else {
+          if (session) {
+            await session.run(
+              `MATCH (u:User {username: $username})
+              CREATE (u)-[:has_image]->(i:Image {url: $url})
+              `,
+              { username: _user.username, url: ret.url }
+            );
+          }
+        }
+          i++;
+        }
+        return res.status(200).json("image uploaded successfully");
+        // if (req.files.image_hna[0]) {
+        //   const ret = await imagekitUploader.upload({
+        //     file: await req.files.image_hna.data,
+        //     fileName: await req.files.image_hna.name,
+        //   });
+        //   console.log(ret, " <-ret");
+        //   //get user from db
+        //   const session = driver.session();
+        //   if (session) {
+        //     await session.run(
+        //       `MATCH (u:User {username: $username})
+        //       SET u.profile_picture = $profile_picture
+        //       RETURN u.profile_picture
+        //       `,
+        //       { username: _user.username, profile_picture: ret.url }
+        //     );
+        //   }
+        //   return res.status(200).json("image uploaded successfully");
+        // }
       }
-      return res.status(200).json("FAILED");
+      // return res.status(200).json("FAILED");
     } catch {
       return res.status(400).json("Image upload failed");
     }
