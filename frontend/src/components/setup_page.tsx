@@ -39,7 +39,7 @@ function Setup_page() {
     additionalPictures: [],
   });
 
-  const [images_url, setimages_url] = useState([]);
+  const [images_url, setimages_url] = useState(Array(5).fill(null))
   const [images_FILES, setImages_file] = useState(Array(5).fill(null));
 
   const [isLoading, setIsLoading] = useState(false);
@@ -137,14 +137,15 @@ function Setup_page() {
 
   const handle_image_change = (event, index) => {
     console.log(index, " index");
-    const file = event.target.files[index];
+    console.log(event.target.files, " <--]event.target.files");
+    const file = event.target.files[0];
     console.log(file, " ]file");
     if (file) {
       let image_url = URL.createObjectURL(file); // Generate object URL for the file
       console.log(image_url, " ]image_url");
       setimages_url((prevImages) => {
         const updatedImages = [...prevImages]; // Make a copy of the images array
-        updatedImages.push(image_url);
+        updatedImages[index] =image_url;
         return updatedImages;
       });
       setImages_file((prevImages) => {
@@ -159,8 +160,10 @@ function Setup_page() {
     const imageUploadDivs = [];
     for (let i = 0; i < 5; i++) {
       imageUploadDivs.push(
-        <div key={i} className="flex flex-col items-center">
-          <label className="w-32 h-32 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-full cursor-pointer hover:border-blue-500">
+        
+        
+        <div key={i} className="flex justify-center">
+          <label className="w-32 h-32 flex items-center  justify-center border-2 border-dashed border-gray-300 rounded-full cursor-pointer hover:border-blue-500">
             {images_url[i] ? (
               <img
                 src={images_url[i]}
@@ -185,8 +188,11 @@ function Setup_page() {
         </div>
       );
     }
-    return imageUploadDivs;
-  }
+    return (
+      <div className="grid grid-cols-2 gap-4">
+          {imageUploadDivs}
+      </div>
+  );  }
 
   // Function to handle form submission
   async function handleSubmit(event) {
@@ -412,8 +418,8 @@ function Setup_page() {
                     style={{ display: "none" }}
                   />
                 </div> */}
-                <div>{generateImageUploadDivs()}</div>
 
+                <div>{generateImageUploadDivs()}</div>
                 <button
                   type="button"
                   onClick={clearInterest}
