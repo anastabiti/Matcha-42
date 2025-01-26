@@ -107,7 +107,7 @@ user_information_Router.post(
       else {
         console.log("---------------- UPLOAD ---------------------");
         // console.log(await req.files.file.name); // the uploaded file object
-        console.log(await req.files); // the uploaded file object
+        console.log(await req.files, " --=--"); // the uploaded file object
         console.log("-------------------------------------");
         if (req.files.image_hna) {
           const ret = await imagekitUploader.upload({

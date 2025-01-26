@@ -8,7 +8,7 @@ import FormLabel from "@mui/material/FormLabel";
 import MonochromePhotosIcon from "@mui/icons-material/MonochromePhotos";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { TextField } from "@mui/material";
-
+import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 function Setup_page() {
   // Initial interests list
   const defaultInterests = [
@@ -38,7 +38,10 @@ function Setup_page() {
     profilePicture: null,
     additionalPictures: [],
   });
-  const [images_p, setimages] = useState("");
+
+  const [images_url, setimages_url] = useState([]);
+  const [images_FILES, setImages_file] = useState(Array(5).fill(null));
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -131,11 +134,60 @@ function Setup_page() {
     }
     setFormData(updateFormData);
   }
-  async function handle_image_change(event) {
-    const file = event.target.files[0];
-    setimages(file);
-    console.log(file);
+
+  const handle_image_change = (event, index) => {
+    console.log(index, " index");
+    const file = event.target.files[index];
+    console.log(file, " ]file");
+    if (file) {
+      let image_url = URL.createObjectURL(file); // Generate object URL for the file
+      console.log(image_url, " ]image_url");
+      setimages_url((prevImages) => {
+        const updatedImages = [...prevImages]; // Make a copy of the images array
+        updatedImages.push(image_url);
+        return updatedImages;
+      });
+      setImages_file((prevImages) => {
+        const updatedImages = [...prevImages]; // Make a copy of the images array
+        updatedImages.push(file);
+        return updatedImages; // Return the updated images array
+      });
+    }
+  };
+
+  function generateImageUploadDivs() {
+    const imageUploadDivs = [];
+    for (let i = 0; i < 5; i++) {
+      imageUploadDivs.push(
+        <div key={i} className="flex flex-col items-center">
+          <label className="w-32 h-32 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-full cursor-pointer hover:border-blue-500">
+            {images_url[i] ? (
+              <img
+                src={images_url[i]}
+                className="w-full h-full rounded-full object-cover"
+              />
+            ) : (
+              <AddPhotoAlternateIcon
+                fontSize="large"
+                className="text-gray-500"
+              />
+            )}
+            <input
+              id={`image_file_${i}`}
+              type="file"
+              accept="image/*"
+              onChange={function (e) {
+                handle_image_change(e, i);
+              }}
+              className="hidden"
+            />
+          </label>
+        </div>
+      );
+    }
+    return imageUploadDivs;
   }
+
   // Function to handle form submission
   async function handleSubmit(event) {
     event.preventDefault();
@@ -144,7 +196,6 @@ function Setup_page() {
     setSuccess("");
 
     try {
-      
       const response = await fetch(
         "http://localhost:3000/api/user/information",
         {
@@ -160,9 +211,12 @@ function Setup_page() {
       const data = await response.json();
 
       if (response.ok) {
-        if (images_p) {
+        if (images_FILES) {
           const new_data = new FormData();
-          new_data.append('image_hna',images_p)
+          for (const file of images_FILES) {
+            new_data.append("image_hna", file);
+          }
+          // new_data.append("image_hna", images_FILES);
           const res = await fetch("http://localhost:3000/api/user/upload", {
             method: "POST",
             credentials: "include",
@@ -334,7 +388,8 @@ function Setup_page() {
                   </div>
                 </div>
 
-                <div>
+                {/* <div>
+                  <AddPhotoAlternateIcon fontSize="large" />
                   Profile Image
                   <input
                     accept="image/*"
@@ -343,8 +398,21 @@ function Setup_page() {
                     }}
                     type="file"
                     name="image_file"
-                  ></input>
-                </div>
+                  >
+                  </input>
+                </div> */}
+                {/* <div>
+                    <AddPhotoAlternateIcon fontSize="large" />
+                  <input
+                    id="image_file"
+                    accept="image/*"
+                    onChange={(e) => handle_image_change(e)}
+                    type="file"
+                    name="image_file"
+                    style={{ display: "none" }}
+                  />
+                </div> */}
+                <div>{generateImageUploadDivs()}</div>
 
                 <button
                   type="button"
