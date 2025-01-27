@@ -22,7 +22,7 @@ user_information_Router.post(
   async (req: any, res: any) => {
     const errors = validationResult(req);
     if (!errors.isEmpty())
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json( "Please! complete all fields" );
 
     const _user =await req.session.user;
     if (!_user) return res.status(401).json("Unauthorized");
@@ -116,10 +116,14 @@ user_information_Router.post(
       const _user = req.session.user;
       if (!_user) return res.status(401).json("Unauthorized");
     try {
-      const files = req.files; // Access all uploaded files
+      const files = await req.files; // Access all uploaded files
 
       console.log(files, "  -?files ")
-      console.log(Object.keys(files).length, "  -?count files-------------------------------------------------------------------- ")
+      // console.log(Object.keys(files).length, "  -?count files-------------------------------------------------------------------- ")
+      if(files)
+      {
+
+      
       // console.log(files[0], "  [0] ")
       // console.log(files.image_hna, "  [1] ")
       console.log(files.image_hna_0, "  [1] ")
@@ -168,7 +172,10 @@ user_information_Router.post(
       }
 
       session.close(); // Close Neo4j session
+    
       return res.status(200).json("Images uploaded successfully.");
+    }
+    return res.status(200).json("No files");
     } catch (error) {
       console.error("Image upload failed:", error);
       return res.status(400).json("Image upload failed.");
