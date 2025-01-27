@@ -1,5 +1,4 @@
 import { useState } from "react";
-import GoogleButton from "react-google-button";
 import Button from "@mui/material/Button";
 import FacebookIcon from "@mui/icons-material/Facebook";
 // https://mui.com/material-ui/material-icons/?srsltid=AfmBOopJikFhdTyZ7jeW_GHSILmUTDSBVafswowgwSgwNmSJRP6PpTKQ&query=google&selected=Google
@@ -19,7 +18,7 @@ const RegistrationForm = () => {
   const [success, setSuccess] = useState("");
 
   // Handle form submission
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e:React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");

@@ -1,6 +1,4 @@
 import { useState } from "react";
-import GoogleButton from "react-google-button";
-import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 
 const resetPassword = () => {
@@ -9,14 +7,12 @@ const resetPassword = () => {
     email: "",
   });
 
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   // Handle form submission
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e:React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
     setError("");
     setSuccess("");
 
@@ -50,9 +46,7 @@ const resetPassword = () => {
     } catch (error) {
       console.log(error);
       setError("Unable to connect to server. Please try again later.");
-    } finally {
-      setIsLoading(false);
-    }
+    } 
   };
 
   return (

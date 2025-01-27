@@ -9,9 +9,17 @@ import MonochromePhotosIcon from "@mui/icons-material/MonochromePhotos";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { TextField } from "@mui/material";
 import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
+interface FormData {
+  gender: string;
+  biography: string;
+  interests: string[];
+}
+
+type FormFields = "gender" | "biography" | "interests";
+
 function Setup_page() {
   // Initial interests list
-  const defaultInterests = [
+  const defaultInterests:string[] = [
     "#Photography",
     "#Shopping",
     "#Karaoke",
@@ -30,14 +38,12 @@ function Setup_page() {
   const [availableInterests, setAvailableInterests] =
     useState(defaultInterests);
   const [new_interest, setNewInterest] = useState("");
-  const [formData, setFormData] = useState({
+ const [formData, setFormData] = useState<FormData>({
     gender: "",
-    // sexual_preferences: "",
     biography: "",
     interests: [],
-    profilePicture: null,
-    additionalPictures: [],
   });
+
 
   const [images_url, setimages_url] = useState(Array(5).fill(null));
   const [images_FILES, setImages_file] = useState(Array(5).fill(null));
@@ -47,15 +53,15 @@ function Setup_page() {
   const [success, setSuccess] = useState("");
 
   // Function to handle toggling interests
-  function toggleInterest(interest) {
-    function updateInterests(prevFormData) {
+  function toggleInterest(interest: string) {
+    function updateInterests(prevFormData: FormData): FormData {
       // Check if interest already exists
       const interestExists = prevFormData.interests.includes(interest);
-      let updatedInterests;
+      let updatedInterests: string[];
 
       if (interestExists) {
         // Remove interest if it exists
-        updatedInterests = prevFormData.interests.filter(function (item) {
+        updatedInterests = prevFormData.interests.filter(function (item:string) {
           return item !== interest;
         });
       } else {
@@ -73,8 +79,8 @@ function Setup_page() {
   }
 
   // Function to clear all interests
-  function clearInterest() {
-    function updateFormData(prevFormData) {
+  function clearInterest():void {
+    function updateFormData(prevFormData:FormData): FormData {
       return {
         ...prevFormData,
         interests: [],
@@ -84,12 +90,12 @@ function Setup_page() {
   }
 
   // Function to handle input change for new interest
-  function handleNewInterestChange(event) {
+  function handleNewInterestChange(event:React.ChangeEvent<HTMLInputElement>):void {
     setNewInterest(event.target.value);
   }
 
   // Function to add new interest
-  function addNewInterest(event) {
+  function addNewInterest(event: React.FormEvent):void {
     event.preventDefault();
 
     if (!new_interest || !new_interest.trim()) {
@@ -105,13 +111,13 @@ function Setup_page() {
     // Check if interest already exists
     if (!availableInterests.includes(formattedInterest)) {
       // Update available interests
-      function updateAvailableInterests(prevInterests) {
+      function updateAvailableInterests(prevInterests: string[]) {
         return [...prevInterests, formattedInterest];
       }
       setAvailableInterests(updateAvailableInterests);
 
       // Update selected interests
-      function updateFormData(prevFormData) {
+      function updateFormData(prevFormData: FormData) : FormData{
         return {
           ...prevFormData,
           interests: [...prevFormData.interests, formattedInterest],
@@ -125,8 +131,8 @@ function Setup_page() {
   }
 
   // Function to handle form field changes
-  function handleFormChange(field, value) {
-    function updateFormData(prevFormData) {
+  function handleFormChange(field:FormFields, value:string) {
+    function updateFormData(prevFormData:FormData) {
       return {
         ...prevFormData,
         [field]: value,
@@ -135,11 +141,15 @@ function Setup_page() {
     setFormData(updateFormData);
   }
 
-  const handle_image_change = (event, index) => {
+  const handle_image_change = (event:React.ChangeEvent<HTMLInputElement>, index:number) => {
     console.log(index, " index");
     console.log(event.target.files, " <--]event.target.files");
-    const file = event.target.files[0];
-    console.log(file, " ]file");
+    // const file = event.target.files[0];
+    const files = event.target.files;
+    if (!files) return;
+    const file = files[0];
+    if (!file) return;
+    // console.log(file, " ]file");
     if (file) {
       let image_url = URL.createObjectURL(file); // Generate object URL for the file
       console.log(image_url, " ]image_url");
@@ -190,7 +200,7 @@ function Setup_page() {
   }
 
   // Function to handle form submission
-  async function handleSubmit(event) {
+  async function handleSubmit(event:React.FormEvent):Promise<void> {
     event.preventDefault();
     setIsLoading(true);
     setError("");
@@ -229,7 +239,7 @@ function Setup_page() {
             }
           }
           // new_data.append("image_hna", images_FILES);
-          const res = await fetch("http://localhost:3000/api/user/upload", {
+           await fetch("http://localhost:3000/api/user/upload", {
             method: "POST",
             credentials: "include",
             body: new_data,
@@ -242,17 +252,18 @@ function Setup_page() {
           // sexual_preferences: "",
           biography: "",
           interests: [],
-          profilePicture: null,
-          additionalPictures: [],
         });
       } else {
         console.log(data, " |||");
         console.log(data, " |||");
         setError(data || "Submission failed. Please try again.");
       }
-    } catch (error) {
-      console.log(error, " fuck")
-      setError(error.message||"Unable to connect to server. Please try again later.");
+    } catch (error:unknown ) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Unable to connect to server. Please try again later.");
+      }
     }
 
     setIsLoading(false);
