@@ -3,7 +3,7 @@ import GoogleButton from "react-google-button";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 
-const resetPassword = () => {
+const ResetPassword = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
@@ -14,7 +14,7 @@ const resetPassword = () => {
   const [success, setSuccess] = useState("");
 
   // Handle form submission
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
@@ -97,4 +97,4 @@ const resetPassword = () => {
   );
 };
 
-export default resetPassword;
+export default ResetPassword;
