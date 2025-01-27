@@ -103,7 +103,7 @@ passport.use(
                 username_ = (await crypto).randomBytes(12).toString("hex");
               }
 
-              const user_ = await new_session.run(
+              const result_ = await new_session.run(
                 `CREATE (n:User {
                   username: $username,
                   email: $email,
@@ -116,8 +116,14 @@ passport.use(
                   gender: "",
                   biography: "",
                   setup_done:false
-                }) 
-                RETURN n.username`,
+                }) RETURN {
+      username: n.username,
+      email: n.email,
+      first_name: n.first_name,
+      last_name: n.last_name,
+      verified: n.verified,
+      setup_done:n.setup_done
+        } as user`,
                 {
                   username: username_ || profile?.name?.givenName,
                   // username: profile?.name?.givenName,
@@ -130,9 +136,9 @@ passport.use(
                   password_reset_token: "",
                 }
               );
-              console.log("user does not exist");
+              const new_user = result_ .records[0]?.get("user");
               await new_session.close();
-              return cb(null, user_);
+              return cb(null, new_user);
             }
           }
         }
@@ -157,8 +163,7 @@ Facebook_auth.get(
   async function (req: any, res: Response) {
     passport.authenticate(
       "facebook",
-      { session: false },
-     async  function (err: any, user: User, info: any) {
+      async function (err: any, user: User, info: any) {
         if (err) {
           return res
             .status(401)
@@ -171,16 +176,19 @@ Facebook_auth.get(
         }
 
         try {
-          req.session.user = { username: user.username, email: user.email, setup_done: user.setup_done};
+          req.session.user = {
+            username: user.username,
+            email: user.email,
+            setup_done: user.setup_done,
+          };
           // console.log(req.session.user, " session user");
           await req.session.save();
-          console.log(user , "  ------------------------------facebook")
-          if ( user.setup_done == true) {
+          console.log(user, "  ------------------------------facebook");
+          if (user.setup_done == true) {
             return res.status(200).redirect("http://localhost:7070/home");
           } else {
             return res.status(200).redirect("http://localhost:7070/setup");
           }
-
         } catch (tokenError) {
           return res.status(400).json("Error generating token");
         }

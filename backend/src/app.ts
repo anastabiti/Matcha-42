@@ -40,7 +40,7 @@ app.use(fileUpload({limites:{
 //     },
 //   })
 // );
-// Add this before your session configuration
+
 driver.verifyConnectivity()
   .then(() => {
     console.log('Successfully connected to Neo4j');
@@ -48,18 +48,17 @@ driver.verifyConnectivity()
   .catch((error: any) => {
     console.error('Neo4j connection error:', error);
   });
+
 app.use(
   session({
     store: new Neo4jStore({ 
       client: driver,
       ttl: 86400,
-      // Add these debugging options
       debug: true,
       prefix: 'sess:',
     }),
     secret: process.env.session_secret as string,
     resave: true,
-    rolling: true, // Ensures session expiry is reset on each request
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
@@ -70,12 +69,6 @@ app.use(
   })
 );
 
-// Add session debugging middleware
-app.use((req, res, next) => {
-  console.log('Session Middleware - Session ID:', req.sessionID);
-  console.log('Session Middleware - Session Data:', req.session);
-  next();
-});
 
 
 // IMagekit initialization

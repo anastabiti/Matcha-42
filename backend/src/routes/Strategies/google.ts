@@ -136,7 +136,7 @@ passport.use(
   
   
                   console.log("creating user");
-                  const user_ = await new_session.run(
+                  const result_ = await new_session.run(
                     `CREATE (n:User {
                     username: $username,
                     email: $email,
@@ -150,7 +150,14 @@ passport.use(
                     biography: "",
                     setup_done:false
                   }) 
-                  RETURN n.username`,
+                   RETURN {
+      username: n.username,
+      email: n.email,
+      first_name: n.first_name,
+      last_name: n.last_name,
+      verified: n.verified,
+      setup_done:n.setup_done
+        } as user`,
                     {
                       username: username_  || profile.displayName,
                         // profile.displayName ||
@@ -164,9 +171,9 @@ passport.use(
                       password_reset_token: "",
                     }
                   );
-                  console.log("user does not exist");
+                  const new_user = result_ .records[0]?.get("user");
                   await new_session.close();
-                  return cb(null, user_);
+                  return cb(null, new_user);
                 }
               }
             }
@@ -188,7 +195,7 @@ passport.use(
     passport.authenticate("google", {
       scope: ["profile", "email"],
   
-      session: false,
+      // session: false,
     }),
     async function (req: Request, res: Response) {
       // console.log("auth/google");
