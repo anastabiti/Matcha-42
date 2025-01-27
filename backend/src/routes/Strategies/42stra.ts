@@ -47,13 +47,13 @@ passport.use(
         // phoneNumbers: [ { value: 'hidden' } ],
         // photos: [ { value: undefined } ],
         // provider: '42',
-        console.log(profile.emails?.[0]?.value, " profile._json.email");
-        console.log(profile?.name?.familyName, " familyname");
-        console.log(profile?.name?.givenName, " givenName");
-        console.log(profile.username, " username");
-        console.log("----------------------------------------------");
-        console.log(profile);
-        console.log("----------------------------------------------");
+        // console.log(profile.emails?.[0]?.value, " profile._json.email");
+        // console.log(profile?.name?.familyName, " familyname");
+        // console.log(profile?.name?.givenName, " givenName");
+        // console.log(profile.username, " username");
+        // console.log("----------------------------------------------");
+        // console.log(profile);
+        // console.log("----------------------------------------------");
 
         const new_session = await driver.session();
         if (new_session) {
@@ -82,20 +82,20 @@ passport.use(
               );
               //check if user is not verified
               if (resu_.records[0].get("user").verified === false) {
-                console.log("email not verified");
+                // console.log("email not verified");
                 await new_session.close();
                 return cb(null, false);
               }
 
-              console.log("user exists", resu_.records[0].get("user"));
+              // console.log("user exists", resu_.records[0].get("user"));
               const user_x = resu_.records[0]?.get("user");
-              console.log(user_x, " user_x");
+              // console.log(user_x, " user_x");
               await new_session.close();
 
               return cb(null, user_x);
             } else {
               console.log("creating user");
-              const user_ = await new_session.run(
+              const result_ = await new_session.run(
                 `CREATE (n:User {
               username: $username,
               email: $email,
@@ -109,7 +109,14 @@ passport.use(
               biography: "",
               setup_done:false
             }) 
-            RETURN n.username`,
+              RETURN {
+      username: n.username,
+      email: n.email,
+      first_name: n.first_name,
+      last_name: n.last_name,
+      verified: n.verified,
+      setup_done:n.setup_done
+        } as user`,
                 {
                   username: profile.username,
                   email: email_,
@@ -122,8 +129,9 @@ passport.use(
                 }
               );
               // console.log("user does not exist");
+              const new_user = result_ .records[0]?.get("user");
               await new_session.close();
-              return cb(null, user_);
+              return cb(null, new_user);
             }
           }
         }
@@ -137,12 +145,10 @@ passport.use(
 
 forty_two_str.get("/auth/intra42", passport.authenticate("42"));
 
-
-
 forty_two_str.get("/auth/intra42/callback", function (req: any, res: Response) {
   passport.authenticate(
     "42",
-    { session: false },
+    // { session: false },
     async function (err: any, user: User, info: any) {
       try {
         if (err) {
@@ -157,22 +163,26 @@ forty_two_str.get("/auth/intra42/callback", function (req: any, res: Response) {
           return res.status(401).json("No user found");
         }
 
-        console.log(
-          " done--------------------------------------------------------\
-          --------------------------------"
-        );
-        console.log(user, " done");
-        console.log(
-          " done--------------------------------------------------------\
-          --------------------------------"
-        );
+        // console.log(user, " done");
+        // console.log(
+        //   " done--------------------------------------------------------\
+        //   --------------------------------"
+        // );
+
+        console.log(" user ------------- ", user);
+
         req.session.user = {
           username: user.username,
           email: user.email,
           setup_done: user.setup_done,
         };
         await req.session.save();
-        if ( user.setup_done == true) {
+        if (!req.session.user) {
+          console.error("Session not saved properly");
+          return res.status(402).json("Session error");
+        }
+
+        if (user.setup_done == true) {
           return res.status(200).redirect("http://localhost:7070/home");
         } else {
           return res.status(200).redirect("http://localhost:7070/setup");

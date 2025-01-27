@@ -26,21 +26,56 @@ app.use(fileUpload({limites:{
   fileSize: 10000000 //byte, // Around 10MB
 }})); // Use the express-fileupload middleware
 
+// app.use(
+//   session({
+//     store: new Neo4jStore({ client: driver }),
+//     secret: process.env.session_secret as string,
+//     resave: false,
+//     saveUninitialized: false, //to avoid storing all sessions even not looged in users
+//     cookie: {
+//       // secure: true,
+//       // httpOnly: false, // Prevent JavaScript access to cookies
+//       sameSite: "lax", // Ensures cookies are sent with requests from the same site
+//       maxAge: 24 * 60 * 60 * 1000, // 24 hours
+//     },
+//   })
+// );
+// Add this before your session configuration
+driver.verifyConnectivity()
+  .then(() => {
+    console.log('Successfully connected to Neo4j');
+  })
+  .catch((error: any) => {
+    console.error('Neo4j connection error:', error);
+  });
 app.use(
   session({
-    store: new Neo4jStore({ client: driver }),
+    store: new Neo4jStore({ 
+      client: driver,
+      ttl: 86400,
+      // Add these debugging options
+      debug: true,
+      prefix: 'sess:',
+    }),
     secret: process.env.session_secret as string,
-    resave: false,
-    saveUninitialized: false, //to avoid storing all sessions even not looged in users
+    resave: true,
+    rolling: true, // Ensures session expiry is reset on each request
+    saveUninitialized: false,
     cookie: {
-      // secure: true,
-      // httpOnly: false, // Prevent JavaScript access to cookies
-      sameSite: "lax", // Ensures cookies are sent with requests from the same site
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      httpOnly: true,
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000,
     },
+    name: 'sessionId'
   })
 );
 
+// Add session debugging middleware
+app.use((req, res, next) => {
+  console.log('Session Middleware - Session ID:', req.sessionID);
+  console.log('Session Middleware - Session Data:', req.session);
+  next();
+});
 
 
 // IMagekit initialization

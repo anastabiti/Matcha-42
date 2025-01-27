@@ -109,6 +109,16 @@ user_information_Router.post(
   //   }
 );
 
+
+user_information_Router.get(
+  "/user/is_auth",
+  async function (req: any, res: any) {
+    console.log(await  req.session.user)   
+     console.log(await  req.session,  " session")
+
+    return res.status(200).json("f")
+  })
+
 user_information_Router.post(
   "/user/upload",
   async function (req: any, res: any) {
