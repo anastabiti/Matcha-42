@@ -23,8 +23,14 @@ export type User = {
   last_name: string;
   verified: boolean;
   gender: string;
-  Sexual_preferences: string;
   biography: string;
+  profile_picture:string
+  setup_done:boolean
+  verfication_token:string
+  pic_1:string
+  pic_2:string
+  pic_3:string
+  pic_4:string
 };
 
 const transporter = nodemailer.createTransport({
@@ -83,7 +89,7 @@ authRouter.post("/login", async (req: any, res: Response) => {
                 if (user_) {
                   req.session.user = {
                     username: req.body.username,
-                    email: req.body.email,
+                    email: req.body.email,       
                   };
 
                   console.log(req.session.user, " session user");

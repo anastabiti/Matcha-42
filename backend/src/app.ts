@@ -3,13 +3,13 @@ import cors from "cors";
 import bodyParser from "body-parser";
 import session from "express-session";
 import passport from "passport";
-import registrationRouter from "../routes/registration";
-import authRouter from "../routes/auth";
-import "../database/index";
-import Facebook_auth from "../routes/Strategies/facebook";
-import Google_auth from "../routes/Strategies/google";
-import forty_two_str from "../routes/Strategies/42stra";
-import user_information_Router from "../routes/user";
+import registrationRouter from "./routes/registration";
+import authRouter from "./routes/auth";
+import "./database/index";
+import Facebook_auth from "./routes/Strategies/facebook";
+import Google_auth from "./routes/Strategies/google";
+import forty_two_str from "./routes/Strategies/42stra";
+import user_information_Router from "./routes/user";
 const fileUpload = require('express-fileupload');
 
 

@@ -113,7 +113,6 @@ passport.use(
                   verified: $verified,
                   password_reset_token: $password_reset_token,
                   gender: "",
-                  sexual_orientation: "",
                   biography: ""
                 }) 
                 RETURN n.username`,

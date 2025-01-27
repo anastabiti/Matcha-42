@@ -52,7 +52,7 @@ passport.use(
         console.log(profile?.name?.givenName, " givenName");
         console.log(profile.username, " username");
         console.log("----------------------------------------------");
-        console.log(profile )
+        console.log(profile);
         console.log("----------------------------------------------");
 
         const new_session = await driver.session();
@@ -67,7 +67,8 @@ passport.use(
       email: n.email,
       first_name: n.first_name,
       last_name: n.last_name,
-      verified: n.verified
+      verified: n.verified,
+      setup_done:n.setup_done
         } as user`,
               {
                 email: email_,
@@ -105,13 +106,12 @@ passport.use(
               verified: $verified,
               password_reset_token: $password_reset_token,
               gender: "",
-              sexual_orientation: "",
-              biography: ""
+              biography: "",
+              setup_done:false
             }) 
             RETURN n.username`,
                 {
-                  username:
-                  profile.username,
+                  username: profile.username,
                   email: email_,
                   password: (await crypto).randomBytes(25).toString("hex"),
                   first_name: profile?.name?.givenName || "",
@@ -121,14 +121,14 @@ passport.use(
                   password_reset_token: "",
                 }
               );
-              console.log("user does not exist");
+              // console.log("user does not exist");
               await new_session.close();
               return cb(null, user_);
             }
           }
         }
       } catch (error) {
-        console.log("error ", error);
+        // console.log("error ", error);
         return cb(error, false);
       }
     }
@@ -137,17 +137,14 @@ passport.use(
 
 forty_two_str.get("/auth/intra42", passport.authenticate("42"));
 
-// authRouter.get("/auth/intra42/callback", passport.authenticate("42", { session: false }), function (req: Request, res: Response) {
-//   console.log("auth/intra42/callback is called");
-// });
+
 
 forty_two_str.get("/auth/intra42/callback", function (req: any, res: Response) {
   passport.authenticate(
     "42",
     { session: false },
-    function (err: any, user: User, info: any) {
+    async function (err: any, user: User, info: any) {
       try {
-        console.log("42 ----------------------=-=-=-=-=-=-=-");
         if (err) {
           console.error("Error during authentication:");
           return res
@@ -160,12 +157,27 @@ forty_two_str.get("/auth/intra42/callback", function (req: any, res: Response) {
           return res.status(401).json("No user found");
         }
 
-        req.session.user = { username: user.username, email: user.email };
-
-        console.log(req.session.user, " session user");
-        req.session.save();
+        console.log(
+          " done--------------------------------------------------------\
+          --------------------------------"
+        );
+        console.log(user, " done");
+        console.log(
+          " done--------------------------------------------------------\
+          --------------------------------"
+        );
+        req.session.user = {
+          username: user.username,
+          email: user.email,
+          setup_done: user.setup_done,
+        };
+        await req.session.save();
+        if ( user.setup_done == true) {
+          return res.status(200).redirect("http://localhost:7070/home");
+        } else {
+          return res.status(200).redirect("http://localhost:7070/setup");
+        }
         // res.status(200).json("login successful");
-        return res.status(200).redirect("http://localhost:7070/home");
       } catch (tokenError) {
         console.error("Error generating token:", tokenError);
         return res.status(400).json("Error generating token");

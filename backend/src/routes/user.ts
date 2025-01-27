@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import { imagekitUploader } from "../src/app";
+import { imagekitUploader } from "./../app";
 const { body, validationResult } = require("express-validator");
 const neo4j = require("neo4j-driver");
 const driver = neo4j.driver(
@@ -24,7 +24,7 @@ user_information_Router.post(
     if (!errors.isEmpty())
       return res.status(400).json({ errors: errors.array() });
 
-    const _user = req.session.user;
+    const _user =await req.session.user;
     if (!_user) return res.status(401).json("Unauthorized");
     else {
       console.log("------------------------------------------------------");
@@ -35,10 +35,15 @@ user_information_Router.post(
       console.log(req.body.gender, "3");
       console.log("------------------------------------------------------");
 
-      if (req.session.user.username) {
+      if (_user.username) {
+        console.log(_user.setup_done , " req.session.setup_done")
+        if(_user.setup_done == true)
+        {
+          return res.status(400).json("Already done");
+        }
         const session = driver.session();
         if (session) {
-          if (req.body.interests) {
+          if (await req.body.interests) {
             for (const interest of req.body.interests) {
               await session.run(
                 `MATCH (u:User {username: $username})
@@ -52,7 +57,7 @@ user_information_Router.post(
             }
           }
           console.log(_user.username, " _user.username--=-=-==--=");
-          if (req.body.biography) {
+          if (await req.body.biography) {
             // "MATCH (n:User) WHERE n.username = $username AND n.verified = true RETURN n.password",
             console.log(
               typeof {
@@ -64,12 +69,13 @@ user_information_Router.post(
             await session.run(
               `MATCH (n:User) WHERE n.username = $username
                         SET n.biography = $biography
+                        SET n.setup_done = true
                         RETURN n.username
               `,
               { username: _user.username, biography: req.body.biography }
             );
           }
-          if (req.body.gender) {
+          if (await req.body.gender) {
             //delete old gender
             await session.run(
               `MATCH (u:User {username: $username})-[r:onta_wla_dakar]->(g:Sex)
@@ -84,9 +90,10 @@ user_information_Router.post(
 
     `,
 
-              { username: _user.username, gender: req.body.gender }
+              { username: _user.username, gender: await req.body.gender }
             );
           }
+          
         }
 
         await session.close();
@@ -101,73 +108,66 @@ user_information_Router.post(
 user_information_Router.post(
   "/user/upload",
   async function (req: any, res: any) {
-    try {
+    // try {
       const _user = req.session.user;
       if (!_user) return res.status(401).json("Unauthorized");
-      else {
-        console.log("---------------- UPLOAD ---------------------");
-        // console.log(await req.files.file.name); // the uploaded file object
-        console.log(await req.files.image_hna[0], " --=--"); // the uploaded file object
-        console.log(await req.files.image_hna[1], " --=--"); // the uploaded file object
-        console.log("-------------------------------------");
-        let images_count =  req.files.image_hna.length;
-        console.log(images_count, " images_count");
-        let i  = 0;
-        while(i < images_count){
-          const ret = await imagekitUploader.upload({
-            file: await req.files.image_hna[i].data,
-            fileName: await req.files.image_hna[i].name,
-          });
-          console.log(ret, " <-ret");
-          //get user from db
-          const session = driver.session();
-          if(i == 0){
-          if (session) {
-            await session.run(
-              `MATCH (u:User {username: $username})
-              SET u.profile_picture = $profile_picture
-              RETURN u.profile_picture
-              `,
-              { username: _user.username, profile_picture: ret.url }
-            );
-          }
+    try {
+      const files = req.files; // Access all uploaded files
+
+      console.log(files, "  -?files ")
+      console.log(Object.keys(files).length, "  -?count files-------------------------------------------------------------------- ")
+      // console.log(files[0], "  [0] ")
+      // console.log(files.image_hna, "  [1] ")
+      console.log(files.image_hna_0, "  [1] ")
+      console.log(files.image_hna_1, "  [1] ")
+      // console.log(files.image_hna_1, "  [1] ")
+      const img_count = Object.keys(files).length
+      const session = driver.session(); // Open a Neo4j session
+      let profilePictureSet = false;
+      if( img_count <= 0 )
+        return res.status(400).json("NO images.");
+      for (let i = 0; i < img_count; i++) {
+        const key = `image_hna_${i}`;
+        const file = files[key];
+
+        if (!file || key === "NULL") {
+          console.log(`Skipping ${key}, no file uploaded.`);
+          continue; // Skip null or missing files
         }
-        else {
-          if (session) {
-            await session.run(
-              `MATCH (u:User {username: $username})
-              CREATE (u)-[:has_image]->(i:Image {url: $url})
-              `,
-              { username: _user.username, url: ret.url }
-            );
-          }
+
+        // Upload to ImageKit
+        const ret = await imagekitUploader.upload({
+          file: file.data,
+          fileName: file.name,
+        });
+        console.log(ret, "<- Uploaded file response");
+
+        // Update Neo4j based on file index
+        if (!profilePictureSet && i === 0) {
+          // Set profile picture for the first valid file
+          await session.run(
+            `MATCH (u:User {username: $username})
+             SET u.profile_picture = $profile_picture
+             RETURN u.profile_picture`,
+            { username: _user.username, profile_picture: ret.url }
+          );
+          profilePictureSet = true;
+        } else {
+          // Set additional pictures with dynamic properties
+          await session.run(
+            `MATCH (u:User {username: $username})
+             SET u.pic_${i} = $url
+             RETURN u.pic_${i}`,
+            { username: _user.username, url: ret.url }
+          );
         }
-          i++;
-        }
-        return res.status(200).json("image uploaded successfully");
-        // if (req.files.image_hna[0]) {
-        //   const ret = await imagekitUploader.upload({
-        //     file: await req.files.image_hna.data,
-        //     fileName: await req.files.image_hna.name,
-        //   });
-        //   console.log(ret, " <-ret");
-        //   //get user from db
-        //   const session = driver.session();
-        //   if (session) {
-        //     await session.run(
-        //       `MATCH (u:User {username: $username})
-        //       SET u.profile_picture = $profile_picture
-        //       RETURN u.profile_picture
-        //       `,
-        //       { username: _user.username, profile_picture: ret.url }
-        //     );
-        //   }
-        //   return res.status(200).json("image uploaded successfully");
-        // }
       }
-      // return res.status(200).json("FAILED");
-    } catch {
-      return res.status(400).json("Image upload failed");
+
+      session.close(); // Close Neo4j session
+      return res.status(200).json("Images uploaded successfully.");
+    } catch (error) {
+      console.error("Image upload failed:", error);
+      return res.status(400).json("Image upload failed.");
     }
   }
 );

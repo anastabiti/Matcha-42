@@ -99,7 +99,6 @@ registrationRouter.post(
         verified: false,
         password_reset_token: "",
         gender: "",
-        sexual_orientation: "",
         biography: "",
       };
       const session = await driver.session();

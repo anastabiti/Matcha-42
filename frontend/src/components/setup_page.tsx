@@ -39,7 +39,7 @@ function Setup_page() {
     additionalPictures: [],
   });
 
-  const [images_url, setimages_url] = useState(Array(5).fill(null))
+  const [images_url, setimages_url] = useState(Array(5).fill(null));
   const [images_FILES, setImages_file] = useState(Array(5).fill(null));
 
   const [isLoading, setIsLoading] = useState(false);
@@ -145,12 +145,12 @@ function Setup_page() {
       console.log(image_url, " ]image_url");
       setimages_url((prevImages) => {
         const updatedImages = [...prevImages]; // Make a copy of the images array
-        updatedImages[index] =image_url;
+        updatedImages[index] = image_url;
         return updatedImages;
       });
       setImages_file((prevImages) => {
         const updatedImages = [...prevImages]; // Make a copy of the images array
-        updatedImages.push(file);
+        updatedImages[index] = file;
         return updatedImages; // Return the updated images array
       });
     }
@@ -160,8 +160,6 @@ function Setup_page() {
     const imageUploadDivs = [];
     for (let i = 0; i < 5; i++) {
       imageUploadDivs.push(
-        
-        
         <div key={i} className="flex justify-center">
           <label className="w-32 h-32 flex items-center  justify-center border-2 border-dashed border-gray-300 rounded-full cursor-pointer hover:border-blue-500">
             {images_url[i] ? (
@@ -188,11 +186,8 @@ function Setup_page() {
         </div>
       );
     }
-    return (
-      <div className="grid grid-cols-2 gap-4">
-          {imageUploadDivs}
-      </div>
-  );  }
+    return <div className="grid grid-cols-2 gap-4">{imageUploadDivs}</div>;
+  }
 
   // Function to handle form submission
   async function handleSubmit(event) {
@@ -219,8 +214,19 @@ function Setup_page() {
       if (response.ok) {
         if (images_FILES) {
           const new_data = new FormData();
-          for (const file of images_FILES) {
-            new_data.append("image_hna", file);
+          console.log(
+            images_FILES,
+            " -------------------....>>>.....images_FILES"
+          );
+
+          // Use a for loop to maintain indexing and handle null values
+          for (let index = 0; index < images_FILES.length; index++) {
+            const file = images_FILES[index];
+            if (file) {
+              new_data.append(`image_hna_${index}`, file); // Append valid files
+            } else {
+              new_data.append(`image_hna_${index}`, "NULL"); // Append "NULL" for null entries
+            }
           }
           // new_data.append("image_hna", images_FILES);
           const res = await fetch("http://localhost:3000/api/user/upload", {
@@ -240,11 +246,13 @@ function Setup_page() {
           additionalPictures: [],
         });
       } else {
-        console.log(data.errors[0].msg, " |||");
-        setError(data.errors[0].msg || "Submission failed. Please try again.");
+        console.log(data, " |||");
+        console.log(data, " |||");
+        setError(data || "Submission failed. Please try again.");
       }
     } catch (error) {
-      setError("Unable to connect to server. Please try again later.");
+      console.log(error, " fuck")
+      setError(error.message||"Unable to connect to server. Please try again later.");
     }
 
     setIsLoading(false);
