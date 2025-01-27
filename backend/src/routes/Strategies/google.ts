@@ -51,7 +51,8 @@ passport.use(
             email: n.email,
             first_name: n.first_name,
             last_name: n.last_name,
-            verified: n.verified
+            verified: n.verified,
+      setup_done:n.setup_done
               } as user`,
                 {
                   email: profile.emails[0].value,
@@ -146,7 +147,8 @@ passport.use(
                     verified: $verified,
                     password_reset_token: $password_reset_token,
                     gender: "",
-                    biography: ""
+                    biography: "",
+                    setup_done:false
                   }) 
                   RETURN n.username`,
                     {
@@ -197,7 +199,7 @@ passport.use(
     passport.authenticate(
       "google",
       { session: false },
-      function (err: any, user: User, info: any) {
+      async function (err: any, user: User, info: any) {
         if (err) {
           console.error("Error during authentication:", err);
           return res
@@ -211,12 +213,19 @@ passport.use(
         }
   
         try {
-          req.session.user = {"username":user.username, "email": user.email}
+          req.session.user = {
+            username: user.username,
+            email: user.email,
+            setup_done: user.setup_done,
+          };
           console.log(req.session.user, " session user");
-          req.session.save();
+         await req.session.save();
           // return res.status(200).json("login successful");
-          return res.status(200).redirect("http://localhost:7070/home");
-
+          if ( user.setup_done == true) {
+            return res.status(200).redirect("http://localhost:7070/home");
+          } else {
+            return res.status(200).redirect("http://localhost:7070/setup");
+          }
 
         } catch (tokenError) {
           console.error("Error generating token:", tokenError);

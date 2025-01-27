@@ -43,7 +43,14 @@ const LoginPage = () => {
           username: "",
           password: "",
         });
-      } else {
+
+
+      } 
+      
+      if (response.status == 201) {
+        navigate('/setup');
+      }
+      else {
         console.log(data, " error");
 
         setError(data || "Login failed. Please try again.");

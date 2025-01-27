@@ -74,6 +74,11 @@ authRouter.post("/login", async (req: any, res: Response) => {
         { username: req.body.username }
       );
 
+      const user_info = await session.run(
+        "MATCH (n:User) WHERE n.username = $username AND n.verified = true RETURN n.setup_done",
+        { username: req.body.username }
+      );
+
       // console.log(hashedPassword.records[0]._fields[0], " hashedPassword");
       if (hashedPassword.records.length > 0) {
         if (hashedPassword.records[0]._fields[0])
@@ -93,8 +98,13 @@ authRouter.post("/login", async (req: any, res: Response) => {
                   };
 
                   console.log(req.session.user, " session user");
-                  req.session.save();
-                  return res.status(200).json("login successful");
+                  await req.session.save();
+                  if (  user_info.records[0]._fields[0]  == true) {
+                    return res.status(200).json("login successful");
+                  } else {
+                    return res.status(201).json("login successful");
+                  }
+                  // return res.status(200).json("login successful");
                 }
               } else {
                 console.log("passwords do not match");

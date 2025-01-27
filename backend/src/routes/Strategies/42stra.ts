@@ -186,3 +186,5 @@ forty_two_str.get("/auth/intra42/callback", function (req: any, res: Response) {
   )(req, res);
 });
 export default forty_two_str;
+// atabiti_a
+//sjnj^*7t87t877dsKK

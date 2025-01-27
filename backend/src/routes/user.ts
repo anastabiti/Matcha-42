@@ -96,8 +96,12 @@ user_information_Router.post(
           
         }
 
+
         await session.close();
-        return res.status(200).json("User information route");
+        req.session.user.setup_done = true
+        await req.session.save();
+
+                return res.status(200).json("User information route");
       }
     }
     return res.status(401).json("Unauthorized");
