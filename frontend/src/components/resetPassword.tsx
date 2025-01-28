@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const resetPassword = () => {
+const ResetPassword = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
@@ -91,4 +91,4 @@ const resetPassword = () => {
   );
 };
 
-export default resetPassword;
+export default ResetPassword;

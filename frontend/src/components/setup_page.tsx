@@ -9,6 +9,7 @@ import MonochromePhotosIcon from "@mui/icons-material/MonochromePhotos";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { TextField } from "@mui/material";
 import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
+import { useNavigate } from "react-router-dom";
 interface FormData {
   gender: string;
   biography: string;
@@ -44,6 +45,7 @@ function Setup_page() {
     interests: [],
   });
 
+  const navigate = useNavigate();
 
   const [images_url, setimages_url] = useState(Array(5).fill(null));
   const [images_FILES, setImages_file] = useState(Array(5).fill(null));
@@ -252,7 +254,9 @@ function Setup_page() {
           // sexual_preferences: "",
           biography: "",
           interests: [],
-        });
+        })
+        
+        navigate('/home')
       } else {
         console.log(data, " |||");
         console.log(data, " |||");
