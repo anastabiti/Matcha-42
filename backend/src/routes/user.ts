@@ -22,9 +22,9 @@ user_information_Router.post(
   async (req: any, res: any) => {
     const errors = validationResult(req);
     if (!errors.isEmpty())
-      return res.status(400).json( "Please! complete all fields" );
+      return res.status(400).json("Please! complete all fields");
 
-    const _user =await req.session.user;
+    const _user = await req.session.user;
     if (!_user) return res.status(401).json("Unauthorized");
     else {
       console.log("------------------------------------------------------");
@@ -36,9 +36,8 @@ user_information_Router.post(
       console.log("------------------------------------------------------");
 
       if (_user.username) {
-        console.log(_user.setup_done , " req.session.setup_done")
-        if(_user.setup_done == true)
-        {
+        console.log(_user.setup_done, " req.session.setup_done");
+        if (_user.setup_done == true) {
           return res.status(400).json("Already done");
         }
         const session = driver.session();
@@ -93,15 +92,13 @@ user_information_Router.post(
               { username: _user.username, gender: await req.body.gender }
             );
           }
-          
         }
 
-
         await session.close();
-        req.session.user.setup_done = true
+        req.session.user.setup_done = true;
         await req.session.save();
 
-                return res.status(200).json("User information route");
+        return res.status(200).json("User information route");
       }
     }
     return res.status(401).json("Unauthorized");
@@ -109,89 +106,112 @@ user_information_Router.post(
   //   }
 );
 
-
 user_information_Router.get(
   "/user/is_auth",
   async function (req: any, res: any) {
-    console.log(await  req.session.user)   
-     console.log(await  req.session,  " session")
+    console.log(await req.session.user);
+    console.log(await req.session, " session");
 
-    return res.status(200).json("f")
-  })
+    return res.status(200).json("f");
+  }
+);
 
 user_information_Router.post(
   "/user/upload",
   async function (req: any, res: any) {
     // try {
-      const _user = req.session.user;
-      if (!_user) return res.status(401).json("Unauthorized");
+    const _user = req.session.user;
+    if (!_user) return res.status(401).json("Unauthorized");
     try {
       const files = await req.files; // Access all uploaded files
 
-      console.log(files, "  -?files ")
+      console.log(files, "  -?files ");
       // console.log(Object.keys(files).length, "  -?count files-------------------------------------------------------------------- ")
-      if(files)
-      {
+      if (files) {
+        // console.log(files[0], "  [0] ")
+        // console.log(files.image_hna, "  [1] ")
+        console.log(files.image_hna_0, "  [1] ");
+        console.log(files.image_hna_1, "  [1] ");
+        // console.log(files.image_hna_1, "  [1] ")
+        const img_count = Object.keys(files).length;
+        const session = driver.session(); // Open a Neo4j session
+        let profilePictureSet = false;
+        if (img_count <= 0) return res.status(400).json("NO images.");
+        for (let i = 0; i < img_count; i++) {
+          const key = `image_hna_${i}`;
+          const file = files[key];
 
-      
-      // console.log(files[0], "  [0] ")
-      // console.log(files.image_hna, "  [1] ")
-      console.log(files.image_hna_0, "  [1] ")
-      console.log(files.image_hna_1, "  [1] ")
-      // console.log(files.image_hna_1, "  [1] ")
-      const img_count = Object.keys(files).length
-      const session = driver.session(); // Open a Neo4j session
-      let profilePictureSet = false;
-      if( img_count <= 0 )
-        return res.status(400).json("NO images.");
-      for (let i = 0; i < img_count; i++) {
-        const key = `image_hna_${i}`;
-        const file = files[key];
+          if (!file || key === "NULL") {
+            console.log(`Skipping ${key}, no file uploaded.`);
+            continue; // Skip null or missing files
+          }
 
-        if (!file || key === "NULL") {
-          console.log(`Skipping ${key}, no file uploaded.`);
-          continue; // Skip null or missing files
-        }
+          // Upload to ImageKit
+          const ret = await imagekitUploader.upload({
+            file: file.data,
+            fileName: file.name,
+          });
+          console.log(ret, "<- Uploaded file response");
 
-        // Upload to ImageKit
-        const ret = await imagekitUploader.upload({
-          file: file.data,
-          fileName: file.name,
-        });
-        console.log(ret, "<- Uploaded file response");
-
-        // Update Neo4j based on file index
-        if (!profilePictureSet && i === 0) {
-          // Set profile picture for the first valid file
-          await session.run(
-            `MATCH (u:User {username: $username})
+          // Update Neo4j based on file index
+          if (!profilePictureSet && i === 0) {
+            // Set profile picture for the first valid file
+            await session.run(
+              `MATCH (u:User {username: $username})
              SET u.profile_picture = $profile_picture
              RETURN u.profile_picture`,
-            { username: _user.username, profile_picture: ret.url }
-          );
-          profilePictureSet = true;
-        } else {
-          // Set additional pictures with dynamic properties
-          await session.run(
-            `MATCH (u:User {username: $username})
+              { username: _user.username, profile_picture: ret.url }
+            );
+            profilePictureSet = true;
+          } else {
+            // Set additional pictures with dynamic properties
+            await session.run(
+              `MATCH (u:User {username: $username})
              SET u.pic_${i} = $url
              RETURN u.pic_${i}`,
-            { username: _user.username, url: ret.url }
-          );
+              { username: _user.username, url: ret.url }
+            );
+          }
         }
-      }
 
-      session.close(); // Close Neo4j session
-    
-      return res.status(200).json("Images uploaded successfully.");
-    }
-    return res.status(200).json("No files");
+        session.close(); // Close Neo4j session
+
+        return res.status(200).json("Images uploaded successfully.");
+      }
+      return res.status(200).json("No files");
     } catch (error) {
       console.error("Image upload failed:", error);
       return res.status(400).json("Image upload failed.");
     }
   }
 );
+
+user_information_Router.get("/user/info", async function (req: any, res: any) {
+  console.log(req.session);
+  try {
+    const user = await req.session.user;
+    if (user) {
+      console.log(user.username, " -----------------------------the user who is logged in now");
+      const session = driver.session()
+      if(session)
+      {
+        // const res = await session.run('MATCH (n:User) WHERE n.username = $username  RETURN n',{username:user.username})
+        const res = await session.run('MATCH (n:User {username: $username})-[:onta_wla_dakar]->(g:Sex) RETURN n, g',{username:user.username})
+        
+        if(res)
+        {
+          console.log(res.records[0]._fields, " database res")
+        }
+        return  res.status(200).json("good");
+      }
+      return  res.status(400).json("problem occured");
+
+    }
+    return res.status(400).json("user not found");
+  } catch {
+    return res.status(401).json("not authorized to access this api");
+  }
+});
 
 export default user_information_Router;
 // tmpuser
