@@ -17,7 +17,11 @@ const user_information_Router = express.Router();
 //   }
 user_information_Router.post(
   "/user/information",
-  body("gender").notEmpty().withMessage("Gender cannot be empty"),
+  body("gender")
+    .notEmpty()
+    .withMessage("Gender cannot be empty")
+    .isIn(["male", "female"])
+    .withMessage("Gender must be 'male' or 'female'"),
   body("biography").notEmpty().withMessage("Biography cannot be empty"),
 
   async (req: any, res: any) => {
@@ -200,11 +204,15 @@ user_information_Router.get("/user/info", async function (req: any, res: any) {
       if (session) {
         // const res = await session.run('MATCH (n:User) WHERE n.username = $username  RETURN n',{username:user.username})
         const res_of_query = await session.run(
-          "MATCH (n:User {username: $username})-[:onta_wla_dakar]->(g:Sex) RETURN n, g",
+          "MATCH (n:User {username: $username})-[:onta_wla_dakar]->(g:Sex)  RETURN n, g",
+          { username: user.username }
+        );
+        const res_interest = await session.run(
+          "MATCH (n:User {username: $username})-[:has_this_interest]->(t:Tags)  RETURN  t",
           { username: user.username }
         );
 
-        if (res_of_query) {
+        if (res_of_query && res_interest) {
           `[
   Node {
     identity: Integer { low: 5, high: 0 },
@@ -231,25 +239,37 @@ user_information_Router.get("/user/info", async function (req: any, res: any) {
     properties: { gender: 'male' },
     elementId: '4:b4732734-2854-487c-93cc-b1c8f8f8c0b0:1'
   }
-]`;
+  ]`;
+          const tags_interest = res_interest.records;
+         let  i =0
+         let arr_= []
+          while(res_interest.records[i] != null)
+          {
+            console.log(res_interest.records[i]._fields[0].properties.interests , " (- -) \n")
+            arr_.push(res_interest.records[i]._fields[0].properties.interests )
+            i++
+          }
+          console.log(arr_, "  arr_   =============================================")
           const userNode = res_of_query.records[0]._fields[0].properties;
           const gender = res_of_query.records[0]._fields[1].properties.gender;
-          console.log(userNode, " --------- USER---------");
-          console.log(
-            gender,
-            " --------=========+++++ GENDER_---+++++========++++"
-          );
+          // console.log(userNode, " --------- USER---------");
+          // console.log(
+          //   gender,
+          //   " --------=========+++++ GENDER_---+++++========++++"
+          // );
           const return_data = {
-            "username":userNode.username,
-            "last_name":userNode.last_name,
-            "first_name:":userNode.first_name,
-            "email:":userNode.email,
-            "biography:":userNode.biography
+            "username": userNode.username,
+            "profile_picture": userNode.profile_picture,
+            "last_name": userNode.last_name,
+            "first_name:": userNode.first_name,
+            "email:": userNode.email,
+            "biography:": userNode.biography,
+            "gender": gender,
+            "tags":arr_
 
-          }
-          console.log(return_data, "--=---(- -)")
+          };
+          // console.log(return_data, "--=---(- -)");
           return res.status(200).json(return_data);
-
         }
         return res.status(200).json("good");
       }
