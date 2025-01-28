@@ -1,5 +1,6 @@
 import express, { Request, Response } from "express";
 import { imagekitUploader } from "./../app";
+import { Result } from "neo4j-driver";
 const { body, validationResult } = require("express-validator");
 const neo4j = require("neo4j-driver");
 const driver = neo4j.driver(
@@ -191,21 +192,68 @@ user_information_Router.get("/user/info", async function (req: any, res: any) {
   try {
     const user = await req.session.user;
     if (user) {
-      console.log(user.username, " -----------------------------the user who is logged in now");
-      const session = driver.session()
-      if(session)
-      {
+      console.log(
+        user.username,
+        " -----------------------------the user who is logged in now"
+      );
+      const session = driver.session();
+      if (session) {
         // const res = await session.run('MATCH (n:User) WHERE n.username = $username  RETURN n',{username:user.username})
-        const res = await session.run('MATCH (n:User {username: $username})-[:onta_wla_dakar]->(g:Sex) RETURN n, g',{username:user.username})
-        
-        if(res)
-        {
-          console.log(res.records[0]._fields, " database res")
-        }
-        return  res.status(200).json("good");
-      }
-      return  res.status(400).json("problem occured");
+        const res_of_query = await session.run(
+          "MATCH (n:User {username: $username})-[:onta_wla_dakar]->(g:Sex) RETURN n, g",
+          { username: user.username }
+        );
 
+        if (res_of_query) {
+          `[
+  Node {
+    identity: Integer { low: 5, high: 0 },
+    labels: [ 'User' ],
+    properties: {
+      password: '41e513e66b9de648e514026a4a0e311deaba162b0c7ca460cd',
+      verfication_token: '',
+      setup_done: true,
+      gender: '',
+      verified: true,
+      last_name: 'Tabiti',
+      profile_picture: 'https://ik.imagekit.io/efcyow6m0/pexels-padrinan-2249528_uwVtgak-2.jpg',
+      password_reset_token: '',
+      biography: 'sddddddddddddddddddddddddddddddddddddddd sd s sdfew3323233 ',
+      first_name: 'Anas',
+      email: '...',
+      username: 'atabiti'
+    },
+    elementId: '4:b4732734-2854-487c-93cc-b1c8f8f8c0b0:5'
+  },
+  Node {
+    identity: Integer { low: 1, high: 0 },
+    labels: [ 'Sex' ],
+    properties: { gender: 'male' },
+    elementId: '4:b4732734-2854-487c-93cc-b1c8f8f8c0b0:1'
+  }
+]`;
+          const userNode = res_of_query.records[0]._fields[0].properties;
+          const gender = res_of_query.records[0]._fields[1].properties.gender;
+          console.log(userNode, " --------- USER---------");
+          console.log(
+            gender,
+            " --------=========+++++ GENDER_---+++++========++++"
+          );
+          const return_data = {
+            "username":userNode.username,
+            "last_name":userNode.last_name,
+            "first_name:":userNode.first_name,
+            "email:":userNode.email,
+            "biography:":userNode.biography
+
+          }
+          console.log(return_data, "--=---(- -)")
+          return res.status(200).json(return_data);
+
+        }
+        return res.status(200).json("good");
+      }
+      return res.status(400).json("problem occured");
     }
     return res.status(400).json("user not found");
   } catch {
