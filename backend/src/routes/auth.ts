@@ -71,30 +71,8 @@ export async function authenticateToken(req:any, res:any, next:any) {
   })
 }
 
-// jwt.verify(token, process.env.JWT_TOKEN_SECRET as string, (err: any, user: any) => {
-//   if (err) {
-//     console.error('Token verification error:', err);
-//     return res.sendStatus(403);
-//   }
-  
-//   req.user = user;
-//   console.log('Authenticated user:', user, " -Middle_-w-->>>>>>>>>>>>>");
-//   next();
-// });
-// export function generateAccessToken(username: String) {
-//   if (username) {
-//     const token = jwt.sign({ userId: username }, process.env.JWT_TOKEN_SECRET, {
-//       expiresIn: "1h",
-//     });
-//     console.log(token, " token");
-//     return token;
-//   } else {
-//     console.log("error in generating jwt");
-//     return null;
-//   }
-// }
 
-// Function to generate access token
+
 export function generateAccessToken(user: User_jwt) {
   if (!user || !user.username) {
     console.error("Invalid user data for token generation");
@@ -133,37 +111,51 @@ authRouter.post("/login", async (req: any, res: Response) => {
     const session = driver.session();
     //get hashedPassword
     if (session) {
-      const hashedPassword = await session.run(
-        "MATCH (n:User) WHERE n.username = $username AND n.verified = true RETURN n.password",
+      const user_data = await session.run(
+        "MATCH (n:User) WHERE n.username = $username AND n.verified = true RETURN n",
         { username: req.body.username }
       );
 
-      const user_info = await session.run(
-        "MATCH (n:User) WHERE n.username = $username AND n.verified = true RETURN n.setup_done",
-        { username: req.body.username }
-      );
+     
 
-      // console.log(hashedPassword.records[0]._fields[0], " hashedPassword");
-      if (hashedPassword.records.length > 0) {
-        if (hashedPassword.records[0]._fields[0])
+      if (user_data.records.length > 0) {
+        console.log(user_data.records[0]._fields[0].properties ,  " user data")
+        const user =await user_data.records[0]._fields[0].properties 
+        if (user.password)
+          console.log(user.password   , "password is ")
           await bcrypt.compare(
             password,
-            hashedPassword.records[0]._fields[0],
+            user.password,
             async function (err: Error, result: any) {
               if (result) {
                 console.log("passwords match");
-                //login successful i must generate a token
                 console.log(req.body, "  login ------------");
                 const user_ = req.body.username;
                 if (user_) {
-                  req.session.user = {
-                    username: req.body.username,
-                    email: req.body.email,       
-                  };
 
-                  console.log(req.session.user, " session user");
-                  await req.session.save();
-                  if (  user_info.records[0]._fields[0]  == true) {
+                  const token = await generateAccessToken(user);
+                  if (!token) {
+                    console.error("Failed to generate authentication token");
+                    return res.status(401).json({ error: "Authentication failed" });
+                  }
+                  console.log(token, " [-JWT TOKEN-]");
+          
+                  res.cookie("jwt_token", token, {
+                    httpOnly: true,
+                    sameSite: "strict",
+                    maxAge: 3600000, // 1 hour in milliseconds
+                  });
+          
+
+                  
+                  // req.session.user = {
+                  //   username: req.body.username,
+                  //   email: req.body.email,       
+                  // };
+
+                  // console.log(req.session.user, " session user");
+                  // await req.session.save();
+                  if (  user.setup_done == true) {
                     return res.status(200).json("login successful");
                   } else {
                     return res.status(201).json("login successful");
@@ -176,7 +168,9 @@ authRouter.post("/login", async (req: any, res: Response) => {
               }
             }
           );
-      } else {
+      } 
+      
+      else {
         console.log("username does not exist");
         res.status(400).json("Username does not exist or Email not verified");
       }

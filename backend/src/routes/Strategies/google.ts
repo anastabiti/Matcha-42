@@ -220,13 +220,27 @@ passport.use(
         }
   
         try {
-          req.session.user = {
-            username: user.username,
-            email: user.email,
-            setup_done: user.setup_done,
-          };
-          console.log(req.session.user, " session user");
-         await req.session.save();
+        //   req.session.user = {
+        //     username: user.username,
+        //     email: user.email,
+        //     setup_done: user.setup_done,
+        //   };
+        //   console.log(req.session.user, " session user");
+        //  await req.session.save();
+
+        const token = await generateAccessToken(user);
+        if (!token) {
+          console.error("Failed to generate authentication token");
+          return res.status(401).json({ error: "Authentication failed" });
+        }
+        console.log(token, " [-JWT TOKEN-]");
+
+        res.cookie("jwt_token", token, {
+          httpOnly: true,
+          sameSite: "strict",
+          maxAge: 3600000, // 1 hour in milliseconds
+        });
+
           // return res.status(200).json("login successful");
           if ( user.setup_done == true) {
             return res.status(200).redirect("http://localhost:7070/home");
