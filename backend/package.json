@@ -15,6 +15,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/jsonwebtoken": "^9.0.8",
     "@types/passport-google-oauth20": "^2.0.16",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.3",
@@ -40,6 +41,7 @@
     "password-validator": "^5.3.0"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/express-session": "^1.18.1",

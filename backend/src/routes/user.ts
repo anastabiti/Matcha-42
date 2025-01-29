@@ -1,23 +1,24 @@
-import express, { Request, Response } from "express";
+import express from "express";
+import { body, validationResult } from "express-validator";
+import neo4j from "neo4j-driver";
 import { imagekitUploader } from "./../app";
-import { Result } from "neo4j-driver";
-import { authenticateToken } from "./auth";
-const { body, validationResult } = require("express-validator");
-const neo4j = require("neo4j-driver");
+import {
+  authenticateToken,
+  authenticateToken_Middleware,
+  generateAccessToken,
+} from "./auth";
+
+const user_information_Router = express.Router();
 const driver = neo4j.driver(
   "neo4j://localhost:7687",
-  neo4j.auth.basic(process.env.database_username, process.env.database_password)
+  neo4j.auth.basic(
+    process.env.database_username as string,
+    process.env.database_password as string
+  )
 );
-const user_information_Router = express.Router();
-
-// {
-//     gender: 'Homosexual',
-//     sexual_preferences: '',
-//     biography: 'wewewe',
-//     interests: [ 'Photography', 'Shopping', 'Tennis', 'Art' ]
-//   }
 user_information_Router.post(
   "/user/information",
+  authenticateToken_Middleware,
   body("gender")
     .notEmpty()
     .withMessage("Gender cannot be empty")
@@ -27,95 +28,110 @@ user_information_Router.post(
 
   async (req: any, res: any) => {
     const errors = validationResult(req);
-    if (!errors.isEmpty())
+    if (!errors.isEmpty()) {
+      console.log(errors, " errors 13->>>.");
       return res.status(400).json("Please! complete all fields");
+    }
+    console.log("------------------------------=-------=-=-=-[123]");
+    // const _user = authenticateToken(req);
+    let _user = req.user;
+    if (!_user) {
+      console.log("User authentication failed");
+      return res.status(401).json("UNAUTHORIZED");
+    }
 
-    const _user = await req.session.user;
-    if (!_user) return res.status(401).json("Unauthorized");
-    else {
-      console.log("------------------------------------------------------");
-      console.log(_user, " 1");
-      console.log("------------------------------------------------------");
-      console.log(req.body.interests, " 2");
-      console.log("------------------------------------------------------");
-      console.log(req.body.gender, "3");
-      console.log("------------------------------------------------------");
-
-      if (_user.username) {
-        console.log(_user.setup_done, " req.session.setup_done");
-        if (_user.setup_done == true) {
-          return res.status(400).json("Already done");
-        }
-        const session = driver.session();
-        if (session) {
-          if (await req.body.interests) {
-            for (const interest of req.body.interests) {
-              await session.run(
-                `MATCH (u:User {username: $username})
+    console.log(_user, " ==================+++++++++++++++++++++101010");
+    if (_user.username) {
+      console.log(_user.setup_done, " user.setup_done");
+      if (_user.setup_done == true) {
+        return res.status(400).json("Already done");
+      }
+      const session = driver.session();
+      if (session) {
+        if (await req.body.interests) {
+          for (const interest of req.body.interests) {
+            await session.run(
+              `MATCH (u:User {username: $username})
                 MERGE (t:Tags {interests: $interests})
                 MERGE (u)-[:has_this_interest]->(t)`,
-                {
-                  username: req.session.user.username,
-                  interests: interest,
-                }
-              );
-            }
-          }
-          console.log(_user.username, " _user.username--=-=-==--=");
-          if (await req.body.biography) {
-            // "MATCH (n:User) WHERE n.username = $username AND n.verified = true RETURN n.password",
-            console.log(
-              typeof {
-                _username: _user.username,
-                biography: req.body.biography,
+              {
+                username: _user.username,
+                interests: interest,
               }
             );
+          }
+        }
+        console.log(_user.username, " _user.username--=-=-==--=");
+        if (await req.body.biography) {
+          // "MATCH (n:User) WHERE n.username = $username AND n.verified = true RETURN n.password",
+          console.log(
+            typeof {
+              _username: _user.username,
+              biography: req.body.biography,
+            }
+          );
 
-            await session.run(
-              `MATCH (n:User) WHERE n.username = $username
+          await session.run(
+            `MATCH (n:User) WHERE n.username = $username
                         SET n.biography = $biography
                         SET n.setup_done = true
                         RETURN n.username
               `,
-              { username: _user.username, biography: req.body.biography }
-            );
-          }
-          if (await req.body.gender) {
-            //delete old gender
-            await session.run(
-              `MATCH (u:User {username: $username})-[r:onta_wla_dakar]->(g:Sex)
+            { username: _user.username, biography: req.body.biography }
+          );
+        }
+        if (await req.body.gender) {
+          //delete old gender
+          await session.run(
+            `MATCH (u:User {username: $username})-[r:onta_wla_dakar]->(g:Sex)
               DELETE r`,
-              { username: _user.username }
-            );
+            { username: _user.username }
+          );
 
-            await session.run(
-              `MATCH (U:User) WHERE U.username = $username
+          await session.run(
+            `MATCH (U:User) WHERE U.username = $username
               MATCH (G:Sex) WHERE G.gender = $gender
               MERGE (U)-[:onta_wla_dakar]->(G)
 
     `,
 
-              { username: _user.username, gender: await req.body.gender }
-            );
-          }
+            { username: _user.username, gender: await req.body.gender }
+          );
         }
-
-        await session.close();
-        req.session.user.setup_done = true;
-        await req.session.save();
-
-        return res.status(200).json("User information route");
       }
+      console.log("llllllllllllllllllllllllllll");
+      await session.close();
+      // req.session.user.setup_done = true;
+      // await req.session.save();
+
+      _user.setup_done = true;
+      console.log("22222222222222222222222");
+
+      const token = await generateAccessToken(_user);
+      if (!token) {
+        console.error("Failed to generate authentication token");
+        return res.status(401).json({ error: "Authentication failed" });
+      }
+      console.log("4444444444444444444444444");
+
+      res.cookie("jwt_token", token, {
+        httpOnly: true,
+        sameSite: "strict",
+        maxAge: 3600000, // 1 hour in milliseconds
+      });
+      console.log("5555555555555555555555");
+
+      return res.status(200).json("User information route");
     }
-    return res.status(401).json("Unauthorized");
+    return res.status(401).json("UNAUTHORIZED");
   }
-  //   }
 );
 
-// --------------------------------------
+// // --------------------------------------
 
 user_information_Router.post(
   "/user/settings",
+  authenticateToken_Middleware,
   body("gender")
     .notEmpty()
     .withMessage("Gender cannot be empty")
@@ -128,106 +144,105 @@ user_information_Router.post(
     if (!errors.isEmpty())
       return res.status(400).json("Please! complete all fields");
 
-    const _user = await req.session.user;
-    if (!_user) return res.status(401).json("Unauthorized");
-    else {
-      console.log("------------------------------------------------------");
-      console.log(_user, " 1");
-      console.log("------------------------------------------------------");
-      console.log(req.body.interests, " 2");
-      console.log("------------------------------------------------------");
-      console.log(req.body.gender, "3");
-      console.log("------------------------------------------------------");
+    const _user = req.user;
+    console.log("------------------------------------------------------");
+    console.log(_user, " 1");
+    console.log("------------------------------------------------------");
+    console.log(req.body.interests, " 2");
+    console.log("------------------------------------------------------");
+    console.log(req.body.gender, "3");
+    console.log("------------------------------------------------------");
 
-      if (_user.username) {
-        console.log(_user.setup_done, " req.session.setup_done");
-        if (_user.setup_done == true) {
-          return res.status(400).json("Already done");
-        }
-        const session = driver.session();
-        if (session) {
-          if (await req.body.interests) {
-            for (const interest of req.body.interests) {
-              await session.run(
-                `MATCH (u:User {username: $username})
+    if (_user.username) {
+      console.log(_user.setup_done, " req.session.setup_done");
+      if (_user.setup_done == true) {
+        return res.status(400).json("Already done");
+      }
+      const session = driver.session();
+      if (session) {
+        if (await req.body.interests) {
+          for (const interest of req.body.interests) {
+            await session.run(
+              `MATCH (u:User {username: $username})
                 MERGE (t:Tags {interests: $interests})
                 MERGE (u)-[:has_this_interest]->(t)`,
-                {
-                  username: req.session.user.username,
-                  interests: interest,
-                }
-              );
-            }
-          }
-          console.log(_user.username, " _user.username--=-=-==--=");
-          if (await req.body.biography) {
-            // "MATCH (n:User) WHERE n.username = $username AND n.verified = true RETURN n.password",
-            console.log(
-              typeof {
-                _username: _user.username,
-                biography: req.body.biography,
+              {
+                username: req.session.user.username,
+                interests: interest,
               }
             );
+          }
+        }
+        console.log(_user.username, " _user.username--=-=-==--=");
+        if (await req.body.biography) {
+          // "MATCH (n:User) WHERE n.username = $username AND n.verified = true RETURN n.password",
+          console.log(
+            typeof {
+              _username: _user.username,
+              biography: req.body.biography,
+            }
+          );
 
-            await session.run(
-              `MATCH (n:User) WHERE n.username = $username
+          await session.run(
+            `MATCH (n:User) WHERE n.username = $username
                         SET n.biography = $biography
                         SET n.setup_done = true
                         RETURN n.username
               `,
-              { username: _user.username, biography: req.body.biography }
-            );
-          }
-          if (await req.body.gender) {
-            //delete old gender
-            await session.run(
-              `MATCH (u:User {username: $username})-[r:onta_wla_dakar]->(g:Sex)
+            { username: _user.username, biography: req.body.biography }
+          );
+        }
+        if (await req.body.gender) {
+          //delete old gender
+          await session.run(
+            `MATCH (u:User {username: $username})-[r:onta_wla_dakar]->(g:Sex)
               DELETE r`,
-              { username: _user.username }
-            );
+            { username: _user.username }
+          );
 
-            await session.run(
-              `MATCH (U:User) WHERE U.username = $username
+          await session.run(
+            `MATCH (U:User) WHERE U.username = $username
               MATCH (G:Sex) WHERE G.gender = $gender
               MERGE (U)-[:onta_wla_dakar]->(G)
 
     `,
 
-              { username: _user.username, gender: await req.body.gender }
-            );
-          }
+            { username: _user.username, gender: await req.body.gender }
+          );
         }
-
-        await session.close();
-        req.session.user.setup_done = true;
-        await req.session.save();
-
-        return res.status(200).json("User information route");
       }
+
+      await session.close();
+      req.session.user.setup_done = true;
+      await req.session.save();
+
+      return res.status(200).json("User information route");
     }
+
     return res.status(401).json("Unauthorized");
   }
   //   }
 );
 
-//----------------------------------------
+// //----------------------------------------
 
-user_information_Router.get(
-  "/user/is_auth",authenticateToken,
-  async function (req: any, res: any) {
-    // console.log(await req.session.user);
-    // console.log(await req.session, " session");
-    console.log(req.user)
-    return res.status(200).json("f");
-  }
-);
+// user_information_Router.get(
+//   "/user/is_auth",
+//   // authenticateToken,
+//   async function (req: any, res: any) {
+//     // console.log(await req.session.user);
+//     // console.log(await req.session, " session");
+//     console.log(req.user);
+//     return res.status(200).json("f");
+//   }
+// );
 
 user_information_Router.post(
   "/user/upload",
+  authenticateToken_Middleware,
   async function (req: any, res: any) {
     // try {
-    const _user = req.session.user;
-    if (!_user) return res.status(401).json("Unauthorized");
+    const _user = req.user;
     try {
       const files = await req.files; // Access all uploaded files
 
@@ -292,29 +307,31 @@ user_information_Router.post(
   }
 );
 
-user_information_Router.get("/user/info", async function (req: any, res: any) {
-  console.log(req.session);
-  try {
-    const user = await req.session.user;
-    if (user) {
-      console.log(
-        user.username,
-        " -----------------------------the user who is logged in now"
-      );
-      const session = driver.session();
-      if (session) {
-        // const res = await session.run('MATCH (n:User) WHERE n.username = $username  RETURN n',{username:user.username})
-        const res_of_query = await session.run(
-          "MATCH (n:User {username: $username})-[:onta_wla_dakar]->(g:Sex)  RETURN n, g",
-          { username: user.username }
+user_information_Router.get(
+  "/user/info",
+  authenticateToken_Middleware,
+  async function (req: any, res: any) {
+    try {
+      const user = req.user;
+      if (user) {
+        console.log(
+          user.username,
+          " -----------------------------the user who is logged in now"
         );
-        const res_interest = await session.run(
-          "MATCH (n:User {username: $username})-[:has_this_interest]->(t:Tags)  RETURN  t",
-          { username: user.username }
-        );
+        const session = driver.session();
+        if (session) {
+          // const res = await session.run('MATCH (n:User) WHERE n.username = $username  RETURN n',{username:user.username})
+          const res_of_query = await session.run(
+            "MATCH (n:User {username: $username})-[:onta_wla_dakar]->(g:Sex)  RETURN n, g",
+            { username: user.username }
+          );
+          const res_interest = await session.run(
+            "MATCH (n:User {username: $username})-[:has_this_interest]->(t:Tags)  RETURN  t",
+            { username: user.username }
+          );
 
-        if (res_of_query && res_interest) {
-          `[
+          if (res_of_query && res_interest) {
+            `[
   Node {
     identity: Integer { low: 5, high: 0 },
     labels: [ 'User' ],
@@ -341,46 +358,57 @@ user_information_Router.get("/user/info", async function (req: any, res: any) {
     elementId: '4:b4732734-2854-487c-93cc-b1c8f8f8c0b0:1'
   }
   ]`;
-          const tags_interest = res_interest.records;
-         let  i =0
-         let arr_= []
-          while(res_interest.records[i] != null)
-          {
-            console.log(res_interest.records[i]._fields[0].properties.interests , " (- -) \n")
-            arr_.push(res_interest.records[i]._fields[0].properties.interests )
-            i++
-          }
-          console.log(arr_, "  arr_   =============================================")
-          const userNode = res_of_query.records[0]._fields[0].properties;
-          const gender = res_of_query.records[0]._fields[1].properties.gender;
-          // console.log(userNode, " --------- USER---------");
-          // console.log(
-          //   gender,
-          //   " --------=========+++++ GENDER_---+++++========++++"
-          // );
-          const return_data = {
-            "username": userNode.username,
-            "profile_picture": userNode.profile_picture,
-            "last_name": userNode.last_name,
-            "first_name:": userNode.first_name,
-            "email:": userNode.email,
-            "biography:": userNode.biography,
-            "gender": gender,
-            "tags":arr_
+            const tags_interest = res_interest.records;
+            let i = 0;
+            let arr_ = [];
+            while (res_interest.records[i] != null) {
+              console.log(
+                // res_interest.records[i]._fields[0].properties.interests,
+                res_interest.records[i].get(0).properties.interests,
 
-          };
-          // console.log(return_data, "--=---(- -)");
-          return res.status(200).json(return_data);
+                " (- -) \n"
+              );
+              arr_.push(res_interest.records[i].get(0).properties.interests);
+              // arr_.push(res_interest.records[i]._fields[0].properties.interests);
+              i++;
+            }
+            console.log(
+              arr_,
+              "  arr_   ============================================="
+            );
+            const userNode = res_of_query.records[0].get(0).properties;
+            const gender = res_of_query.records[0].get(1).properties.gender;
+            // console.log(userNode, " --------- USER---------");
+            // const userNode = res_of_query.records[0]._fields[0].properties;
+            // const gender = res_of_query.records[0]._fields[1].properties.gender;
+            // console.log(userNode, " --------- USER---------");
+            // console.log(
+            //   gender,
+            //   " --------=========+++++ GENDER_---+++++========++++"
+            // );
+            const return_data = {
+              username: userNode.username,
+              profile_picture: userNode.profile_picture,
+              last_name: userNode.last_name,
+              "first_name:": userNode.first_name,
+              "email:": userNode.email,
+              "biography:": userNode.biography,
+              gender: gender,
+              tags: arr_,
+            };
+            // console.log(return_data, "--=---(- -)");
+            return res.status(200).json(return_data);
+          }
+          return res.status(200).json("good");
         }
-        return res.status(200).json("good");
+        return res.status(400).json("problem occured");
       }
-      return res.status(400).json("problem occured");
+      return res.status(400).json("user not found");
+    } catch {
+      return res.status(401).json("not authorized to access this api");
     }
-    return res.status(400).json("user not found");
-  } catch {
-    return res.status(401).json("not authorized to access this api");
   }
-});
+);
 
 export default user_information_Router;
 // tmpuser

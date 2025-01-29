@@ -24,13 +24,13 @@ export type User = {
   verified: boolean;
   gender: string;
   biography: string;
-  profile_picture:string
-  setup_done:boolean
-  verfication_token:string
-  pic_1:string
-  pic_2:string
-  pic_3:string
-  pic_4:string
+  profile_picture: string;
+  setup_done: boolean;
+  verfication_token: string;
+  pic_1: string;
+  pic_2: string;
+  pic_3: string;
+  pic_4: string;
 };
 
 interface User_jwt {
@@ -49,30 +49,76 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+export  function authenticateToken(req: any) {
+  try {
+    if(!req)
+      return null
+    console.log(req.headers["cookie"], " ---> 1\n");
 
-
-
-export async function authenticateToken(req:any, res:any, next:any) {
-  const authHeader = await req.headers['authorization']
-  console.log(await req.headers['cookie'] , ' ---> cookie')
-  const full_token = await req.headers['cookie']
-  const jwt_only = full_token.split("=")
-  console.log(jwt_only , "----jwt_only")
-  if (jwt_only[1] == null) return res.sendStatus(401)
-
-  await jwt.verify(jwt_only[1], process.env.JWT_TOKEN_SECRET as string, (err: any, user: any) => {
-    console.log(err)
-
-    if (err) return res.sendStatus(403)
-
-    req.user = user
-    console.log(user ," -Middle_-w-->>>>>>>>>>>>>")
-    next()
-  })
+    let token = null;
+    const cookies = req.headers.cookie?.split(";") || [];
+    for (let cookie of cookies) {
+      if (cookie.trim().startsWith("jwt_token=")) {
+        token = cookie.split("=")[1];
+        break;
+      }
+    }
+    console.log(token, " ---- token");
+    if (token != null) {
+      const res =  jwt.verify(
+        token,
+        process.env.JWT_TOKEN_SECRET as string
+      );
+      if (res)
+        return res;
+      else
+        return null;
+    } else return null;
+  } catch {
+    return null;
+  }
 }
+// -----------------------------------------------
+export const authenticateToken_Middleware = async (
+  req: any,
+  res: any,
+  next: any
+) => {
+  try {
+    console.log(req.headers["cookie"], " ---> 1\n");
+    console.log("inside middelware---------------------------")
+    let token = null;
+    const cookies = req.headers.cookie?.split(";") || [];
+    for (let cookie of cookies) {
+      if (cookie.trim().startsWith("jwt_token=")) {
+        token = cookie.split("=")[1];
+        break;
+      }
+    }
 
+    console.log(token, " ---- token");
 
+    if (!token) {
+      return res.status(401).json("No token provided" );
+    }
 
+    try {
+      const decoded = await jwt.verify(
+        token,
+        process.env.JWT_TOKEN_SECRET as string
+      );
+      
+      // Attach the decoded user to the request object
+      req.user = decoded;
+      next();
+    } catch (err) {
+      return res.status(403).json( "Invalid token");
+    }
+  } catch (error) {
+    return res.status(401).json("error");
+  }
+};
+// --------------------------------------------------
 export function generateAccessToken(user: User_jwt) {
   if (!user || !user.username) {
     console.error("Invalid user data for token generation");
@@ -84,11 +130,11 @@ export function generateAccessToken(user: User_jwt) {
       {
         username: user.username,
         email: user.email,
-        setup_done: user.setup_done
+        setup_done: user.setup_done,
       },
       process.env.JWT_TOKEN_SECRET,
       {
-        expiresIn: "1h"
+        expiresIn: "1h",
       }
     );
     console.log("Generated token:", token);
@@ -116,61 +162,55 @@ authRouter.post("/login", async (req: any, res: Response) => {
         { username: req.body.username }
       );
 
-     
-
       if (user_data.records.length > 0) {
-        console.log(user_data.records[0]._fields[0].properties ,  " user data")
-        const user =await user_data.records[0]._fields[0].properties 
-        if (user.password)
-          console.log(user.password   , "password is ")
-          await bcrypt.compare(
-            password,
-            user.password,
-            async function (err: Error, result: any) {
-              if (result) {
-                console.log("passwords match");
-                console.log(req.body, "  login ------------");
-                const user_ = req.body.username;
-                if (user_) {
-
-                  const token = await generateAccessToken(user);
-                  if (!token) {
-                    console.error("Failed to generate authentication token");
-                    return res.status(401).json({ error: "Authentication failed" });
-                  }
-                  console.log(token, " [-JWT TOKEN-]");
-          
-                  res.cookie("jwt_token", token, {
-                    httpOnly: true,
-                    sameSite: "strict",
-                    maxAge: 3600000, // 1 hour in milliseconds
-                  });
-          
-
-                  
-                  // req.session.user = {
-                  //   username: req.body.username,
-                  //   email: req.body.email,       
-                  // };
-
-                  // console.log(req.session.user, " session user");
-                  // await req.session.save();
-                  if (  user.setup_done == true) {
-                    return res.status(200).json("login successful");
-                  } else {
-                    return res.status(201).json("login successful");
-                  }
-                  // return res.status(200).json("login successful");
+        console.log(user_data.records[0]._fields[0].properties, " user data");
+        const user = await user_data.records[0]._fields[0].properties;
+        if (user.password) console.log(user.password, "password is ");
+        await bcrypt.compare(
+          password,
+          user.password,
+          async function (err: Error, result: any) {
+            if (result) {
+              console.log("passwords match");
+              console.log(req.body, "  login ------------");
+              const user_ = req.body.username;
+              if (user_) {
+                const token = await generateAccessToken(user);
+                if (!token) {
+                  console.error("Failed to generate authentication token");
+                  return res
+                    .status(401)
+                    .json({ error: "Authentication failed" });
                 }
-              } else {
-                console.log("passwords do not match");
-                res.status(400).json("passwords do not match");
+                console.log(token, " [-JWT TOKEN-]");
+
+                res.cookie("jwt_token", token, {
+                  httpOnly: true,
+                  sameSite: "strict",
+                  maxAge: 3600000, // 1 hour in milliseconds
+                });
+
+                // req.session.user = {
+                //   username: req.body.username,
+                //   email: req.body.email,
+                // };
+
+                // console.log(req.session.user, " session user");
+                // await req.session.save();
+                if (user.setup_done == true) {
+                  return res.status(200).json("login successful");
+                } else {
+                  return res.status(201).json("login successful");
+                }
+                // return res.status(200).json("login successful");
               }
+            } else {
+              console.log("passwords do not match");
+              res.status(400).json("passwords do not match");
             }
-          );
-      } 
-      
-      else {
+          }
+        );
+      } else {
         console.log("username does not exist");
         res.status(400).json("Username does not exist or Email not verified");
       }

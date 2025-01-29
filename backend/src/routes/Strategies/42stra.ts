@@ -186,7 +186,7 @@ forty_two_str.get("/auth/intra42/callback", function (req: any, res: Response) {
         // };
         // await req.session.save();
 
-        const token = await generateAccessToken(user);
+        const token =  generateAccessToken(user);
         if (!token) {
           console.error("Failed to generate authentication token");
           return res.status(401).json({ error: "Authentication failed" });

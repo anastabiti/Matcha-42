@@ -26,7 +26,6 @@ app.use(fileUpload({limites:{
   fileSize: 10000000 //byte, // Around 10MB
 }})); // Use the express-fileupload middleware
 
-
 driver.verifyConnectivity()
   .then(() => {
     console.log('Successfully connected to Neo4j');
