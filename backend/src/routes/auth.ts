@@ -33,6 +33,11 @@ export type User = {
   pic_4:string
 };
 
+interface User_jwt {
+  username: string;
+  email: string;
+  setup_done: boolean;
+}
 const transporter = nodemailer.createTransport({
   service: "Gmail",
   host: "smtp.gmail.com",
@@ -44,15 +49,74 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export function generateAccessToken(username: String) {
-  if (username) {
-    const token = jwt.sign({ userId: username }, process.env.JWT_TOKEN_SECRET, {
-      expiresIn: "1h",
-    });
-    console.log(token, " token");
+
+
+
+export async function authenticateToken(req:any, res:any, next:any) {
+  const authHeader = await req.headers['authorization']
+  console.log(await req.headers['cookie'] , ' ---> cookie')
+  const full_token = await req.headers['cookie']
+  const jwt_only = full_token.split("=")
+  console.log(jwt_only , "----jwt_only")
+  if (jwt_only[1] == null) return res.sendStatus(401)
+
+  await jwt.verify(jwt_only[1], process.env.JWT_TOKEN_SECRET as string, (err: any, user: any) => {
+    console.log(err)
+
+    if (err) return res.sendStatus(403)
+
+    req.user = user
+    console.log(user ," -Middle_-w-->>>>>>>>>>>>>")
+    next()
+  })
+}
+
+// jwt.verify(token, process.env.JWT_TOKEN_SECRET as string, (err: any, user: any) => {
+//   if (err) {
+//     console.error('Token verification error:', err);
+//     return res.sendStatus(403);
+//   }
+  
+//   req.user = user;
+//   console.log('Authenticated user:', user, " -Middle_-w-->>>>>>>>>>>>>");
+//   next();
+// });
+// export function generateAccessToken(username: String) {
+//   if (username) {
+//     const token = jwt.sign({ userId: username }, process.env.JWT_TOKEN_SECRET, {
+//       expiresIn: "1h",
+//     });
+//     console.log(token, " token");
+//     return token;
+//   } else {
+//     console.log("error in generating jwt");
+//     return null;
+//   }
+// }
+
+// Function to generate access token
+export function generateAccessToken(user: User_jwt) {
+  if (!user || !user.username) {
+    console.error("Invalid user data for token generation");
+    return null;
+  }
+
+  try {
+    const token = jwt.sign(
+      {
+        username: user.username,
+        email: user.email,
+        setup_done: user.setup_done
+      },
+      process.env.JWT_TOKEN_SECRET,
+      {
+        expiresIn: "1h"
+      }
+    );
+    console.log("Generated token:", token);
     return token;
-  } else {
-    console.log("error in generating jwt");
+  } catch (error) {
+    console.error("Error generating JWT:", error);
     return null;
   }
 }

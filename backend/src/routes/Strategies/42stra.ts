@@ -129,7 +129,7 @@ passport.use(
                 }
               );
               // console.log("user does not exist");
-              const new_user = result_ .records[0]?.get("user");
+              const new_user = result_.records[0]?.get("user");
               await new_session.close();
               return cb(null, new_user);
             }
@@ -148,7 +148,7 @@ forty_two_str.get("/auth/intra42", passport.authenticate("42"));
 forty_two_str.get("/auth/intra42/callback", function (req: any, res: Response) {
   passport.authenticate(
     "42",
-    // { session: false },
+    { session: false },
     async function (err: any, user: User, info: any) {
       try {
         if (err) {
@@ -169,24 +169,52 @@ forty_two_str.get("/auth/intra42/callback", function (req: any, res: Response) {
         //   --------------------------------"
         // );
 
-        console.log(" user ------------- ", user);
+        console.log("_---------------------------_____------_____ ", user);
+        `
+         first_name: 'Anas',
+        username: 'atabiti',
+        setup_done: true,
+        email: 'atabiti@student.1337.ma',
+        verified: true,
+        last_name: 'Tabiti'
 
-        req.session.user = {
-          username: user.username,
-          email: user.email,
-          setup_done: user.setup_done,
-        };
-        await req.session.save();
-        if (!req.session.user) {
-          console.error("Session not saved properly");
-          return res.status(402).json("Session error");
+  `;
+        // req.session.user = {
+        //   username: user.username,
+        //   email: user.email,
+        //   setup_done: user.setup_done,
+        // };
+        // await req.session.save();
+
+        const token = await generateAccessToken(user);
+        if (!token) {
+          console.error("Failed to generate authentication token");
+          return res.status(401).json({ error: "Authentication failed" });
         }
+        console.log(token, " [-JWT TOKEN-]");
 
-        if (user.setup_done == true) {
+        res.cookie("jwt_token", token, {
+          httpOnly: true,
+          sameSite: "strict",
+          maxAge: 3600000, // 1 hour in milliseconds
+        });
+
+        
+        if (user.setup_done) {
           return res.status(200).redirect("http://localhost:7070/home");
         } else {
           return res.status(200).redirect("http://localhost:7070/setup");
         }
+        // if (!req.session.user) {
+        //   console.error("Session not saved properly");
+        //   return res.status(402).json("Session error");
+        // }
+
+        // if (user.setup_done == true) {
+        //   return res.status(200).redirect("http://localhost:7070/home");
+        // } else {
+        //   return res.status(200).redirect("http://localhost:7070/setup");
+        // }
         // res.status(200).json("login successful");
       } catch (tokenError) {
         console.error("Error generating token:", tokenError);

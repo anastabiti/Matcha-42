@@ -1,7 +1,7 @@
 import express, { Application, Request, Response } from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
-import session from "express-session";
+// import session from "express-session";
 import passport from "passport";
 import registrationRouter from "./routes/registration";
 import authRouter from "./routes/auth";
@@ -20,26 +20,12 @@ const driver = neo4j.driver(
   "neo4j://localhost:7687",
   neo4j.auth.basic(process.env.database_username, process.env.database_password)
 );
-let Neo4jStore = require("connect-neo4j")(session);
+// const Neo4jStore = require("connect-neo4j")(session);
 
 app.use(fileUpload({limites:{
   fileSize: 10000000 //byte, // Around 10MB
 }})); // Use the express-fileupload middleware
 
-// app.use(
-//   session({
-//     store: new Neo4jStore({ client: driver }),
-//     secret: process.env.session_secret as string,
-//     resave: false,
-//     saveUninitialized: false, //to avoid storing all sessions even not looged in users
-//     cookie: {
-//       // secure: true,
-//       // httpOnly: false, // Prevent JavaScript access to cookies
-//       sameSite: "lax", // Ensures cookies are sent with requests from the same site
-//       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-//     },
-//   })
-// );
 
 driver.verifyConnectivity()
   .then(() => {
@@ -49,25 +35,21 @@ driver.verifyConnectivity()
     console.error('Neo4j connection error:', error);
   });
 
-app.use(
-  session({
-    store: new Neo4jStore({ 
-      client: driver,
-      ttl: 86400,
-      debug: true,
-      prefix: 'sess:',
-    }),
-    secret: process.env.session_secret as string,
-    resave: true,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      sameSite: "lax",
-      maxAge: 24 * 60 * 60 * 1000,
-    },
-    name: 'sessionId'
-  })
-);
+// app.use(
+//   session({
+//     store: new Neo4jStore({ 
+//       client: driver,
+//       ttl: 86400,
+//       debug: true,
+//     }),
+//     secret: process.env.session_secret as string,
+//     resave: true,
+//     saveUninitialized: false,
+//     cookie: {
+//       maxAge: 24 * 60 * 60 * 1000,
+//     },
+//   })
+// );
 
 
 

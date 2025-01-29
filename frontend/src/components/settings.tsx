@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Button from "@mui/material/Button";
 import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
@@ -10,494 +10,359 @@ import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { TextField } from "@mui/material";
 import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 import { useNavigate } from "react-router-dom";
+
 interface FormData {
-  last_name:string
-  first_name:string
-  email:string
+  last_name: string;
+  first_name: string;
+  email: string;
   gender: string;
   biography: string;
   interests: string[];
-
 }
 
-type FormFields = "gender" | "biography" | "interests" | "last_name" | "first_name";
+interface UserInfo {
+  username: string;
+  profile_picture: string;
+  last_name: string;
+  "first_name:": string;
+  "email:": string;
+  "biography:": string;
+  pic_1: string | null;
+  pic_2: string | null;
+  pic_3: string | null;
+  pic_4: string | null;
+  gender: string;
+  tags: string[];
+}
+
+type FormFields = "gender" | "biography" | "interests" | "last_name" | "first_name" | "email";
 
 function Settings() {
-  // Initial interests list
-  const defaultInterests:string[] = [
-    "#Photography",
-    "#Shopping",
-    "#Karaoke",
-    "#Yoga",
-    "#Cooking",
-    "#Tennis",
-    "#Art",
-    "#Traveling",
-    "#Music",
-    "#Video games",
-    "#Swimming",
-    "#Running",
+  const defaultInterests = [
+    "#Photography", "#Shopping", "#Karaoke", "#Yoga", "#Cooking",
+    "#Tennis", "#Art", "#Traveling", "#Music", "#Video games",
+    "#Swimming", "#Running",
   ];
 
-  // State declarations
-  const [availableInterests, setAvailableInterests] =
-    useState(defaultInterests);
+  const [availableInterests, setAvailableInterests] = useState(defaultInterests);
   const [new_interest, setNewInterest] = useState("");
- const [formData, setFormData] = useState<FormData>({
-  last_name:"",
-  first_name:"",
-  email:"",
+  const [formData, setFormData] = useState<FormData>({
+    last_name: "",
+    first_name: "",
+    email: "",
     gender: "",
     biography: "",
     interests: [],
   });
 
   const navigate = useNavigate();
-
-  const [images_url, setimages_url] = useState(Array(5).fill(null));
-  const [images_FILES, setImages_file] = useState(Array(5).fill(null));
-
+  const [images_url, setimages_url] = useState<(string | null)[]>(Array(5).fill(null));
+  const [images_FILES, setImages_file] = useState<(File | null)[]>(Array(5).fill(null));
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Function to handle toggling interests
-  function toggleInterest(interest: string) {
-    function updateInterests(prevFormData: FormData): FormData {
-      // Check if interest already exists
-      const interestExists = prevFormData.interests.includes(interest);
-      let updatedInterests: string[];
-
-      if (interestExists) {
-        // Remove interest if it exists
-        updatedInterests = prevFormData.interests.filter(function (item:string) {
-          return item !== interest;
+  // Fetch user data on component mount
+  useEffect(function() {
+    async function fetchUserInfo() {
+      try {
+        const response = await fetch("http://localhost:3000/api/user/info", {
+          credentials: "include",
         });
-      } else {
-        // Add interest if it doesn't exist
-        updatedInterests = [...prevFormData.interests, interest];
+        const data: UserInfo = await response.json();
+        console.log(data.tags , "        data.tags ")
+        setFormData({
+          last_name: data.last_name || "",
+          first_name: data["first_name:"] || "",
+          email: data["email:"] || "",
+          gender: data.gender || "",
+          biography: data["biography:"] || "",
+          interests: data.tags || [],
+        });
+        if(data.tags)
+        {
+          setAvailableInterests([])
+          setAvailableInterests(data.tags)
+        }
+
+        setimages_url([
+          data.profile_picture || null,
+          data.pic_1 || null,
+          data.pic_2 || null,
+          data.pic_3 || null,
+          data.pic_4 || null,
+        ]);
+      } catch (error) {
+        console.error("Error fetching user info:", error);
+        setError("Failed to load user information");
       }
+    }
+
+    fetchUserInfo();
+  }, []);
+
+  function toggleInterest(interest: string) {
+    setFormData(function(prevFormData) {
+      const interestExists = prevFormData.interests.includes(interest);
+      const updatedInterests = interestExists
+        ? prevFormData.interests.filter(function(item) { return item !== interest; })
+        : [...prevFormData.interests, interest];
 
       return {
         ...prevFormData,
         interests: updatedInterests,
       };
-    }
-
-    setFormData(updateInterests);
+    });
   }
 
-  // Function to clear all interests
-  function clearInterest():void {
-    function updateFormData(prevFormData:FormData): FormData {
+  function clearInterest() {
+    setFormData(function(prevFormData) {
       return {
         ...prevFormData,
         interests: [],
       };
-    }
-    setFormData(updateFormData);
+    });
   }
 
-  // Function to handle input change for new interest
-  function handleNewInterestChange(event:React.ChangeEvent<HTMLInputElement>):void {
+  function handleNewInterestChange(event: React.ChangeEvent<HTMLInputElement>) {
     setNewInterest(event.target.value);
   }
 
-  // Function to add new interest
-  function addNewInterest(event: React.FormEvent):void {
+  function addNewInterest(event: React.FormEvent) {
     event.preventDefault();
 
-    if (!new_interest || !new_interest.trim()) {
-      return;
-    }
+    if (!new_interest.trim()) return;
 
-    // Format the interest with # if it doesn't have one
-    let formattedInterest = new_interest.trim();
-    if (!formattedInterest.startsWith("#")) {
-      formattedInterest = "#" + formattedInterest;
-    }
+    const formattedInterest = new_interest.trim().startsWith("#")
+      ? new_interest.trim()
+      : "#" + new_interest.trim();
 
-    // Check if interest already exists
     if (!availableInterests.includes(formattedInterest)) {
-      // Update available interests
-      function updateAvailableInterests(prevInterests: string[]) {
-        return [...prevInterests, formattedInterest];
-      }
-      setAvailableInterests(updateAvailableInterests);
-
-      // Update selected interests
-      function updateFormData(prevFormData: FormData) : FormData{
+      setAvailableInterests(function(prev) { return [...prev, formattedInterest]; });
+      setFormData(function(prev) {
         return {
-          ...prevFormData,
-          interests: [...prevFormData.interests, formattedInterest],
+          ...prev,
+          interests: [...prev.interests, formattedInterest],
         };
-      }
-      setFormData(updateFormData);
+      });
     }
 
-    // Clear the input
     setNewInterest("");
   }
 
-  // Function to handle form field changes
-  function handleFormChange(field:FormFields, value:string) {
-    function updateFormData(prevFormData:FormData) {
+  function handleFormChange(field: FormFields, value: string) {
+    setFormData(function(prev) {
       return {
-        ...prevFormData,
+        ...prev,
         [field]: value,
       };
-    }
-    setFormData(updateFormData);
+    });
   }
 
-  const handle_image_change = (event:React.ChangeEvent<HTMLInputElement>, index:number) => {
-    console.log(index, " index");
-    console.log(event.target.files, " <--]event.target.files");
-    // const file = event.target.files[0];
-    const files = event.target.files;
-    if (!files) return;
-    const file = files[0];
+  function handle_image_change(event: React.ChangeEvent<HTMLInputElement>, index: number) {
+    const file = event.target.files?.[0];
     if (!file) return;
-    // console.log(file, " ]file");
-    if (file) {
-      let image_url = URL.createObjectURL(file); // Generate object URL for the file
-      console.log(image_url, " ]image_url");
-      setimages_url((prevImages) => {
-        const updatedImages = [...prevImages]; // Make a copy of the images array
-        updatedImages[index] = image_url;
-        return updatedImages;
-      });
-      setImages_file((prevImages) => {
-        const updatedImages = [...prevImages]; // Make a copy of the images array
-        updatedImages[index] = file;
-        return updatedImages; // Return the updated images array
-      });
-    }
-  };
+
+    const image_url = URL.createObjectURL(file);
+    setimages_url(function(prev) {
+      const updated = [...prev];
+      updated[index] = image_url;
+      return updated;
+    });
+
+    setImages_file(function(prev) {
+      const updated = [...prev];
+      updated[index] = file;
+      return updated;
+    });
+  }
 
   function generateImageUploadDivs() {
-    const imageUploadDivs = [];
-    for (let i = 0; i < 5; i++) {
-      imageUploadDivs.push(
-        <div key={i} className="flex justify-center">
-          <label className="w-32 h-32 flex items-center  justify-center border-2 border-dashed border-gray-300 rounded-full cursor-pointer hover:border-blue-500">
-            {images_url[i] ? (
-              <img
-                src={images_url[i]}
-                className="w-full h-full rounded-full object-cover"
-              />
-            ) : (
-              <AddPhotoAlternateIcon
-                fontSize="large"
-                className="text-gray-500"
-              />
-            )}
-            <input
-              id={`image_file_${i}`}
-              type="file"
-              accept="image/*"
-              onChange={function (e) {
-                handle_image_change(e, i);
-              }}
-              className="hidden"
-            />
-          </label>
-        </div>
-      );
-    }
-    return <div className="grid grid-cols-2 gap-4">{imageUploadDivs}</div>;
+    return (
+      <div className="grid grid-cols-2 gap-4">
+        {Array(5).fill(null).map(function(_, i) {
+          return (
+            <div key={i} className="flex justify-center">
+              <label className="w-32 h-32 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-full cursor-pointer hover:border-blue-500">
+                {images_url[i] ? (
+                  <img
+                    src={images_url[i] || ''}
+                    alt={`User image ${i + 1}`}
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  <AddPhotoAlternateIcon fontSize="large" className="text-gray-500" />
+                )}
+                <input
+                  id={`image_file_${i}`}
+                  type="file"
+                  accept="image/*"
+                  onChange={function(e) { handle_image_change(e, i); }}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          );
+        })}
+      </div>
+    );
   }
 
-  // Function to handle form submission
-  async function handleSubmit(event:React.FormEvent):Promise<void> {
+  async function handleSubmit(event: React.FormEvent): Promise<void> {
     event.preventDefault();
     setIsLoading(true);
     setError("");
     setSuccess("");
 
     try {
-      const response = await fetch(
-        "http://localhost:3000/api/user/information",
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        }
-      );
+      const response = await fetch("http://localhost:3000/api/user/settings", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
 
       const data = await response.json();
 
       if (response.ok) {
-        if (images_FILES) {
+        if (images_FILES.some(function(file) { return file !== null; })) {
           const new_data = new FormData();
-          console.log(
-            images_FILES,
-            " -------------------....>>>.....images_FILES"
-          );
-
-          // Use a for loop to maintain indexing and handle null values
-          for (let index = 0; index < images_FILES.length; index++) {
-            const file = images_FILES[index];
+          images_FILES.forEach(function(file, index) {
             if (file) {
-              new_data.append(`image_hna_${index}`, file); // Append valid files
+              new_data.append(`image_hna_${index}`, file);
             } else {
-              new_data.append(`image_hna_${index}`, "NULL"); // Append "NULL" for null entries
+              new_data.append(`image_hna_${index}`, "NULL");
             }
-          }
-          // new_data.append("image_hna", images_FILES);
-           await fetch("http://localhost:3000/api/user/upload", {
+          });
+
+          await fetch("http://localhost:3000/api/user/upload", {
             method: "POST",
             credentials: "include",
             body: new_data,
           });
         }
-        setSuccess("Your information has been submitted successfully.");
-        // Reset form
-        setFormData({
-          last_name:"",
-          first_name:"",
-          gender: "",
-          biography: "",
-          interests: [],
-        })
-        
-        navigate('/home')
+
+        setSuccess("Your information has been updated successfully.");
+        navigate('/home');
       } else {
-        console.log(data, " |||");
-        console.log(data, " |||");
-        setError(data || "Submission failed. Please try again.");
+        setError(data || "Update failed. Please try again.");
       }
-    } catch (error:unknown ) {
-      if (error instanceof Error) {
-        setError(error.message);
-      } else {
-        setError("Unable to connect to server. Please try again later.");
-      }
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Unable to connect to server. Please try again later.");
     }
 
     setIsLoading(false);
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+    <div className="p-12 bg-gray-900 flex items-center justify-center">
       <div className="w-full max-w-md">
-        <div className="bg-[#E94057] rounded-2xl p-6">
+        <div className="bg-[#E94057] rounded-2xl p-9">
           <div className="space-y-6">
             <h2 className="text-2xl font-semibold text-white mb-8">
-              Setup Your Account
+              Update Your Profile
             </h2>
 
-            <form onSubmit={handleSubmit} className="">
-              <FormControl>
+            <form onSubmit={handleSubmit} className="space-y-6">
               <TextField
                 fullWidth
-                label="last name"
-                multiline
-                rows={1}
+                label="Last Name"
                 value={formData.last_name}
-                inputProps={{
-                  maxLength: 60,
-                }}
-                onChange={(e) =>
-                  setFormData({ ...formData, last_name: e.target.value })
-                }
+                onChange={function(e) { handleFormChange("last_name", e.target.value); }}
+                className="bg-white rounded"
               />
+
               <TextField
                 fullWidth
-                label="first name"
-                multiline
-                rows={1}
+                label="First Name"
                 value={formData.first_name}
-                inputProps={{
-                  maxLength: 60,
-                }}
-                onChange={(e) =>
-                  setFormData({ ...formData, first_name: e.target.value })
-                }
+                onChange={function(e) { handleFormChange("first_name", e.target.value); }}
+                className="bg-white rounded"
               />
+
               <TextField
                 fullWidth
-                label="update email"
-                multiline
-                rows={1}
+                label="Email"
                 value={formData.email}
-                inputProps={{
-                  maxLength: 60,
-                }}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
+                onChange={function(e) { handleFormChange("email", e.target.value); }}
+                className="bg-white rounded"
               />
-                <FormLabel id="gender">Gender</FormLabel>
-                  
+
+              <FormControl className="w-full">
+                <FormLabel id="gender" className="text-white">Gender</FormLabel>
                 <RadioGroup
-                  aria-labelledby="gender"
                   value={formData.gender}
-                  name="gender"
-                  onChange={function (event) {
-                    handleFormChange("gender", event.target.value);
-                  }}
+                  onChange={function(e) { handleFormChange("gender", e.target.value); }}
                 >
-                  <FormControlLabel
-                    value="female"
-                    control={<Radio />}
-                    label="Female"
-                  />
-                  <FormControlLabel
-                    value="male"
-                    control={<Radio />}
-                    label="Male"
-                  />
+                  <FormControlLabel value="female" control={<Radio />} label="Female" className="text-white" />
+                  <FormControlLabel value="male" control={<Radio />} label="Male" className="text-white" />
                 </RadioGroup>
               </FormControl>
 
-              {/* <FormControl> */}
-              {/* <FormLabel id="sexual_preferences">
-                  Sexual preferences
-                </FormLabel> */}
-              {/* <RadioGroup
-                  aria-labelledby="sexual_preferences"
-                  value={formData.sexual_preferences}
-                  name="sexual_preferences"
-                  onChange={function (event) {
-                    handleFormChange("sexual_preferences", event.target.value);
-                  }}
-                >
-                  <FormControlLabel
-                    value="homosexual"
-                    control={<Radio />}
-                    label="Homosexual"
-                  />
-                  <FormControlLabel
-                    value="heterosexual"
-                    control={<Radio />}
-                    label="Heterosexual"
-                  />
-                  <FormControlLabel
-                    value="bisexual"
-                    control={<Radio />}
-                    label="Bisexual"
-                  />
-                  <FormControlLabel
-                    value="other"
-                    control={<Radio />}
-                    label="Other"
-                  />
-                </RadioGroup> */}
-              {/* </FormControl> */}
-
-              {/* <div className="relative">
-                <div className="text-white mb-2">Biography</div>
-                <input
-                  type="text"
-                  placeholder="Biography"
-                  className="w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-400"
-                  value={formData.biography}
-                  onChange={function(event) {
-                    handleFormChange("biography", event.target.value);
-                  }}
-                  required
-                />
-              </div> */}
               <TextField
                 fullWidth
                 label="Biography"
                 multiline
-                rows={5}
+                rows={4}
                 value={formData.biography}
-                inputProps={{
-                  maxLength: 200,
-                }}
-                onChange={(e) =>
-                  setFormData({ ...formData, biography: e.target.value })
-                }
+                onChange={function(e) { handleFormChange("biography", e.target.value); }}
+                className="bg-white rounded"
               />
-              <div className="space-y-6">
-                <h2 className="text-2xl font-semibold text-white mb-8">
-                  Your Interests
-                </h2>
 
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold text-white">Your Interests</h3>
                 <div className="grid grid-cols-2 gap-3">
-                  {availableInterests.map(function (interest) {
+                  {availableInterests.map(function(interest) {
                     return (
                       <button
                         type="button"
                         key={interest}
-                        onClick={function () {
-                          toggleInterest(interest);
-                        }}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors
-                          ${
-                            formData.interests.includes(interest)
-                              ? "bg-pink-600 text-white"
-                              : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-                          }`}
+                        onClick={function() { toggleInterest(interest); }}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                          formData.interests.includes(interest)
+                            ? "bg-pink-600 text-white"
+                            : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                        }`}
                       >
-                        {interest === "#Photography" && (
-                          <MonochromePhotosIcon className="mr-2" />
-                        )}
-                        {interest === "#Shopping" && (
-                          <ShoppingCartIcon className="mr-2" />
-                        )}
+                        {interest === "#Photography" && <MonochromePhotosIcon className="mr-2" />}
+                        {interest === "#Shopping" && <ShoppingCartIcon className="mr-2" />}
                         {interest}
                       </button>
                     );
                   })}
-
-                  <div className="col-span-2 flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="New Interest"
-                      className="flex-1 px-4 py-2 rounded-full text-sm font-medium transition-colors bg-gray-800 text-gray-300"
-                      value={new_interest}
-                      onChange={handleNewInterestChange}
-                    />
-                    <Button
-                      type="button"
-                      onClick={addNewInterest}
-                      variant="contained"
-                    >
-                      Add
-                    </Button>
-                  </div>
                 </div>
 
-                {/* <div>
-                  <AddPhotoAlternateIcon fontSize="large" />
-                  Profile Image
+                <div className="flex gap-2">
                   <input
-                    accept="image/*"
-                    onChange={function (e) {
-                      handle_image_change(e);
-                    }}
-                    type="file"
-                    name="image_file"
-                  >
-                  </input>
-                </div> */}
-                {/* <div>
-                    <AddPhotoAlternateIcon fontSize="large" />
-                  <input
-                    id="image_file"
-                    accept="image/*"
-                    onChange={(e) => handle_image_change(e)}
-                    type="file"
-                    name="image_file"
-                    style={{ display: "none" }}
+                    type="text"
+                    placeholder="Add New Interest"
+                    value={new_interest}
+                    onChange={handleNewInterestChange}
+                    className="flex-1 px-4 py-2 rounded-full text-sm bg-gray-800 text-white"
                   />
-                </div> */}
+                  <Button
+                    onClick={addNewInterest}
+                    variant="contained"
+                    className="bg-pink-600"
+                  >
+                    Add
+                  </Button>
+                </div>
 
-                <div>{generateImageUploadDivs()}</div>
                 <button
                   type="button"
                   onClick={clearInterest}
                   className="w-full bg-pink-600 hover:bg-pink-700 text-white rounded-xl py-3 font-semibold"
                 >
-                  Clear Interest
+                  Clear Interests
                 </button>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold text-white">Your Photos</h3>
+                {generateImageUploadDivs()}
               </div>
 
               {error && (
@@ -516,7 +381,7 @@ function Settings() {
                 className="w-full bg-pink-600 hover:bg-pink-700 text-white rounded-xl py-3 font-semibold"
                 disabled={isLoading}
               >
-                {isLoading ? "Submitting..." : "Submit your information"}
+                {isLoading ? "Updating..." : "Save Changes"}
               </button>
             </form>
           </div>
