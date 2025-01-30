@@ -163,8 +163,9 @@ user_information_Router.post(
     console.log(user_copy, "user_copy\n");
     const new_session = driver.session();
     if (new_session) {
+      const gender = req.body.gender;
       const update_db = await new_session.run(
-      `  
+        `  
           MATCH (n:User)
           WHERE n.username = $username 
           SET n.last_name = $last_name,
@@ -173,8 +174,26 @@ user_information_Router.post(
               n.biography = $biography
           RETURN n
           `,
-        { username: logged_user.username, last_name: user_copy.last_name, first_name: user_copy.first_name, gender: user_copy.gender, biography: user_copy.biography }
+        { username: logged_user.username, last_name: user_copy.last_name, first_name: user_copy.first_name, gender: gender, biography: user_copy.biography }
       );
+      if (gender) {
+        //delete old gender
+        await new_session.run(
+          `MATCH (u:User {username: $username})-[r:onta_wla_dakar]->(g:Sex)
+            DELETE r`,
+          { username: logged_user.username }
+        );
+
+        await new_session.run(
+          `MATCH (U:User) WHERE U.username = $username
+            MATCH (G:Sex) WHERE G.gender = $gender
+            MERGE (U)-[:onta_wla_dakar]->(G)
+
+  `,
+
+          { username: logged_user.username, gender: gender }
+        );
+      }
       if (update_db.records.length > 0) return res.status(200).json("SUCESS");
       else return res.status(400).json("Error");
     } else {
