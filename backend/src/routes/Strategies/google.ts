@@ -237,7 +237,7 @@ passport.use(
 
         res.cookie("jwt_token", token, {
           httpOnly: true,
-          sameSite: "strict",
+          sameSite: "lax",
           maxAge: 3600000, // 1 hour in milliseconds
         });
 

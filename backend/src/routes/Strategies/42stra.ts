@@ -21,7 +21,7 @@ const passport = require("passport");
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////CIPHERS////////////////////////////////////////////////////
-const create_new_user_cipher = `CREATE (n:User {
+export const create_new_user_cipher = `CREATE (n:User {
               username: $username,
               email: $email,
               password: $password,
@@ -66,7 +66,7 @@ passport.use(
         // phoneNumbers: [ { value: 'hidden' } ],
         // photos: [ { value: undefined } ],
         // provider: '42',
-
+        // console.log(profile , "  42 profile")
         const new_session = await driver.session();
         if (new_session) {
           const email_ = profile.emails?.[0]?.value || profile._json?.email;
@@ -193,7 +193,7 @@ forty_two_str.get("/auth/intra42/callback", function (req: any, res: Response) {
 
       res.cookie("jwt_token", token, {
         httpOnly: true,
-        sameSite: "strict",
+        sameSite: "lax",
         maxAge: 3600000, // 1 hour in milliseconds
       });
 

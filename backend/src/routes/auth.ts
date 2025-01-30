@@ -85,7 +85,7 @@ export const authenticateToken_Middleware = async (
   next: any
 ) => {
   try {
-    console.log(req.headers["cookie"], " ---> 1\n");
+    console.log(req.headers["cookie"], " ---> req.headers\n");
     console.log("inside middelware---------------------------")
     let token = null;
     const cookies = req.headers.cookie?.split(";") || [];
@@ -186,7 +186,7 @@ authRouter.post("/login", async (req: any, res: Response) => {
 
                 res.cookie("jwt_token", token, {
                   httpOnly: true,
-                  sameSite: "strict",
+                  sameSite: "lax",
                   maxAge: 3600000, // 1 hour in milliseconds
                 });
 

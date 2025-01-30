@@ -3,7 +3,6 @@ import { body, validationResult } from "express-validator";
 import neo4j from "neo4j-driver";
 import { imagekitUploader } from "./../app";
 import {
-  authenticateToken,
   authenticateToken_Middleware,
   generateAccessToken,
 } from "./auth";
@@ -116,7 +115,7 @@ user_information_Router.post(
 
       res.cookie("jwt_token", token, {
         httpOnly: true,
-        sameSite: "strict",
+        sameSite: "lax",
         maxAge: 3600000, // 1 hour in milliseconds
       });
       console.log("5555555555555555555555");
@@ -311,8 +310,11 @@ user_information_Router.get(
   "/user/info",
   authenticateToken_Middleware,
   async function (req: any, res: any) {
-    try {
+    // try {
       const user = req.user;
+      console.log("-------------------------------")
+      console.log(req, " req is here")
+      console.log("-------------------------------")
       if (user) {
         console.log(
           user.username,
@@ -404,9 +406,9 @@ user_information_Router.get(
         return res.status(400).json("problem occured");
       }
       return res.status(400).json("user not found");
-    } catch {
-      return res.status(401).json("not authorized to access this api");
-    }
+    // } catch {
+    //   return res.status(401).json("not authorized to access this api");
+    // }
   }
 );
 

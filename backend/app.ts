@@ -26,20 +26,20 @@ app.use(fileUpload({limites:{
   fileSize: 10000000 //byte, // Around 10MB
 }})); // Use the express-fileupload middleware
 
-app.use(
-  session({
-    store: new Neo4jStore({ client: driver }),
-    secret: process.env.session_secret as string,
-    resave: false,
-    saveUninitialized: false, //to avoid storing all sessions even not looged in users
-    cookie: {
-      // secure: true,
-      // httpOnly: false, // Prevent JavaScript access to cookies
-      sameSite: "lax", // Ensures cookies are sent with requests from the same site
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    },
-  })
-);
+// app.use(
+//   session({
+//     store: new Neo4jStore({ client: driver }),
+//     secret: process.env.session_secret as string,
+//     resave: false,
+//     saveUninitialized: false, //to avoid storing all sessions even not looged in users
+//     cookie: {
+//       // secure: true,
+//       // httpOnly: false, // Prevent JavaScript access to cookies
+//       sameSite: "lax", // Ensures cookies are sent with requests from the same site
+//       maxAge: 24 * 60 * 60 * 1000, // 24 hours
+//     },
+//   })
+// );
 
 
 

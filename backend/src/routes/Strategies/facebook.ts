@@ -4,6 +4,7 @@ const Facebook_auth = express.Router();
 const crypto = import("crypto");
 import { Profile, VerifyCallback } from "passport-google-oauth20";
 import { generateAccessToken, User } from "../auth";
+import { create_new_user_cipher } from "./42stra";
 const neo4j = require("neo4j-driver");
 const driver = neo4j.driver(
   "neo4j://localhost:7687",
@@ -58,25 +59,23 @@ passport.use(
 
           if (email_) {
             const resu_ = await new_session.run(
-              `MATCH (n:User) WHERE n.email = $email
-          RETURN {
-          username: n.username,
-          email: n.email,
-          first_name: n.first_name,
-          last_name: n.last_name,
-          verified: n.verified,   
-            setup_done:n.setup_done
-            } as user`,
+                            `
+                MATCH (n:User)
+                WHERE n.email = $email
+                RETURN {
+                  username: n.username,
+                  email: n.email,
+                  first_name: n.first_name,
+                  last_name: n.last_name,
+                  verified: n.verified,
+                  setup_done:n.setup_done
+                } AS user`,
               {
                 email: email_,
               }
             );
             if (resu_.records?.length > 0) {
-              //check if user is not verified
-              console.log(
-                resu_.records[0].get("user").verified,
-                " -------------------------->"
-              );
+             
               //check if user is not verified
               if (resu_.records[0].get("user").verified === false) {
                 console.log("email not verified");
@@ -104,26 +103,28 @@ passport.use(
               }
 
               const result_ = await new_session.run(
-                `CREATE (n:User {
-                  username: $username,
-                  email: $email,
-                  password: $password,
-                  first_name: $first_name,
-                  last_name: $last_name,
-                  verfication_token: $verfication_token,
-                  verified: $verified,
-                  password_reset_token: $password_reset_token,
-                  gender: "",
-                  biography: "",
-                  setup_done:false
-                }) RETURN {
-      username: n.username,
-      email: n.email,
-      first_name: n.first_name,
-      last_name: n.last_name,
-      verified: n.verified,
-      setup_done:n.setup_done
-        } as user`,
+                create_new_user_cipher
+      //           `CREATE (n:User {
+      //             username: $username,
+      //             email: $email,
+      //             password: $password,
+      //             first_name: $first_name,
+      //             last_name: $last_name,
+      //             verfication_token: $verfication_token,
+      //             verified: $verified,
+      //             password_reset_token: $password_reset_token,
+      //             gender: "",
+      //             biography: "",
+      //             setup_done:false
+      //           }) RETURN {
+      // username: n.username,
+      // email: n.email,
+      // first_name: n.first_name,
+      // last_name: n.last_name,
+      // verified: n.verified,
+      // setup_done:n.setup_done
+      //   } as user`
+         ,
                 {
                   username: username_ || profile?.name?.givenName,
                   // username: profile?.name?.givenName,
@@ -194,7 +195,7 @@ Facebook_auth.get(
 
           res.cookie("jwt_token", token, {
             httpOnly: true,
-            sameSite: "strict",
+            sameSite: "lax",
             maxAge: 3600000, // 1 hour in milliseconds
           });
 
