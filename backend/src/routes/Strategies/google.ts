@@ -120,12 +120,14 @@ passport.use(
                 //   password_reset_token: "",
                 // };
                 if (profile.emails?.[0].value) {
-  
+                  const cleanUsername =  profile.displayName?.trim() || '';
+
                   //check if username exists
                 const check_username = await new_session.run(
                   "MATCH (u:User) WHERE u.username = $username RETURN u",
-                  { username: profile.displayName }
+                  { username:cleanUsername}
                 );
+                console.log(cleanUsername, " profile.displayName.trim()---------------")
                 let username_ = null;
                 if (check_username.records.length > 0)
                 {
@@ -159,7 +161,7 @@ passport.use(
       setup_done:n.setup_done
         } as user`,
                     {
-                      username: username_  || profile.displayName,
+                      username: username_  || cleanUsername,
                         // profile.displayName ||
                         // (await crypto).randomBytes(10).toString(),
                       email: profile.emails[0].value,

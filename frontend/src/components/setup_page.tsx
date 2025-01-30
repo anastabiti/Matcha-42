@@ -16,11 +16,26 @@ interface FormData {
   interests: string[];
 }
 
+import {
+  PhotoCamera,
+  ShoppingCart,
+  Mic,
+  SelfImprovement,
+  Restaurant,
+  SportsTennis,
+  Palette,
+  Flight,
+  MusicNote,
+  SportsEsports,
+  Pool,
+  DirectionsRun,
+} from "@mui/icons-material";
+
 type FormFields = "gender" | "biography" | "interests";
 
 function Setup_page() {
   // Initial interests list
-  const defaultInterests:string[] = [
+  const defaultInterests: string[] = [
     "#Photography",
     "#Shopping",
     "#Karaoke",
@@ -39,7 +54,7 @@ function Setup_page() {
   const [availableInterests, setAvailableInterests] =
     useState(defaultInterests);
   const [new_interest, setNewInterest] = useState("");
- const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<FormData>({
     gender: "",
     biography: "",
     interests: [],
@@ -63,7 +78,9 @@ function Setup_page() {
 
       if (interestExists) {
         // Remove interest if it exists
-        updatedInterests = prevFormData.interests.filter(function (item:string) {
+        updatedInterests = prevFormData.interests.filter(function (
+          item: string
+        ) {
           return item !== interest;
         });
       } else {
@@ -81,8 +98,8 @@ function Setup_page() {
   }
 
   // Function to clear all interests
-  function clearInterest():void {
-    function updateFormData(prevFormData:FormData): FormData {
+  function clearInterest(): void {
+    function updateFormData(prevFormData: FormData): FormData {
       return {
         ...prevFormData,
         interests: [],
@@ -92,12 +109,14 @@ function Setup_page() {
   }
 
   // Function to handle input change for new interest
-  function handleNewInterestChange(event:React.ChangeEvent<HTMLInputElement>):void {
+  function handleNewInterestChange(
+    event: React.ChangeEvent<HTMLInputElement>
+  ): void {
     setNewInterest(event.target.value);
   }
 
   // Function to add new interest
-  function addNewInterest(event: React.FormEvent):void {
+  function addNewInterest(event: React.FormEvent): void {
     event.preventDefault();
 
     if (!new_interest || !new_interest.trim()) {
@@ -119,7 +138,7 @@ function Setup_page() {
       setAvailableInterests(updateAvailableInterests);
 
       // Update selected interests
-      function updateFormData(prevFormData: FormData) : FormData{
+      function updateFormData(prevFormData: FormData): FormData {
         return {
           ...prevFormData,
           interests: [...prevFormData.interests, formattedInterest],
@@ -133,8 +152,8 @@ function Setup_page() {
   }
 
   // Function to handle form field changes
-  function handleFormChange(field:FormFields, value:string) {
-    function updateFormData(prevFormData:FormData) {
+  function handleFormChange(field: FormFields, value: string) {
+    function updateFormData(prevFormData: FormData) {
       return {
         ...prevFormData,
         [field]: value,
@@ -143,7 +162,10 @@ function Setup_page() {
     setFormData(updateFormData);
   }
 
-  const handle_image_change = (event:React.ChangeEvent<HTMLInputElement>, index:number) => {
+  const handle_image_change = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => {
     console.log(index, " index");
     console.log(event.target.files, " <--]event.target.files");
     // const file = event.target.files[0];
@@ -202,7 +224,7 @@ function Setup_page() {
   }
 
   // Function to handle form submission
-  async function handleSubmit(event:React.FormEvent):Promise<void> {
+  async function handleSubmit(event: React.FormEvent): Promise<void> {
     event.preventDefault();
     setIsLoading(true);
     setError("");
@@ -241,7 +263,7 @@ function Setup_page() {
             }
           }
           // new_data.append("image_hna", images_FILES);
-           await fetch("http://localhost:3000/api/user/upload", {
+          await fetch("http://localhost:3000/api/user/upload", {
             method: "POST",
             credentials: "include",
             body: new_data,
@@ -254,15 +276,15 @@ function Setup_page() {
           // sexual_preferences: "",
           biography: "",
           interests: [],
-        })
-        
-        navigate('/home')
+        });
+
+        navigate("/home");
       } else {
         console.log(data, " |||");
         console.log(data, " |||");
         setError(data || "Submission failed. Please try again.");
       }
-    } catch (error:unknown ) {
+    } catch (error: unknown) {
       if (error instanceof Error) {
         setError(error.message);
       } else {
@@ -388,11 +410,42 @@ function Setup_page() {
                               : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                           }`}
                       >
-                        {interest === "#Photography" && (
+                        {/* {interest === "#Photography" && (
                           <MonochromePhotosIcon className="mr-2" />
                         )}
                         {interest === "#Shopping" && (
                           <ShoppingCartIcon className="mr-2" />
+                        )}
+                        {interest} */}
+                        {interest === "#Photography" && (
+                          <PhotoCamera className="mr-2" />
+                        )}
+                        {interest === "#Shopping" && (
+                          <ShoppingCart className="mr-2" />
+                        )}
+                        {interest === "#Karaoke" && <Mic className="mr-2" />}
+                        {interest === "#Yoga" && (
+                          <SelfImprovement className="mr-2" />
+                        )}
+                        {interest === "#Cooking" && (
+                          <Restaurant className="mr-2" />
+                        )}
+                        {interest === "#Tennis" && (
+                          <SportsTennis className="mr-2" />
+                        )}
+                        {interest === "#Art" && <Palette className="mr-2" />}
+                        {interest === "#Traveling" && (
+                          <Flight className="mr-2" />
+                        )}
+                        {interest === "#Music" && (
+                          <MusicNote className="mr-2" />
+                        )}
+                        {interest === "#Video games" && (
+                          <SportsEsports className="mr-2" />
+                        )}
+                        {interest === "#Swimming" && <Pool className="mr-2" />}
+                        {interest === "#Running" && (
+                          <DirectionsRun className="mr-2" />
                         )}
                         {interest}
                       </button>
