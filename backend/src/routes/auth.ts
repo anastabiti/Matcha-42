@@ -85,8 +85,8 @@ export const authenticateToken_Middleware = async (
   next: any
 ) => {
   try {
-    console.log(req.headers["cookie"], " ---> req.headers\n");
-    console.log("inside middelware---------------------------")
+    // console.log(req.headers["cookie"], " ---> req.headers\n");
+    // console.log("inside middelware---------------------------")
     let token = null;
     const cookies = req.headers.cookie?.split(";") || [];
     for (let cookie of cookies) {
@@ -96,7 +96,7 @@ export const authenticateToken_Middleware = async (
       }
     }
 
-    console.log(token, " ---- token");
+    // console.log(token, " ---- token");
 
     if (!token) {
       return res.status(401).json("No token provided" );
