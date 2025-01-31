@@ -418,7 +418,12 @@ user_information_Router.get(
       const user = req.user;
 
       console.log("-------------------------------", user, "\n\n\n\n\n");
+<<<<<<< HEAD
       if (user.setup_done == false) return res.status(405).json("Complete Profile Setup first");
+=======
+      if(user.setup_done == false)
+        return res.status(405).json("Complete Profile Setup first")
+>>>>>>> 533ae36bc8ecb3e10a51aa10751121a02bee97c6
       // console.log(req, " req is here");
       console.log("-------------------------------");
       if (user) {
