@@ -40,7 +40,7 @@ const registrationRouter = express.Router();
 // registration route
 registrationRouter.post(
   "/registration",
-  body("email").isEmail(),
+  body("email").isEmail().isLength({ min: 7, max: 30 }),
   body("password").isLength({ min: 8, max: 50 }),
   body("username").isLength({ min: 6, max: 20 }),
   body("first_name").isLength({ min: 3, max: 30 }),

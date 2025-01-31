@@ -73,12 +73,17 @@ const RegistrationForm = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <input
                 type="email"
+                minLength={7}
+                maxLength={30}
+            
                 placeholder="Email Address"
                 className="w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-400"
                 value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
+                onChange={(e) => {
+                  if (e.target.value.length <= 30) {
+                    setFormData({ ...formData, email: e.target.value });
+                  }
+                }}
                 required
               />
 

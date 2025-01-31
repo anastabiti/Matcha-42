@@ -310,9 +310,15 @@ function Settings() {
               <TextField
                 fullWidth
                 label="Last Name"
+                inputProps={{
+                  minLength: 3,
+                  maxLength: 30
+                }}
                 value={formData.last_name}
                 onChange={function (e) {
-                  handleFormChange("last_name", e.target.value);
+                  if (e.target.value.length <= 30) {
+                    handleFormChange("last_name", e.target.value);
+                  }
                 }}
                 className="bg-white rounded"
               />
@@ -320,9 +326,15 @@ function Settings() {
               <TextField
                 fullWidth
                 label="First Name"
+                inputProps={{
+                  minLength: 3,
+                  maxLength: 30
+                }}
                 value={formData.first_name}
                 onChange={function (e) {
-                  handleFormChange("first_name", e.target.value);
+                  if (e.target.value.length <= 30) {
+                    handleFormChange("first_name", e.target.value);
+                  }
                 }}
                 className="bg-white rounded"
               />
@@ -330,9 +342,17 @@ function Settings() {
               <TextField
                 fullWidth
                 label="Email"
+                type="email"
+                inputProps={{
+                  minLength: 7,
+                  maxLength: 30
+                }}
+
                 value={formData.email}
                 onChange={function (e) {
-                  handleFormChange("email", e.target.value);
+                  if (e.target.value.length <= 30) {
+                    handleFormChange("email", e.target.value);
+                  }
                 }}
                 className="bg-white rounded"
               />
@@ -391,7 +411,6 @@ function Settings() {
                     handleFormChange("biography", e.target.value);
                   }
                 }}
-               
                 // helperText={`${formData.biography?.length || 0}/200 characters`}
                 className="bg-white rounded"
               />
