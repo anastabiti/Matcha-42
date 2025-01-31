@@ -138,7 +138,11 @@ user_information_Router.post(
     .isLength({ min: 3, max: 30 })
     .notEmpty()
     .withMessage("first_name cannot be empty"),
-  body("email").notEmpty().withMessage("email cannot be empty").isEmail(),
+  body("email")
+    .notEmpty()
+    .isLength({ min: 7, max: 100 })
+    .withMessage("email cannot be empty")
+    .isEmail(),
   body("gender")
     .notEmpty()
     .withMessage("Gender cannot be empty")
@@ -163,11 +167,12 @@ user_information_Router.post(
 
     const user_copy = { ...req.body };
     const new_session = driver.session();
-
+    console.log(logged_user, " logged_user\n\n\n\n\n");
     try {
       if (new_session) {
         const gender = req.body.gender;
-
+        const email = req.body.email;
+        console.log("NEW EMAIL IS : ", email, "\n\n\n");
         // Update basic user information
         const update_db = await new_session.run(
           `  
@@ -420,8 +425,11 @@ user_information_Router.get(
   async function (req: any, res: any) {
     try {
       const user = req.user;
-      console.log("-------------------------------");
-      console.log(req, " req is here");
+
+      console.log("-------------------------------", user);
+      if(!user.setup_done)
+        return res.status(405).json("Complete Profile Setup first")
+      // console.log(req, " req is here");
       console.log("-------------------------------");
       if (user) {
         console.log(user.username, " -----------------------------the user who is logged in now");

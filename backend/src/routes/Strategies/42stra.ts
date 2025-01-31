@@ -66,7 +66,7 @@ passport.use(
         // phoneNumbers: [ { value: 'hidden' } ],
         // photos: [ { value: undefined } ],
         // provider: '42',
-        // console.log(profile , "  42 profile")
+        console.log(profile.id , "  42 profile")
         const new_session = await driver.session();
         if (new_session) {
           const email_ = profile.emails?.[0]?.value || profile._json?.email;

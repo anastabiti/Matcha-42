@@ -89,9 +89,12 @@ function Settings() {
         const response = await fetch("http://localhost:3000/api/user/info", {
           credentials: "include"
         });
-        const data: UserInfo = await response.json();
-        console.log(data.tags, "        data.tags ");
-        setFormData({
+        if(response.ok)
+        {
+
+          const data: UserInfo = await response.json();
+          console.log(data.tags, "        data.tags ");
+          setFormData({
           last_name: data.last_name || "",
           first_name: data["first_name:"] || "",
           email: data["email:"] || "",
@@ -103,7 +106,7 @@ function Settings() {
           setAvailableInterests([]);
           setAvailableInterests(data.tags);
         }
-
+        
         setimages_url([
           data.profile_picture || null,
           data.pic_1 || null,
@@ -111,6 +114,11 @@ function Settings() {
           data.pic_3 || null,
           data.pic_4 || null
         ]);
+      }
+      if(response.status == 405)
+      {
+        navigate('/setup')
+      }
       } catch (error) {
         console.error("Error fetching user info:", error);
         setError("Failed to load user information");
@@ -303,7 +311,7 @@ function Settings() {
         <div className="bg-[#E94057] rounded-2xl p-9">
           <div className="space-y-6">
             <h2 className="text-2xl font-semibold text-white mb-8">
-              Update Your Profile
+            Edit your profile
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-6">
