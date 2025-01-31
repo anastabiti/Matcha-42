@@ -132,7 +132,16 @@ registrationRouter.post(
             .toString("hex");
           console.log(user.verfication_token, "verfication_token");
           await session.run(
-            "CREATE (a:User {username: $username, email: $email, password: $password, first_name: $first_name, last_name: $last_name,verified:false, verfication_token:$verfication_token,setup_done:$setup_done, password_reset_token:$password_reset_token}) RETURN a",
+            `CREATE (a:User {username: $username, email: $email, password: $password,
+             first_name: $first_name,
+              last_name: $last_name,verified:false,
+               verfication_token:$verfication_token,setup_done:$setup_done,
+               
+               pic_1: "",
+              pic_2: "",
+              pic_3: "",
+              pic_4: "",
+               password_reset_token:$password_reset_token}) RETURN a`,
             user
           );
 

@@ -150,7 +150,11 @@ passport.use(
                     password_reset_token: $password_reset_token,
                     gender: "",
                     biography: "",
-                    setup_done:false
+                    setup_done:false,
+                    pic_1: "",
+              pic_2: "",
+              pic_3: "",
+              pic_4: ""
                   }) 
                    RETURN {
       username: n.username,

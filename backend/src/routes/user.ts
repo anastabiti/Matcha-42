@@ -163,6 +163,7 @@ user_information_Router.post(
     }
 
     const logged_user = req.user;
+    console.log(logged_user.email, " >>>>>>>>>>>>-----------email is here-<<<<<<<<<<<");
     if (!logged_user) return res.status(401).json("UNAUTH");
 
     const user_copy = { ...req.body };
@@ -244,7 +245,7 @@ user_information_Router.post(
       }
     } catch (error) {
       console.error("Error updating user settings:", error);
-      return res.status(500).json("Internal server error");
+      return res.status(400).json("Error updating user settings");
     } finally {
       await new_session.close();
     }
@@ -353,41 +354,31 @@ user_information_Router.post(
   "/user/upload",
   authenticateToken_Middleware,
   async function (req: any, res: any) {
-    // try {
     const _user = req.user;
     try {
       const files = await req.files; // Access all uploaded files
-
-      console.log(files, "  -?files ");
-      // console.log(Object.keys(files).length, "  -?count files-------------------------------------------------------------------- ")
       if (files) {
-        // console.log(files[0], "  [0] ")
-        // console.log(files.image_hna, "  [1] ")
-        console.log(files.image_hna_0, "  [1] ");
-        console.log(files.image_hna_1, "  [1] ");
-        // console.log(files.image_hna_1, "  [1] ")
-        const img_count = Object.keys(files).length;
-        const session = driver.session(); // Open a Neo4j session
+      const session = driver.session(); // Open a Neo4j session
+      console.log(Object.keys(files), "------console.log(Object.keys(files))-------");
+      const keys: string[] = Object.keys(files);
+      console.log(files, "  -?files ");
+      for (let i = 0; i < keys.length; i++) {
+        console.log(keys[i], " key--", files[keys[i]], "=============---====(-`-)");
+      
+       
         let profilePictureSet = false;
-        if (img_count <= 0) return res.status(400).json("NO images.");
-        for (let i = 0; i < img_count; i++) {
-          const key = `image_hna_${i}`;
-          const file = files[key];
-
-          if (!file || key === "NULL") {
-            console.log(`Skipping ${key}, no file uploaded.`);
-            continue; // Skip null or missing files
-          }
-
+       
+          const file = files[keys[i]]
+          const img_db_index = keys[i].replace("image_hna_", ""); 
+          console.log(img_db_index, " image index\n\n\n\n\n\n\n") ; // Output: "2"
           // Upload to ImageKit
           const ret = await imagekitUploader.upload({
             file: file.data,
             fileName: file.name,
           });
-          console.log(ret, "<- Uploaded file response");
+          // console.log(ret, "<- Uploaded file response");
 
-          // Update Neo4j based on file index
-          if (!profilePictureSet && i === 0) {
+          if (!profilePictureSet && keys[i] == 'image_hna_0') {
             // Set profile picture for the first valid file
             await session.run(
               `MATCH (u:User {username: $username})
@@ -400,8 +391,8 @@ user_information_Router.post(
             // Set additional pictures with dynamic properties
             await session.run(
               `MATCH (u:User {username: $username})
-             SET u.pic_${i} = $url
-             RETURN u.pic_${i}`,
+             SET u.pic_${img_db_index} = $url
+             RETURN u`,
               { username: _user.username, url: ret.url }
             );
           }
@@ -426,9 +417,8 @@ user_information_Router.get(
     try {
       const user = req.user;
 
-      console.log("-------------------------------", user);
-      if(!user.setup_done)
-        return res.status(405).json("Complete Profile Setup first")
+      console.log("-------------------------------", user, "\n\n\n\n\n");
+      if (user.setup_done == false) return res.status(405).json("Complete Profile Setup first");
       // console.log(req, " req is here");
       console.log("-------------------------------");
       if (user) {
@@ -473,6 +463,16 @@ user_information_Router.get(
             //   gender,
             //   " --------=========+++++ GENDER_---+++++========++++"
             // );
+            // const return_data = {
+            //   username: userNode.username,
+            //   profile_picture: userNode.profile_picture,
+            //   last_name: userNode.last_name,
+            //   "first_name:": userNode.first_name,
+            //   "email:": userNode.email,
+            //   "biography:": userNode.biography,
+            //   gender: gender,
+            //   tags: arr_,
+            // };
             const return_data = {
               username: userNode.username,
               profile_picture: userNode.profile_picture,
@@ -480,6 +480,13 @@ user_information_Router.get(
               "first_name:": userNode.first_name,
               "email:": userNode.email,
               "biography:": userNode.biography,
+              pic_1: userNode.pic_1,
+
+              pic_2: userNode.pic_2,
+
+              pic_3: userNode.pic_3,
+
+              pic_4: userNode.pic_4,
               gender: gender,
               tags: arr_,
             };
