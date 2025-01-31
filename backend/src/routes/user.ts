@@ -244,7 +244,7 @@ user_information_Router.post(
       }
     } catch (error) {
       console.error("Error updating user settings:", error);
-      return res.status(500).json("Internal server error");
+      return res.status(400).json("Error updating user settings");
     } finally {
       await new_session.close();
     }
@@ -426,8 +426,8 @@ user_information_Router.get(
     try {
       const user = req.user;
 
-      console.log("-------------------------------", user);
-      if(!user.setup_done)
+      console.log("-------------------------------", user, "\n\n\n\n\n");
+      if(user.setup_done == false)
         return res.status(405).json("Complete Profile Setup first")
       // console.log(req, " req is here");
       console.log("-------------------------------");

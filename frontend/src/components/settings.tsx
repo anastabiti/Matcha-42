@@ -308,7 +308,7 @@ function Settings() {
   return (
     <div className="p-12 bg-gray-900 flex items-center justify-center">
       <div className="w-full max-w-md">
-        <div className="bg-[#E94057] rounded-2xl p-9">
+        <div className="bg-[#E94075] rounded-2xl p-9">
           <div className="space-y-6">
             <h2 className="text-2xl font-semibold text-white mb-8">
             Edit your profile
