@@ -10,7 +10,7 @@ const RegistrationForm = () => {
     username: "",
     first_name: "",
     last_name: "",
-    password: "",
+    password: ""
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -18,7 +18,7 @@ const RegistrationForm = () => {
   const [success, setSuccess] = useState("");
 
   // Handle form submission
-  const handleSubmit = async (e:React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
@@ -28,9 +28,9 @@ const RegistrationForm = () => {
       const response = await fetch("http://localhost:3000/api/registration", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json"
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(formData)
       });
 
       const data = await response.json();
@@ -47,7 +47,7 @@ const RegistrationForm = () => {
           username: "",
           first_name: "",
           last_name: "",
-          password: "",
+          password: ""
         });
       } else {
         console.log(data, " error");
@@ -82,14 +82,30 @@ const RegistrationForm = () => {
                 required
               />
 
+              {/* <input
+                type="text"
+                placeholder="Username"
+                className="w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-400"
+                
+                value={formData.username}
+
+                onChange={(e) =>
+                  setFormData({ ...formData, username: e.target.value })
+                }
+                required
+              /> */}
               <input
                 type="text"
                 placeholder="Username"
                 className="w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-400"
+                minLength={6}
+                maxLength={20}
                 value={formData.username}
-                onChange={(e) =>
-                  setFormData({ ...formData, username: e.target.value })
-                }
+                onChange={(e) => {
+                  if (e.target.value.length <= 20) {
+                    setFormData({ ...formData, username: e.target.value });
+                  }
+                }}
                 required
               />
 
@@ -98,21 +114,29 @@ const RegistrationForm = () => {
                   type="text"
                   placeholder="First Name"
                   className="w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-400"
+                  minLength={3}
+                  maxLength={30}
                   value={formData.first_name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, first_name: e.target.value })
-                  }
+                  onChange={(e) => {
+                    if (e.target.value.length <= 30) {
+                      setFormData({ ...formData, first_name: e.target.value });
+                    }
+                  }}
                   required
                 />
 
                 <input
                   type="text"
                   placeholder="Last Name"
+                  minLength={3}
+                  maxLength={30}
                   className="w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-400"
                   value={formData.last_name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, last_name: e.target.value })
-                  }
+                  onChange={(e) => {
+                    if (e.target.value.length <= 30) {
+                      setFormData({ ...formData, last_name: e.target.value });
+                    }
+                  }}
                   required
                 />
               </div>
@@ -122,10 +146,14 @@ const RegistrationForm = () => {
                   type="text"
                   placeholder="Password"
                   className="w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-400"
+                  minLength={8}
+                  maxLength={50}
                   value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
+                  onChange={(e) => {
+                    if (e.target.value.length <= 50) {
+                      setFormData({ ...formData, password: e.target.value });
+                    }
+                  }}
                   required
                 />
               </div>
@@ -155,13 +183,15 @@ const RegistrationForm = () => {
               />
             </div> */}
             <div className="flex items-center justify-center grid-cols-2 gap-4 ">
-              <Button variant="contained"
-               onClick={() => {
-                //new link
-                window.location.href =
-                  "http://localhost:3000/api/auth/facebook";
-              }} 
-              startIcon={<FacebookIcon />}>
+              <Button
+                variant="contained"
+                onClick={() => {
+                  //new link
+                  window.location.href =
+                    "http://localhost:3000/api/auth/facebook";
+                }}
+                startIcon={<FacebookIcon />}
+              >
                 Facebook
               </Button>
 
@@ -178,11 +208,11 @@ const RegistrationForm = () => {
               </Button>
 
               <Button
-              onClick={() => {
-                //new link
-                window.location.href =
-                  "http://localhost:3000/api/auth/intra42";
-              }}
+                onClick={() => {
+                  //new link
+                  window.location.href =
+                    "http://localhost:3000/api/auth/intra42";
+                }}
                 variant="contained"
                 startIcon={<img src="42-Final-sigle-seul.svg" width={25}></img>}
               >

@@ -5,13 +5,23 @@ import { imagekitUploader } from "./../app";
 import { authenticateToken_Middleware, generateAccessToken } from "./auth";
 
 const user_information_Router = express.Router();
-const driver = neo4j.driver("neo4j://localhost:7687", neo4j.auth.basic(process.env.database_username as string, process.env.database_password as string));
+const driver = neo4j.driver(
+  "neo4j://localhost:7687",
+  neo4j.auth.basic(process.env.database_username as string, process.env.database_password as string)
+);
 user_information_Router.post(
   "/user/information",
   authenticateToken_Middleware,
-  body("gender").notEmpty().withMessage("Gender cannot be empty").isIn(["male", "female"]).withMessage("Gender must be 'male' or 'female'"),
-  body("biography").notEmpty().withMessage("Biography cannot be empty"),
-
+  body("gender")
+    .notEmpty()
+    .withMessage("Gender cannot be empty")
+    .isIn(["male", "female"])
+    .withMessage("Gender must be 'male' or 'female'"),
+  body("biography")
+    .notEmpty()
+    .withMessage("Biography cannot be empty")
+    .isLength({ min: 20, max: 200 })
+    .withMessage("Biography must be between 20 and 200 characters"),
   async (req: any, res: any) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -120,11 +130,25 @@ user_information_Router.post(
 user_information_Router.post(
   "/user/settings",
   authenticateToken_Middleware,
-  body("last_name").notEmpty().withMessage("last_name cannot be empty"),
-  body("first_name").notEmpty().withMessage("first_name cannot be empty"),
+  body("last_name")
+    .isLength({ min: 3, max: 30 })
+    .notEmpty()
+    .withMessage("last_name cannot be empty"),
+  body("first_name")
+    .isLength({ min: 3, max: 30 })
+    .notEmpty()
+    .withMessage("first_name cannot be empty"),
   body("email").notEmpty().withMessage("email cannot be empty").isEmail(),
-  body("gender").notEmpty().withMessage("Gender cannot be empty").isIn(["male", "female"]).withMessage("Gender must be 'male' or 'female'"),
-  body("biography").notEmpty().withMessage("Biography cannot be empty"),
+  body("gender")
+    .notEmpty()
+    .withMessage("Gender cannot be empty")
+    .isIn(["male", "female"])
+    .withMessage("Gender must be 'male' or 'female'"),
+  body("biography")
+    .notEmpty()
+    .withMessage("Biography cannot be empty")
+    .isLength({ min: 20, max: 200 })
+    .withMessage("Biography must be between 20 and 200 characters"),
   body("interests").isArray().withMessage("Interests must be an array"),
 
   async (req: any, res: any) => {
@@ -139,11 +163,11 @@ user_information_Router.post(
 
     const user_copy = { ...req.body };
     const new_session = driver.session();
-    
+
     try {
       if (new_session) {
         const gender = req.body.gender;
-        
+
         // Update basic user information
         const update_db = await new_session.run(
           `  
@@ -155,12 +179,12 @@ user_information_Router.post(
               n.biography = $biography
           RETURN n
           `,
-          { 
-            username: logged_user.username, 
-            last_name: user_copy.last_name, 
-            first_name: user_copy.first_name, 
-            gender: gender, 
-            biography: user_copy.biography 
+          {
+            username: logged_user.username,
+            last_name: user_copy.last_name,
+            first_name: user_copy.first_name,
+            gender: gender,
+            biography: user_copy.biography,
           }
         );
 
@@ -270,9 +294,9 @@ user_information_Router.post(
 //     if (new_session) {
 //       const gender = req.body.gender;
 //       const update_db = await new_session.run(
-//         `  
+//         `
 //           MATCH (n:User)
-//           WHERE n.username = $username 
+//           WHERE n.username = $username
 //           SET n.last_name = $last_name,
 //               n.first_name = $first_name,
 //               n.gender = $gender,
@@ -320,136 +344,150 @@ user_information_Router.post(
 //   }
 // );
 
-user_information_Router.post("/user/upload", authenticateToken_Middleware, async function (req: any, res: any) {
-  // try {
-  const _user = req.user;
-  try {
-    const files = await req.files; // Access all uploaded files
+user_information_Router.post(
+  "/user/upload",
+  authenticateToken_Middleware,
+  async function (req: any, res: any) {
+    // try {
+    const _user = req.user;
+    try {
+      const files = await req.files; // Access all uploaded files
 
-    console.log(files, "  -?files ");
-    // console.log(Object.keys(files).length, "  -?count files-------------------------------------------------------------------- ")
-    if (files) {
-      // console.log(files[0], "  [0] ")
-      // console.log(files.image_hna, "  [1] ")
-      console.log(files.image_hna_0, "  [1] ");
-      console.log(files.image_hna_1, "  [1] ");
-      // console.log(files.image_hna_1, "  [1] ")
-      const img_count = Object.keys(files).length;
-      const session = driver.session(); // Open a Neo4j session
-      let profilePictureSet = false;
-      if (img_count <= 0) return res.status(400).json("NO images.");
-      for (let i = 0; i < img_count; i++) {
-        const key = `image_hna_${i}`;
-        const file = files[key];
+      console.log(files, "  -?files ");
+      // console.log(Object.keys(files).length, "  -?count files-------------------------------------------------------------------- ")
+      if (files) {
+        // console.log(files[0], "  [0] ")
+        // console.log(files.image_hna, "  [1] ")
+        console.log(files.image_hna_0, "  [1] ");
+        console.log(files.image_hna_1, "  [1] ");
+        // console.log(files.image_hna_1, "  [1] ")
+        const img_count = Object.keys(files).length;
+        const session = driver.session(); // Open a Neo4j session
+        let profilePictureSet = false;
+        if (img_count <= 0) return res.status(400).json("NO images.");
+        for (let i = 0; i < img_count; i++) {
+          const key = `image_hna_${i}`;
+          const file = files[key];
 
-        if (!file || key === "NULL") {
-          console.log(`Skipping ${key}, no file uploaded.`);
-          continue; // Skip null or missing files
-        }
+          if (!file || key === "NULL") {
+            console.log(`Skipping ${key}, no file uploaded.`);
+            continue; // Skip null or missing files
+          }
 
-        // Upload to ImageKit
-        const ret = await imagekitUploader.upload({
-          file: file.data,
-          fileName: file.name,
-        });
-        console.log(ret, "<- Uploaded file response");
+          // Upload to ImageKit
+          const ret = await imagekitUploader.upload({
+            file: file.data,
+            fileName: file.name,
+          });
+          console.log(ret, "<- Uploaded file response");
 
-        // Update Neo4j based on file index
-        if (!profilePictureSet && i === 0) {
-          // Set profile picture for the first valid file
-          await session.run(
-            `MATCH (u:User {username: $username})
+          // Update Neo4j based on file index
+          if (!profilePictureSet && i === 0) {
+            // Set profile picture for the first valid file
+            await session.run(
+              `MATCH (u:User {username: $username})
              SET u.profile_picture = $profile_picture
              RETURN u.profile_picture`,
-            { username: _user.username, profile_picture: ret.url }
-          );
-          profilePictureSet = true;
-        } else {
-          // Set additional pictures with dynamic properties
-          await session.run(
-            `MATCH (u:User {username: $username})
+              { username: _user.username, profile_picture: ret.url }
+            );
+            profilePictureSet = true;
+          } else {
+            // Set additional pictures with dynamic properties
+            await session.run(
+              `MATCH (u:User {username: $username})
              SET u.pic_${i} = $url
              RETURN u.pic_${i}`,
-            { username: _user.username, url: ret.url }
-          );
-        }
-      }
-
-      session.close(); // Close Neo4j session
-
-      return res.status(200).json("Images uploaded successfully.");
-    }
-    return res.status(200).json("No files");
-  } catch (error) {
-    console.error("Image upload failed:", error);
-    return res.status(400).json("Image upload failed.");
-  }
-});
-
-user_information_Router.get("/user/info", authenticateToken_Middleware, async function (req: any, res: any) {
-  try {
-    const user = req.user;
-    console.log("-------------------------------");
-    console.log(req, " req is here");
-    console.log("-------------------------------");
-    if (user) {
-      console.log(user.username, " -----------------------------the user who is logged in now");
-      const session = driver.session();
-      if (session) {
-        // const res = await session.run('MATCH (n:User) WHERE n.username = $username  RETURN n',{username:user.username})
-        const res_of_query = await session.run("MATCH (n:User {username: $username})-[:onta_wla_dakar]->(g:Sex)  RETURN n, g", { username: user.username });
-        const res_interest = await session.run("MATCH (n:User {username: $username})-[:has_this_interest]->(t:Tags)  RETURN  t", { username: user.username });
-        console.log(res_of_query, "++++++++++++++++++++++++++=res_of_query");
-        console.log(res_interest, " -------------res_interest");
-        if (res_of_query.records.length > 0 && res_interest.records.length > 0) {
-          console.log("here");
-          const tags_interest = res_interest.records;
-          let i = 0;
-          let arr_ = [];
-          while (res_interest.records[i] != null) {
-            console.log(
-              // res_interest.records[i]._fields[0].properties.interests,
-              res_interest.records[i].get(0).properties.interests,
-
-              " (- -) \n"
+              { username: _user.username, url: ret.url }
             );
-            arr_.push(res_interest.records[i].get(0).properties.interests);
-            // arr_.push(res_interest.records[i]._fields[0].properties.interests);
-            i++;
           }
-          console.log(arr_, "  arr_   =============================================");
-          const userNode = res_of_query.records[0].get(0).properties;
-          const gender = res_of_query.records[0].get(1).properties.gender;
-          // console.log(userNode, " --------- USER---------");
-          // const userNode = res_of_query.records[0]._fields[0].properties;
-          // const gender = res_of_query.records[0]._fields[1].properties.gender;
-          // console.log(userNode, " --------- USER---------");
-          // console.log(
-          //   gender,
-          //   " --------=========+++++ GENDER_---+++++========++++"
-          // );
-          const return_data = {
-            username: userNode.username,
-            profile_picture: userNode.profile_picture,
-            last_name: userNode.last_name,
-            "first_name:": userNode.first_name,
-            "email:": userNode.email,
-            "biography:": userNode.biography,
-            gender: gender,
-            tags: arr_,
-          };
-          // console.log(return_data, "--=---(- -)");
-          return res.status(200).json(return_data);
         }
-        return res.status(400).json("user infos are not completed");
+
+        session.close(); // Close Neo4j session
+
+        return res.status(200).json("Images uploaded successfully.");
       }
-      return res.status(400).json("problem occured");
+      return res.status(200).json("No files");
+    } catch (error) {
+      console.error("Image upload failed:", error);
+      return res.status(400).json("Image upload failed.");
     }
-    return res.status(400).json("user not found");
-  } catch {
-    return res.status(400).json("Error occured");
   }
-});
+);
+
+user_information_Router.get(
+  "/user/info",
+  authenticateToken_Middleware,
+  async function (req: any, res: any) {
+    try {
+      const user = req.user;
+      console.log("-------------------------------");
+      console.log(req, " req is here");
+      console.log("-------------------------------");
+      if (user) {
+        console.log(user.username, " -----------------------------the user who is logged in now");
+        const session = driver.session();
+        if (session) {
+          // const res = await session.run('MATCH (n:User) WHERE n.username = $username  RETURN n',{username:user.username})
+          const res_of_query = await session.run(
+            "MATCH (n:User {username: $username})-[:onta_wla_dakar]->(g:Sex)  RETURN n, g",
+            { username: user.username }
+          );
+          const res_interest = await session.run(
+            "MATCH (n:User {username: $username})-[:has_this_interest]->(t:Tags)  RETURN  t",
+            { username: user.username }
+          );
+          console.log(res_of_query, "++++++++++++++++++++++++++=res_of_query");
+          console.log(res_interest, " -------------res_interest");
+          if (res_of_query.records.length > 0 && res_interest.records.length > 0) {
+            console.log("here");
+            const tags_interest = res_interest.records;
+            let i = 0;
+            let arr_ = [];
+            while (res_interest.records[i] != null) {
+              console.log(
+                // res_interest.records[i]._fields[0].properties.interests,
+                res_interest.records[i].get(0).properties.interests,
+
+                " (- -) \n"
+              );
+              arr_.push(res_interest.records[i].get(0).properties.interests);
+              // arr_.push(res_interest.records[i]._fields[0].properties.interests);
+              i++;
+            }
+            console.log(arr_, "  arr_   =============================================");
+            const userNode = res_of_query.records[0].get(0).properties;
+            const gender = res_of_query.records[0].get(1).properties.gender;
+            // console.log(userNode, " --------- USER---------");
+            // const userNode = res_of_query.records[0]._fields[0].properties;
+            // const gender = res_of_query.records[0]._fields[1].properties.gender;
+            // console.log(userNode, " --------- USER---------");
+            // console.log(
+            //   gender,
+            //   " --------=========+++++ GENDER_---+++++========++++"
+            // );
+            const return_data = {
+              username: userNode.username,
+              profile_picture: userNode.profile_picture,
+              last_name: userNode.last_name,
+              "first_name:": userNode.first_name,
+              "email:": userNode.email,
+              "biography:": userNode.biography,
+              gender: gender,
+              tags: arr_,
+            };
+            // console.log(return_data, "--=---(- -)");
+            return res.status(200).json(return_data);
+          }
+          return res.status(400).json("user infos are not completed");
+        }
+        return res.status(400).json("problem occured");
+      }
+      return res.status(400).json("user not found");
+    } catch {
+      return res.status(400).json("Error occured");
+    }
+  }
+);
 
 export default user_information_Router;
 // tmpuser

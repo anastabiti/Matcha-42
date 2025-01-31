@@ -35,16 +35,32 @@ interface UserInfo {
   tags: string[];
 }
 
-type FormFields = "gender" | "biography" | "interests" | "last_name" | "first_name" | "email";
+type FormFields =
+  | "gender"
+  | "biography"
+  | "interests"
+  | "last_name"
+  | "first_name"
+  | "email";
 
 function Settings() {
   const defaultInterests = [
-    "#Photography", "#Shopping", "#Karaoke", "#Yoga", "#Cooking",
-    "#Tennis", "#Art", "#Traveling", "#Music", "#Video games",
-    "#Swimming", "#Running",
+    "#Photography",
+    "#Shopping",
+    "#Karaoke",
+    "#Yoga",
+    "#Cooking",
+    "#Tennis",
+    "#Art",
+    "#Traveling",
+    "#Music",
+    "#Video games",
+    "#Swimming",
+    "#Running"
   ];
 
-  const [availableInterests, setAvailableInterests] = useState(defaultInterests);
+  const [availableInterests, setAvailableInterests] =
+    useState(defaultInterests);
   const [new_interest, setNewInterest] = useState("");
   const [formData, setFormData] = useState<FormData>({
     last_name: "",
@@ -52,37 +68,40 @@ function Settings() {
     email: "",
     gender: "",
     biography: "",
-    interests: [],
+    interests: []
   });
 
   const navigate = useNavigate();
-  const [images_url, setimages_url] = useState<(string | null)[]>(Array(5).fill(null));
-  const [images_FILES, setImages_file] = useState<(File | null)[]>(Array(5).fill(null));
+  const [images_url, setimages_url] = useState<(string | null)[]>(
+    Array(5).fill(null)
+  );
+  const [images_FILES, setImages_file] = useState<(File | null)[]>(
+    Array(5).fill(null)
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   // Fetch user data on component mount
-  useEffect(function() {
+  useEffect(function () {
     async function fetchUserInfo() {
       try {
         const response = await fetch("http://localhost:3000/api/user/info", {
-          credentials: "include",
+          credentials: "include"
         });
         const data: UserInfo = await response.json();
-        console.log(data.tags , "        data.tags ")
+        console.log(data.tags, "        data.tags ");
         setFormData({
           last_name: data.last_name || "",
           first_name: data["first_name:"] || "",
           email: data["email:"] || "",
           gender: data.gender || "",
           biography: data["biography:"] || "",
-          interests: data.tags || [],
+          interests: data.tags || []
         });
-        if(data.tags)
-        {
-          setAvailableInterests([])
-          setAvailableInterests(data.tags)
+        if (data.tags) {
+          setAvailableInterests([]);
+          setAvailableInterests(data.tags);
         }
 
         setimages_url([
@@ -90,7 +109,7 @@ function Settings() {
           data.pic_1 || null,
           data.pic_2 || null,
           data.pic_3 || null,
-          data.pic_4 || null,
+          data.pic_4 || null
         ]);
       } catch (error) {
         console.error("Error fetching user info:", error);
@@ -102,24 +121,26 @@ function Settings() {
   }, []);
 
   function toggleInterest(interest: string) {
-    setFormData(function(prevFormData) {
+    setFormData(function (prevFormData) {
       const interestExists = prevFormData.interests.includes(interest);
       const updatedInterests = interestExists
-        ? prevFormData.interests.filter(function(item) { return item !== interest; })
+        ? prevFormData.interests.filter(function (item) {
+            return item !== interest;
+          })
         : [...prevFormData.interests, interest];
 
       return {
         ...prevFormData,
-        interests: updatedInterests,
+        interests: updatedInterests
       };
     });
   }
 
   function clearInterest() {
-    setFormData(function(prevFormData) {
+    setFormData(function (prevFormData) {
       return {
         ...prevFormData,
-        interests: [],
+        interests: []
       };
     });
   }
@@ -138,11 +159,13 @@ function Settings() {
       : "#" + new_interest.trim();
 
     if (!availableInterests.includes(formattedInterest)) {
-      setAvailableInterests(function(prev) { return [...prev, formattedInterest]; });
-      setFormData(function(prev) {
+      setAvailableInterests(function (prev) {
+        return [...prev, formattedInterest];
+      });
+      setFormData(function (prev) {
         return {
           ...prev,
-          interests: [...prev.interests, formattedInterest],
+          interests: [...prev.interests, formattedInterest]
         };
       });
     }
@@ -151,26 +174,29 @@ function Settings() {
   }
 
   function handleFormChange(field: FormFields, value: string) {
-    setFormData(function(prev) {
+    setFormData(function (prev) {
       return {
         ...prev,
-        [field]: value,
+        [field]: value
       };
     });
   }
 
-  function handle_image_change(event: React.ChangeEvent<HTMLInputElement>, index: number) {
+  function handle_image_change(
+    event: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) {
     const file = event.target.files?.[0];
     if (!file) return;
 
     const image_url = URL.createObjectURL(file);
-    setimages_url(function(prev) {
+    setimages_url(function (prev) {
       const updated = [...prev];
       updated[index] = image_url;
       return updated;
     });
 
-    setImages_file(function(prev) {
+    setImages_file(function (prev) {
       const updated = [...prev];
       updated[index] = file;
       return updated;
@@ -180,30 +206,37 @@ function Settings() {
   function generateImageUploadDivs() {
     return (
       <div className="grid grid-cols-2 gap-4">
-        {Array(5).fill(null).map(function(_, i) {
-          return (
-            <div key={i} className="flex justify-center">
-              <label className="w-32 h-32 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-full cursor-pointer hover:border-blue-500">
-                {images_url[i] ? (
-                  <img
-                    src={images_url[i] || ''}
-                    alt={`User image ${i + 1}`}
-                    className="w-full h-full rounded-full object-cover"
+        {Array(5)
+          .fill(null)
+          .map(function (_, i) {
+            return (
+              <div key={i} className="flex justify-center">
+                <label className="w-32 h-32 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-full cursor-pointer hover:border-blue-500">
+                  {images_url[i] ? (
+                    <img
+                      src={images_url[i] || ""}
+                      alt={`User image ${i + 1}`}
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <AddPhotoAlternateIcon
+                      fontSize="large"
+                      className="text-gray-500"
+                    />
+                  )}
+                  <input
+                    id={`image_file_${i}`}
+                    type="file"
+                    accept="image/*"
+                    onChange={function (e) {
+                      handle_image_change(e, i);
+                    }}
+                    className="hidden"
                   />
-                ) : (
-                  <AddPhotoAlternateIcon fontSize="large" className="text-gray-500" />
-                )}
-                <input
-                  id={`image_file_${i}`}
-                  type="file"
-                  accept="image/*"
-                  onChange={function(e) { handle_image_change(e, i); }}
-                  className="hidden"
-                />
-              </label>
-            </div>
-          );
-        })}
+                </label>
+              </div>
+            );
+          })}
       </div>
     );
   }
@@ -219,17 +252,21 @@ function Settings() {
         method: "POST",
         credentials: "include",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json"
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(formData)
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        if (images_FILES.some(function(file) { return file !== null; })) {
+        if (
+          images_FILES.some(function (file) {
+            return file !== null;
+          })
+        ) {
           const new_data = new FormData();
-          images_FILES.forEach(function(file, index) {
+          images_FILES.forEach(function (file, index) {
             if (file) {
               new_data.append(`image_hna_${index}`, file);
             } else {
@@ -240,17 +277,21 @@ function Settings() {
           await fetch("http://localhost:3000/api/user/upload", {
             method: "POST",
             credentials: "include",
-            body: new_data,
+            body: new_data
           });
         }
 
         setSuccess("Your information has been updated successfully.");
-        navigate('/home');
+        navigate("/home");
       } else {
         setError(data || "Update failed. Please try again.");
       }
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Unable to connect to server. Please try again later.");
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Unable to connect to server. Please try again later."
+      );
     }
 
     setIsLoading(false);
@@ -270,7 +311,9 @@ function Settings() {
                 fullWidth
                 label="Last Name"
                 value={formData.last_name}
-                onChange={function(e) { handleFormChange("last_name", e.target.value); }}
+                onChange={function (e) {
+                  handleFormChange("last_name", e.target.value);
+                }}
                 className="bg-white rounded"
               />
 
@@ -278,7 +321,9 @@ function Settings() {
                 fullWidth
                 label="First Name"
                 value={formData.first_name}
-                onChange={function(e) { handleFormChange("first_name", e.target.value); }}
+                onChange={function (e) {
+                  handleFormChange("first_name", e.target.value);
+                }}
                 className="bg-white rounded"
               />
 
@@ -286,48 +331,96 @@ function Settings() {
                 fullWidth
                 label="Email"
                 value={formData.email}
-                onChange={function(e) { handleFormChange("email", e.target.value); }}
+                onChange={function (e) {
+                  handleFormChange("email", e.target.value);
+                }}
                 className="bg-white rounded"
               />
 
               <FormControl className="w-full">
-                <FormLabel id="gender" className="text-white">Gender</FormLabel>
+                <FormLabel id="gender" className="text-white">
+                  Gender
+                </FormLabel>
                 <RadioGroup
                   value={formData.gender}
-                  onChange={function(e) { handleFormChange("gender", e.target.value); }}
+                  onChange={function (e) {
+                    handleFormChange("gender", e.target.value);
+                  }}
                 >
-                  <FormControlLabel value="female" control={<Radio />} label="Female" className="text-white" />
-                  <FormControlLabel value="male" control={<Radio />} label="Male" className="text-white" />
+                  <FormControlLabel
+                    value="female"
+                    control={<Radio />}
+                    label="Female"
+                    className="text-white"
+                  />
+                  <FormControlLabel
+                    value="male"
+                    control={<Radio />}
+                    label="Male"
+                    className="text-white"
+                  />
                 </RadioGroup>
               </FormControl>
 
+              {/* <TextField
+                fullWidth
+                label="Biography"
+                multiline
+                rows={4}
+                inputProps={{
+                  minLength:20,
+                  maxLength: 200
+                }}
+                value={formData.biography}
+                onChange={function(e) { handleFormChange("biography", e.target.value); }}
+                className="bg-white rounded"
+              /> */}
               <TextField
                 fullWidth
                 label="Biography"
                 multiline
                 rows={4}
+                inputProps={{
+                  minLength: 20,
+                  maxLength: 200
+                }}
                 value={formData.biography}
-                onChange={function(e) { handleFormChange("biography", e.target.value); }}
+                onChange={(e) => {
+                  // Prevent input beyond 200 characters
+                  if (e.target.value.length <= 200) {
+                    handleFormChange("biography", e.target.value);
+                  }
+                }}
+               
+                // helperText={`${formData.biography?.length || 0}/200 characters`}
                 className="bg-white rounded"
               />
 
               <div className="space-y-4">
-                <h3 className="text-xl font-semibold text-white">Your Interests</h3>
+                <h3 className="text-xl font-semibold text-white">
+                  Your Interests
+                </h3>
                 <div className="grid grid-cols-2 gap-3">
-                  {availableInterests.map(function(interest) {
+                  {availableInterests.map(function (interest) {
                     return (
                       <button
                         type="button"
                         key={interest}
-                        onClick={function() { toggleInterest(interest); }}
+                        onClick={function () {
+                          toggleInterest(interest);
+                        }}
                         className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                           formData.interests.includes(interest)
                             ? "bg-pink-600 text-white"
                             : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                         }`}
                       >
-                        {interest === "#Photography" && <MonochromePhotosIcon className="mr-2" />}
-                        {interest === "#Shopping" && <ShoppingCartIcon className="mr-2" />}
+                        {interest === "#Photography" && (
+                          <MonochromePhotosIcon className="mr-2" />
+                        )}
+                        {interest === "#Shopping" && (
+                          <ShoppingCartIcon className="mr-2" />
+                        )}
                         {interest}
                       </button>
                     );
@@ -361,7 +454,9 @@ function Settings() {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-xl font-semibold text-white">Your Photos</h3>
+                <h3 className="text-xl font-semibold text-white">
+                  Your Photos
+                </h3>
                 {generateImageUploadDivs()}
               </div>
 

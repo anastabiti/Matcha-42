@@ -376,18 +376,24 @@ function Setup_page() {
                   required
                 />
               </div> */}
-              <TextField
+                   <TextField
                 fullWidth
                 label="Biography"
                 multiline
-                rows={5}
-                value={formData.biography}
+                rows={4}
                 inputProps={{
-                  maxLength: 200,
+                  minLength: 20,
+                  maxLength: 200
                 }}
-                onChange={(e) =>
-                  setFormData({ ...formData, biography: e.target.value })
-                }
+                value={formData.biography}
+                onChange={(e) => {
+                  // Prevent input beyond 200 characters
+                  if (e.target.value.length <= 200) {
+                    handleFormChange("biography", e.target.value);
+                  }
+                }}
+               
+                className="bg-white rounded"
               />
               <div className="space-y-6">
                 <h2 className="text-2xl font-semibold text-white mb-8">
