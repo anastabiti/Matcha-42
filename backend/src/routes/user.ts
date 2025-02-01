@@ -349,6 +349,8 @@ user_information_Router.post(
 //     return res.status(200).json("f");
 //   }
 // );
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 user_information_Router.post(
   "/user/upload",
@@ -364,7 +366,25 @@ user_information_Router.post(
       console.log(files, "  -?files ");
       for (let i = 0; i < keys.length; i++) {
         console.log(keys[i], " key--", files[keys[i]], "=============---====(-`-)");
-      
+
+        console.log("--------------------------------------------------")
+        console.log( files[keys[i]].mimetype," mimetype is here")
+        console.log("--------------------------------------------------")
+        if (!ALLOWED_MIME_TYPES.includes(files[keys[i]].mimetype)) {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid file type: ${files[keys[i]].mimetype}. Only JPEG/JPG and PNG files are allowed.`
+          });
+        }
+
+      //   // Optional: Check file size
+      //   if (file.size > MAX_FILE_SIZE) {
+      //     return res.status(400).json({
+      //       success: false,
+      //       message: `File ${file.name} is too large. Maximum size is 5MB.`
+      //     });
+      //   }
+      // }
        
         let profilePictureSet = false;
        

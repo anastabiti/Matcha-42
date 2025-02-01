@@ -327,15 +327,19 @@ function Settings() {
             }
           });
 
-          await fetch("http://localhost:3000/api/user/upload", {
+         const resu_= await fetch("http://localhost:3000/api/user/upload", {
             method: "POST",
             credentials: "include",
             body: new_data
           });
+          if (!resu_.ok) {
+            const resData = await resu_.json();
+            setError(resData.message || "Update failed. Please try again.");
+          }
         }
 
         setSuccess("Your information has been updated successfully.");
-        navigate("/home");
+        // navigate("/home");
       } else {
         setError(data || "Update failed. Please try again.");
       }
