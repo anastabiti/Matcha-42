@@ -10,6 +10,7 @@ import ResetPassword from './components/resetPassword'
 
 import Profile from './pages/Profile'
 import IsLogged from './components/Is_Logged'
+import Chat from './components/Chat'
 
 function App() {
 
@@ -31,6 +32,7 @@ function App() {
           <Route element={<IsLogged />}>
             <Route path="/home" element={<Home_page />} />
             <Route path="/setup" element={<Setup_page />} />
+            <Route path="/chat" element={<Chat />} />
             <Route path="/profile" element={<Profile />} />
           </Route>
         </Route>
