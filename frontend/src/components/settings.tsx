@@ -58,6 +58,11 @@ function Settings() {
     "#Swimming",
     "#Running"
   ];
+  
+  interface EmailChangeForm {
+    newEmail: string;
+    password: string;
+  }
 
   const [availableInterests, setAvailableInterests] =
     useState(defaultInterests);
@@ -81,6 +86,14 @@ function Settings() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  // Email change state
+  const [emailForm, setEmailForm] = useState<EmailChangeForm>({
+    newEmail: "",
+    password: ""
+  });
+  const [emailChangeError, setEmailChangeError] = useState("");
+  const [emailChangeSuccess, setEmailChangeSuccess] = useState("");
+  const [isEmailChangeLoading, setIsEmailChangeLoading] = useState(false);
 
   // Fetch user data on component mount
   useEffect(function () {
@@ -143,6 +156,38 @@ function Settings() {
       };
     });
   }
+  async function handleEmailChange(e: React.FormEvent) {
+    e.preventDefault();
+    setIsEmailChangeLoading(true);
+    setEmailChangeError("");
+    setEmailChangeSuccess("");
+
+    try {
+      const response = await fetch("http://localhost:3000/api/change_email", {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(emailForm)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setEmailChangeSuccess("Check your email to verify your new address.");
+        setEmailForm({ newEmail: "", password: "" });
+      } else {
+        setEmailChangeError(data || "Failed to update email");
+      }
+    } catch (error) {
+      setEmailChangeError("Connection error. Please try again.");
+    }
+
+    setIsEmailChangeLoading(false);
+  }
+
+
 
   function clearInterest() {
     setFormData(function (prevFormData) {
@@ -347,24 +392,7 @@ function Settings() {
                 className="bg-white rounded"
               />
 
-              <TextField
-                fullWidth
-                label="Email"
-                type="email"
-                inputProps={{
-                  minLength: 7,
-                  maxLength: 30
-                }}
-
-                value={formData.email}
-                onChange={function (e) {
-                  if (e.target.value.length <= 30) {
-                    handleFormChange("email", e.target.value);
-                  }
-                }}
-                className="bg-white rounded"
-              />
-
+             
               <FormControl className="w-full">
                 <FormLabel id="gender" className="text-white">
                   Gender
@@ -507,6 +535,69 @@ function Settings() {
               </button>
             </form>
           </div>
+
+           {/* Email Change Section */}
+        <div className="bg-[#E94075] rounded-2xl p-9">
+          
+          <h2 className="text-2xl font-semibold text-white mb-8">Change Email</h2>
+          <TextField
+                fullWidth
+                label="Old Email"
+                type="email"
+                inputProps={{
+                  minLength: 7,
+                  maxLength: 30
+                  , 
+                  readOnly: true
+                }}
+
+                value={formData.email}
+                // onChange={function (e) {
+                //   if (e.target.value.length <= 30) {
+                //     handleFormChange("email", e.target.value);
+                //   }
+                // }}
+                className="bg-white rounded"
+              />
+
+          <form onSubmit={handleEmailChange} className="space-y-4">
+            <TextField
+              fullWidth
+              label="New Email"
+              type="email"
+              value={emailForm.newEmail}
+              onChange={(e) => setEmailForm(prev => ({ ...prev, newEmail: e.target.value }))}
+              className="bg-white rounded"
+              required
+            />
+            <TextField
+              fullWidth
+              label="Password"
+              type="spassword"
+              value={emailForm.password}
+              onChange={(e) => setEmailForm(prev => ({ ...prev, password: e.target.value }))}
+              className="bg-white rounded"
+              required
+            />
+            {emailChangeError && (
+              <div className="text-red-500 text-sm bg-red-100 p-2 rounded">
+                {emailChangeError}
+              </div>
+            )}
+            {emailChangeSuccess && (
+              <div className="text-green-500 text-sm bg-green-100 p-2 rounded">
+                {emailChangeSuccess}
+              </div>
+            )}
+            <button
+              type="submit"
+              className="w-full bg-pink-600 hover:bg-pink-700 text-white rounded-xl py-3 font-semibold"
+              disabled={isEmailChangeLoading}
+            >
+              {isEmailChangeLoading ? "Updating Email..." : "Change Email"}
+            </button>
+          </form>
+        </div>
         </div>
       </div>
     </div>

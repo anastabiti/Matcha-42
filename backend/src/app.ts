@@ -10,6 +10,7 @@ import Facebook_auth from "./routes/Strategies/facebook";
 import Google_auth from "./routes/Strategies/google";
 import forty_two_str from "./routes/Strategies/42stra";
 import user_information_Router from "./routes/user";
+import email_change from "./routes/email_change";
 const fileUpload = require('express-fileupload');
 
 
@@ -108,5 +109,6 @@ app.use("/api", Facebook_auth);
 app.use("/api", Google_auth);
 app.use("/api", forty_two_str);
 app.use("/api", user_information_Router);
+app.use("/api", email_change);
 
 export default app;
