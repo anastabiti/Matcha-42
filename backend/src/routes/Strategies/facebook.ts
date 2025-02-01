@@ -62,6 +62,7 @@ passport.use(
                             `
                 MATCH (n:User)
                 WHERE n.email = $email
+                SET n.is_logged = true
                 RETURN {
                   username: n.username,
                   email: n.email,

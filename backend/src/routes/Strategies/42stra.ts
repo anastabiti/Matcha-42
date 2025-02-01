@@ -36,7 +36,8 @@ export const create_new_user_cipher = `CREATE (n:User {
               pic_1: "",
               pic_2: "",
               pic_3: "",
-              pic_4: ""
+              pic_4: "",
+              is_logged:  true
             })
             RETURN {
               username: n.username,
@@ -81,6 +82,7 @@ passport.use(
               `
                 MATCH (n:User)
                 WHERE n.email = $email
+                SET n.is_logged = true
                 RETURN {
                   username: n.username,
                   email: n.email,
@@ -173,15 +175,7 @@ forty_two_str.get("/auth/intra42/callback", function (req: any, res: Response) {
       //   --------------------------------"
       // );
 
-      `
-         first_name: 'Anas',
-        username: 'atabiti',
-        setup_done: true,
-        email: 'atabiti@student.1337.ma',
-        verified: true,
-        last_name: 'Tabiti'
-
-  `;
+    
       // req.session.user = {
       //   username: user.username,
       //   email: user.email,

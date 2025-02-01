@@ -46,6 +46,7 @@ passport.use(
               const resu_ = await new_session.run(
                 // `MATCH (n:User) WHERE n.email = $email RETURN {n.username, n.email, n.first_name, n.last_name, n.verified} as n`,
                 `MATCH (n:User) WHERE n.email = $email
+                  SET n.is_logged = true
             RETURN {
             username: n.username,
             email: n.email,
@@ -154,7 +155,8 @@ passport.use(
                     pic_1: "",
               pic_2: "",
               pic_3: "",
-              pic_4: ""
+              pic_4: "",
+              is_logged:  true
                   }) 
                    RETURN {
       username: n.username,
