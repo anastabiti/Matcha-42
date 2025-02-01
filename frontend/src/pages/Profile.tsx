@@ -43,7 +43,7 @@ type FormFields =
   | "first_name"
   | "email";
 
-function Settings() {
+function Profile() {
   const defaultInterests = [
     "#Photography",
     "#Shopping",
@@ -608,4 +608,4 @@ function Settings() {
   );
 }
 
-export default Settings;
+export default Profile;

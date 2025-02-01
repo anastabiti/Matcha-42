@@ -7,7 +7,8 @@ import Home_page from './components/home'
 import Setup_page from './components/setup_page'
 import Layout from './Layout'
 import ResetPassword from './components/resetPassword'
-import  Settings from './components/settings'
+
+import Profile from './pages/Profile'
 
 function App() {
 
@@ -23,7 +24,7 @@ function App() {
           <Route element={<Layout />}>
             <Route path="/home" element={<Home_page />} />
             <Route path="/setup" element={<Setup_page />} />
-            <Route path="/settings" element={<Settings />} />
+            <Route path="/profile" element={<Profile />} />
           </Route>
 
         </Routes>
