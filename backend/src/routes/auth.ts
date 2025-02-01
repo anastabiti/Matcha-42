@@ -235,14 +235,14 @@ authRouter.post(
         const email = req.body.email;
         const session = driver.session();
         if (session) {
+          
           const url_token = jwt.sign({ email: email }, process.env.JWT_TOKEN_SECRET, {
             expiresIn: "10min",
           });
-
           const res_ = await session.run(
             `MATCH (n:User) WHERE n.email = $email
-             SET n.password_reset_token = $url_token 
-             RETURN n.email`,
+            SET n.password_reset_token = $url_token 
+            RETURN n.email`,
             { email: email, url_token: url_token }
           );
           console.log(res_.records, " res_");
@@ -255,9 +255,9 @@ authRouter.post(
               to: email,
               subject: "Reset Your password ,Tinder! 💖",
               text: `Hi ${email},
-        
+
         Welcome use the link below to reset your password! 🎉        
-        🔗 Reset Your Password: http://localhost:3000/api/reset_it?token=${url_token}
+        🔗 Reset Your Password: http://localhost:7070/resetPassword?token=${url_token}
         
         
         Best regards,  
@@ -288,29 +288,38 @@ authRouter.post(
   }
 );
 
-//
-authRouter.get(
+
+
+authRouter.patch(
   "/reset_it",
-  // authRouter.patch("/reset_it",   body("password").isLength({ min: 6, max: 30 }),
-  async (req: Request, res: Response) => {
-    // console.log(req.query.token, " token");
-    //   console.log(req.body.password, "password");
+  body("password").isLength({ min: 6, max: 30 }),
+  async (req: any, res: any) => {
     try {
-      const token = req.query.token;
-      if (token) {
-        const jwt_ = await jwt.verify(token, process.env.JWT_TOKEN_SECRET);
+      const token = req.body.token as string;
+      const password = req.body.password
+      console.log(token ," token", password, " new password is \n\n\n")
+      if (!token) {
+        return res.status(400).send("Invalid token");
+      }
 
-        console.log(jwt_, " jwt_");
-
-        res.send("password reset api is called");
-      } //empty token
-      else res.status(400).send("invalid token");
-    } catch {
-      console.log("error in reset_it");
-      res.status(400).send("Expired or invalid token");
-    }
+        const jwt_ = await jwt.verify(token, process.env.JWT_TOKEN_SECRET);  
+        const new_session = driver.session()
+        if(new_session){
+          const res= new_session.run(`
+            MATCH
+            `)
+        }
+        console.log(jwt_, "--------------------jwt_-----------------\n\n\n\n") 
+        return res.status(200).json("sucess");
+      } catch (jwtError) {
+        console.error("Token verification failed:", jwtError);
+        return res.status(400).send("Expired or invalid token");
+    } 
   }
 );
+
+// --------------------------
+
 
 authRouter.post("/logout", authenticateToken_Middleware, async (req: any, res: Response) => {
   console.log("log out -+==_==+++++_=>>.......???>>>>>>");
