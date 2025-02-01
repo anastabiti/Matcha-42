@@ -296,7 +296,7 @@ function Setup_page() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-12">
       <div className="w-full max-w-md">
         <div className="bg-[#E94057] rounded-2xl p-6">
           <div className="space-y-6">

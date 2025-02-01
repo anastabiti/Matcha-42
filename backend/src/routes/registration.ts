@@ -25,7 +25,7 @@ schema
   .spaces() // Should not have spaces
   .has()
   .symbols(); // Must have at least 1 symbol
-const transporter = nodemailer.createTransport({
+export const transporter = nodemailer.createTransport({
   service: "Gmail",
   host: "smtp.gmail.com",
   port: 465,
