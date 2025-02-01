@@ -430,6 +430,19 @@ user_information_Router.post(
   }
 );
 
+
+user_information_Router.get(
+
+
+  "/user/is_logged",
+  authenticateToken_Middleware,
+  async function (req: any, res: any) {
+    console.log("is_looged is called ")
+      return res.status(200).json("IS LOGGED")
+  }
+    
+)
+
 user_information_Router.get(
   "/user/info",
   authenticateToken_Middleware,

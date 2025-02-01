@@ -44,7 +44,7 @@ const Navigation = () => (
       <NavLink to="/messages" icon={<MessageCircle />} text="Messages" />
       <NavLink to="/profile" icon={<User />} text="Profile" />
       <NavLink to="/notifications" icon={<Bell />} text="" />
-
+      <MobileNavLink to="/settings" icon={<Settings />} />
 
     </div>
 
@@ -54,6 +54,7 @@ const Navigation = () => (
       <MobileNavLink to="/messages" icon={<MessageCircle />} />
       <MobileNavLink to="/notifications" icon={<Bell />} />
       <MobileNavLink to="/profile" icon={<User />} />
+      <MobileNavLink to="/settings" icon={<Settings />} />
     </div>
 
     <button  className="hidden md:flex items-center text-gray-400 hover:text-[#e94057] transition-colors">
