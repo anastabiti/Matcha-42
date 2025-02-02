@@ -11,6 +11,7 @@ import Google_auth from "./routes/Strategies/google";
 import forty_two_str from "./routes/Strategies/42stra";
 import user_information_Router from "./routes/user";
 import email_change from "./routes/email_change";
+import match from "./routes/matchRoutes";
 const fileUpload = require('express-fileupload');
 
 
@@ -78,6 +79,7 @@ async function init_gender() {
     console.log("init_gender is called ----------------------------");
   }
 }
+
 init_gender();
 // app.use(session({
 //   genid: function(req) {
@@ -110,5 +112,6 @@ app.use("/api", Google_auth);
 app.use("/api", forty_two_str);
 app.use("/api", user_information_Router);
 app.use("/api", email_change);
+app.use('/', match);
 
 export default app;

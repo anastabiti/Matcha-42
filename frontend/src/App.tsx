@@ -9,6 +9,7 @@ import Layout from './Layout'
 import ResetPassword from './components/resetPassword'
 
 import Profile from './pages/Profile'
+import DiscoverPage from './pages/Discover'
 
 function App() {
 
@@ -25,6 +26,7 @@ function App() {
             <Route path="/home" element={<Home_page />} />
             <Route path="/setup" element={<Setup_page />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/discover"  element={<DiscoverPage />}/>
           </Route>
 
         </Routes>

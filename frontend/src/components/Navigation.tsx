@@ -2,7 +2,6 @@ import { Heart, User, MessageCircle, Search, LogOut, Bell } from 'lucide-react';
 import { NavLink as RouterLink } from 'react-router-dom';
 
 // import { useNavigate } from "react-router-dom";
-import { Settings } from 'lucide-react';
 
 // const handlelogout = async () => {
 //   const navigate = useNavigate()
