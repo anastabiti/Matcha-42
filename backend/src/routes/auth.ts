@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 import { env } from "process";
 const { body, validationResult } = require("express-validator");
 const router = express.Router();
-const jwt = require("jsonwebtoken");
+import jwt from "jsonwebtoken";
 const bcrypt = require("bcrypt");
 const authRouter = express.Router();
 const crypto = import("crypto");
@@ -95,7 +95,7 @@ export const authenticateToken_Middleware = async (req: any, res: any, next: any
       }
 
       try {
-        const decoded = await jwt.verify(token, process.env.JWT_TOKEN_SECRET as string);
+        const decoded :any= await jwt.verify(token, process.env.JWT_TOKEN_SECRET as string);
         console.log(decoded.username , " decoded.username ----------------=-\n\n\n\n")
         const res_db = await session.run(
           `MATCH (n:User) WHERE n.username = $username AND n.is_logged = true
@@ -128,7 +128,7 @@ export function generateAccessToken(user: User_jwt) {
         email: user.email,
         setup_done: user.setup_done,
       },
-      process.env.JWT_TOKEN_SECRET,
+      process.env.JWT_TOKEN_SECRET as string,
       {
         expiresIn: "1h",
       }
@@ -236,7 +236,7 @@ authRouter.post(
         const session = driver.session();
         if (session) {
           
-          const url_token = jwt.sign({ email: email }, process.env.JWT_TOKEN_SECRET, {
+          const url_token = jwt.sign({ email: email }, process.env.JWT_TOKEN_SECRET as string, {
             expiresIn: "10min",
           });
           const res_ = await session.run(
@@ -302,7 +302,7 @@ authRouter.patch(
         return res.status(400).send("Invalid token");
       }
 
-        const jwt_ = await jwt.verify(token, process.env.JWT_TOKEN_SECRET);  
+        const jwt_ = await jwt.verify(token, process.env.JWT_TOKEN_SECRET as string) ;  
         const new_session = driver.session()
         if(new_session){
           const res= new_session.run(`

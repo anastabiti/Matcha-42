@@ -2,7 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { Send } from 'lucide-react';
 
-const socket = io('http://localhost:3000');
+const socket = io('http://localhost:3000',
+  { 
+    withCredentials: true, 
+  }
+);
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
@@ -33,14 +37,15 @@ const Chat = () => {
   };
 
   return (
-    <div className="flex flex-col h-[80vh] bg-[#242033] rounded-lg overflow-hidden">
+    // https://tailwindcss.com/docs/flex-direction#column-reversed
+    <div className="flex flex-col h-[80vh] bg-[#242033] rounded-lg overflow-hidden p-12">
       {/* Chat header */}
       <div className="p-4 bg-[#2a2639] border-b border-[#342f45]">
         <h2 className="text-xl font-semibold">Chat Room</h2>
       </div>
 
       {/* Messages container */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-col overflow-y-auto p-4 space-y-4">
         {messages.map((msg, index) => (
           <div 
             key={index} 
