@@ -13,7 +13,8 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:7070",
+    // origin: "http://localhost:7070",
+    origin:process.env.front_end_ip,
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -62,7 +63,9 @@ io.on("connection", async (socket: any) => {
     };
 
     // Emit to all connected clients (including sender)
+    // io.emit("newMessage", newMessage);
     socket.to('atabiti').emit("newMessage", newMessage);
+
   });
 });
 

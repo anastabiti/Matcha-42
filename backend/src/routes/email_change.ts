@@ -98,7 +98,7 @@ email_change.patch(
                       
                      You requested to change your email address. Before we update it, please confirm your new email by clicking the link below:
 
-                            🔗 Confirm Your Email: http://localhost:3000/api/verify-new-email?token=${verfication_token}
+                            🔗 Confirm Your Email: ${process.env.back_end_ip}/api/verify-new-email?token=${verfication_token}
 
                             If you didn’t request this change, please ignore this email.
 

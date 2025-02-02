@@ -257,7 +257,7 @@ authRouter.post(
               text: `Hi ${email},
 
         Welcome use the link below to reset your password! 🎉        
-        🔗 Reset Your Password: http://localhost:7070/resetPassword?token=${url_token}
+        🔗 Reset Your Password: ${process.env.front_end_ip}/resetPassword?token=${url_token}
         
         
         Best regards,  

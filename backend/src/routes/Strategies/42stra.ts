@@ -11,7 +11,10 @@ import { auth } from "neo4j-driver-core";
 import { Profile, VerifyCallback } from "passport-google-oauth20";
 import { generateAccessToken, User } from "../auth";
 const neo4j = require("neo4j-driver");
-const driver = neo4j.driver("neo4j://localhost:7687", neo4j.auth.basic(process.env.database_username, process.env.database_password));
+const driver = neo4j.driver(
+  "neo4j://localhost:7687",
+  neo4j.auth.basic(process.env.database_username, process.env.database_password)
+);
 
 const passport = require("passport");
 
@@ -57,10 +60,15 @@ passport.use(
     {
       clientID: process.env.FORTYTWO_APP_ID,
       clientSecret: process.env.FORTYTWO_APP_SECRET,
-      callbackURL: "http://localhost:3000/api/auth/intra42/callback",
+      callbackURL: `${process.env.back_end_ip}/api/auth/intra42/callback`,
     },
 
-    async function (accessToken: string, refreshToken: string, profile: Profile, cb: VerifyCallback) {
+    async function (
+      accessToken: string,
+      refreshToken: string,
+      profile: Profile,
+      cb: VerifyCallback
+    ) {
       try {
         //   id: '90435',
         // username: 'atabiti',
@@ -71,7 +79,7 @@ passport.use(
         // phoneNumbers: [ { value: 'hidden' } ],
         // photos: [ { value: undefined } ],
         // provider: '42',
-        console.log(profile.id , "  42 profile")
+        console.log(profile.id, "  42 profile");
         const new_session = await driver.session();
         if (new_session) {
           const email_ = profile.emails?.[0]?.value || profile._json?.email;
@@ -108,15 +116,23 @@ passport.use(
 
               return cb(null, user_x);
             } else {
-              console.log(" create a new User 42 auth--------------- \n\n\n\n", profile.username, " ]\n\n\n");
+              console.log(
+                " create a new User 42 auth--------------- \n\n\n\n",
+                profile.username,
+                " ]\n\n\n"
+              );
               if (profile.username) {
-                const check_useername_exists = await new_session.run(`MATCH (n:User) WHERE n.username  = $username return n`, { username: profile.username });
+                const check_useername_exists = await new_session.run(
+                  `MATCH (n:User) WHERE n.username  = $username return n`,
+                  { username: profile.username }
+                );
                 if (check_useername_exists.records?.length > 0) {
                   //case: user registered with a username like "atabiti" , then a user with diff email logged with 42, but he has the same username "atabiti", i have to generate a new username for him.
                   console.log("[------same username found----] , ", check_useername_exists.records);
-                  const diff_username = profile.username  + "_"+  (await crypto).randomBytes(10).toString("hex")
+                  const diff_username =
+                    profile.username + "_" + (await crypto).randomBytes(10).toString("hex");
                   const result_ = await new_session.run(create_new_user_cipher, {
-                    username: diff_username ,
+                    username: diff_username,
                     email: email_,
                     password: (await crypto).randomBytes(25).toString("hex"),
                     first_name: profile?.name?.givenName || "",
@@ -175,7 +191,6 @@ forty_two_str.get("/auth/intra42/callback", function (req: any, res: Response) {
       //   --------------------------------"
       // );
 
-    
       // req.session.user = {
       //   username: user.username,
       //   email: user.email,
@@ -196,21 +211,11 @@ forty_two_str.get("/auth/intra42/callback", function (req: any, res: Response) {
       });
 
       if (user.setup_done) {
-        return res.status(200).redirect("http://localhost:7070/home");
+        return res.status(200).redirect(`${process.env.front_end_ip}/home`);
       } else {
-        return res.status(200).redirect("http://localhost:7070/setup");
+        return res.status(200).redirect(`${process.env.front_end_ip}/setup`);
       }
-      // if (!req.session.user) {
-      //   console.error("Session not saved properly");
-      //   return res.status(402).json("Session error");
-      // }
 
-      // if (user.setup_done == true) {
-      //   return res.status(200).redirect("http://localhost:7070/home");
-      // } else {
-      //   return res.status(200).redirect("http://localhost:7070/setup");
-      // }
-      // res.status(200).json("login successful");
     } catch (tokenError) {
       console.error("Error generating token:", tokenError);
       return res.status(400).json("Error generating token");

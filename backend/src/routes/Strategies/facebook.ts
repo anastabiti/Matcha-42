@@ -22,7 +22,8 @@ passport.use(
     {
       clientID: process.env.FACEBOOK_APP_ID,
       clientSecret: process.env.FACEBOOK_APP_SECRET,
-      callbackURL: "http://localhost:3000/api/auth/facebook/callback",
+      // callbackURL: "http://localhost:3000/api/auth/facebook/callback",
+      callbackURL: `${process.env.back_end_ip}/api/auth/facebook/callback`,
       profileFields: ["id", "emails", "name"],
     },
 
@@ -202,9 +203,9 @@ Facebook_auth.get(
 
           console.log(user, "  ------------------------------facebook");
           if (user.setup_done == true) {
-            return res.status(200).redirect("http://localhost:7070/home");
+            return res.status(200).redirect(`${process.env.front_end_ip}/home`);
           } else {
-            return res.status(200).redirect("http://localhost:7070/setup");
+            return res.status(200).redirect(`${process.env.front_end_ip}/setup`);
           }
         } catch (tokenError) {
           return res.status(400).json("Error generating token");

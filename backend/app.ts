@@ -78,9 +78,9 @@ init_gender();
 
 // fix cors issues
 const corsOptions = {
-  origin: "http://localhost:7070",
+  // origin: "http://localhost:7070",
+  origin: process.env.front_end_ip,
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  // allowedHeaders: ["Content-Type"],
   credentials: true,
 };
 app.use(passport.initialize());

@@ -25,7 +25,7 @@ passport.use(
       {
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: "http://localhost:3000/api/auth/google/callback",
+        callbackURL: `${process.env.back_end_ip}/api/auth/google/callback`,
       },
   
       async function (
@@ -251,9 +251,9 @@ passport.use(
 
           // return res.status(200).json("login successful");
           if ( user.setup_done == true) {
-            return res.status(200).redirect("http://localhost:7070/home");
+            return res.status(200).redirect(`${process.env.front_end_ip}/home`);
           } else {
-            return res.status(200).redirect("http://localhost:7070/setup");
+            return res.status(200).redirect(`${process.env.front_end_ip}/setup`);
           }
 
         } catch (tokenError) {
