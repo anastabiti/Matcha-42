@@ -31,6 +31,7 @@ import {
   Pool,
   DirectionsRun
 } from "@mui/icons-material";
+import Gps from "./Gps";
 
 type FormFields = "gender" | "biography" | "interests";
 
@@ -70,11 +71,14 @@ function Setup_page() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  //access lo
-  navigator.geolocation.getCurrentPosition(function(position) {
-    console.log("Latitude is :", position.coords.latitude);
-    console.log("Longitude is :", position.coords.longitude);
-  });
+  
+  // //access location
+  // navigator.geolocation.getCurrentPosition(function(position) {
+  //   console.log("Latitude is :", position.coords.latitude);
+  //   console.log("Longitude is :", position.coords.longitude);
+  // });
+
+
   // Function to handle toggling interests
   function toggleInterest(interest: string) {
     function updateInterests(prevFormData: FormData): FormData {
@@ -504,6 +508,7 @@ function Setup_page() {
                 {isLoading ? "Submitting..." : "Submit your information"}
               </button>
             </form>
+            <Gps></Gps>
           </div>
         </div>
       </div>
