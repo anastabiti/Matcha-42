@@ -45,6 +45,7 @@ registrationRouter.post(
   body("username").isLength({ min: 6, max: 20 }),
   body("first_name").isLength({ min: 3, max: 30 }),
   body("last_name").isLength({ min: 3, max: 30 }),
+  body("age").isInt({ min: 18, max: 100 }),
 
   async (req: Request, res: Response) => {
     if (schema.validate(req.body.password) === false) {
@@ -75,6 +76,7 @@ registrationRouter.post(
         res.status(400).json("First name must be between 3 and 30 characters");
       else if (errors.array()[0].path === "last_name")
         res.status(400).json("Last name must be between 3 and 30 characters");
+      else if (errors.array()[0].path === "age") res.status(400).json("Age  must be above 18");
     } else {
       // console.log(req.body, 'req.body');
       // console.log(req.body.username, " username");
@@ -100,6 +102,7 @@ registrationRouter.post(
         gender: "",
         biography: "",
         setup_done: false,
+        age: req.body.age,
       };
       const session = await driver.session();
       // console.log(process.env.database_username, process.env.database_password, "database");
@@ -130,17 +133,11 @@ registrationRouter.post(
              first_name: $first_name,
               last_name: $last_name,verified:false,
                verfication_token:$verfication_token,setup_done:$setup_done,
-               
-               pic_1: "",
-              pic_2: "",
-              pic_3: "",
-              pic_4: "",
-               password_reset_token:$password_reset_token
-
-              fame_rating: 0,
-              
-              }) RETURN a`,
-
+               gender:"",
+                pics: ["","","","",""],
+            fame_rating:0,              is_logged:  false,
+            age:$age,
+               password_reset_token:$password_reset_token}) RETURN a`,
             user
           );
 
@@ -238,3 +235,5 @@ registrationRouter.get("/verify-email", async (req: Request, res: Response) => {
 });
 
 export default registrationRouter;
+//atabiti_a
+//sjjJh77^$hJ$uyh

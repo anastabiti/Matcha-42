@@ -17,6 +17,7 @@ user_information_Router.post(
     .withMessage("Gender cannot be empty")
     .isIn(["male", "female"])
     .withMessage("Gender must be 'male' or 'female'"),
+    body("age").isInt({ min: 18, max: 100 }),
   body("biography")
     .notEmpty()
     .withMessage("Biography cannot be empty")
@@ -71,29 +72,31 @@ user_information_Router.post(
             `MATCH (n:User) WHERE n.username = $username
                         SET n.biography = $biography
                         SET n.setup_done = true
+                        set n.gender = $gender
+                        set n.age = $age
                         RETURN n.username
               `,
-            { username: _user.username, biography: req.body.biography }
+            { username: _user.username, biography: req.body.biography ,gender:req.body.gender,age:req.body.age}
           );
         }
-        if (await req.body.gender) {
-          //delete old gender
-          await session.run(
-            `MATCH (u:User {username: $username})-[r:onta_wla_dakar]->(g:Sex)
-              DELETE r`,
-            { username: _user.username }
-          );
+    //     if (await req.body.gender) {
+    //       //delete old gender
+    //       await session.run(
+    //         `MATCH (u:User {username: $username})-[r:onta_wla_dakar]->(g:Sex)
+    //           DELETE r`,
+    //         { username: _user.username }
+    //       );
 
-          await session.run(
-            `MATCH (U:User) WHERE U.username = $username
-              MATCH (G:Sex) WHERE G.gender = $gender
-              MERGE (U)-[:onta_wla_dakar]->(G)
+    //       await session.run(
+    //         `MATCH (U:User) WHERE U.username = $username
+    //           MATCH (G:Sex) WHERE G.gender = $gender
+    //           MERGE (U)-[:onta_wla_dakar]->(G)
 
-    `,
+    // `,
 
-            { username: _user.username, gender: await req.body.gender }
-          );
-        }
+    //         { username: _user.username, gender: await req.body.gender }
+    //       );
+    //     }
       }
       console.log("llllllllllllllllllllllllllll");
       await session.close();
@@ -154,6 +157,7 @@ user_information_Router.post(
     .isLength({ min: 20, max: 200 })
     .withMessage("Biography must be between 20 and 200 characters"),
   body("interests").isArray().withMessage("Interests must be an array"),
+  body("age").isInt({ min: 18, max: 100 }),
 
   async (req: any, res: any) => {
     const errors = validationResult(req);
@@ -182,7 +186,8 @@ user_information_Router.post(
           SET n.last_name = $last_name,
               n.first_name = $first_name,
               n.gender = $gender,
-              n.biography = $biography
+              n.biography = $biography,
+              n.age = $age
           RETURN n
           `,
           {
@@ -191,26 +196,27 @@ user_information_Router.post(
             first_name: user_copy.first_name,
             gender: gender,
             biography: user_copy.biography,
+            age:user_copy.age
           }
         );
 
-        // Update gender relationship
-        if (gender) {
-          // Delete old gender relationship
-          await new_session.run(
-            `MATCH (u:User {username: $username})-[r:onta_wla_dakar]->(g:Sex)
-             DELETE r`,
-            { username: logged_user.username }
-          );
+        // // Update gender relationship
+        // if (gender) {
+        //   // Delete old gender relationship
+        //   await new_session.run(
+        //     `MATCH (u:User {username: $username})-[r:onta_wla_dakar]->(g:Sex)
+        //      DELETE r`,
+        //     { username: logged_user.username }
+        //   );
 
-          // Create new gender relationship
-          await new_session.run(
-            `MATCH (U:User) WHERE U.username = $username
-             MATCH (G:Sex) WHERE G.gender = $gender
-             MERGE (U)-[:onta_wla_dakar]->(G)`,
-            { username: logged_user.username, gender: gender }
-          );
-        }
+        //   // Create new gender relationship
+        //   await new_session.run(
+        //     `MATCH (U:User) WHERE U.username = $username
+        //      MATCH (G:Sex) WHERE G.gender = $gender
+        //      MERGE (U)-[:onta_wla_dakar]->(G)`,
+        //     { username: logged_user.username, gender: gender }
+        //   );
+        // }
 
         // Update interests
         if (user_copy.interests && Array.isArray(user_copy.interests)) {
@@ -352,84 +358,95 @@ user_information_Router.post(
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
+
+
 user_information_Router.post(
   "/user/upload",
   authenticateToken_Middleware,
   async function (req: any, res: any) {
     const _user = req.user;
     try {
-      const files = await req.files; // Access all uploaded files
-      if (files) {
-      const session = driver.session(); // Open a Neo4j session
-      console.log(Object.keys(files), "------console.log(Object.keys(files))-------");
-      const keys: string[] = Object.keys(files);
-      console.log(files, "  -?files ");
-      for (let i = 0; i < keys.length; i++) {
-        console.log(keys[i], " key--", files[keys[i]], "=============---====(-`-)");
+      const files = await req.files;
+      if (!files) {
+        return res.status(200).json("No files");
+      }
 
-        console.log("--------------------------------------------------")
-        console.log( files[keys[i]].mimetype," mimetype is here")
-        console.log("--------------------------------------------------")
-        if (!ALLOWED_MIME_TYPES.includes(files[keys[i]].mimetype)) {
+      const session = driver.session();
+      const keys: string[] = Object.keys(files);
+      
+      // Get existing pics array
+      const result = await session.run(
+        `MATCH (u:User {username: $username}) 
+         RETURN u.pics as pics`,
+        { username: _user.username }
+      );
+      let existingPics = result.records[0]?.get('pics') || [];
+      console.log()
+      for (let i = 0; i < keys.length; i++) {
+        const file = files[keys[i]];
+        console.log("[",files[keys[i]] , " ----------files[keys[i]];\n",keys[i],"\n\n\n",files, " ---files", " i is ", i , "\n\n\n\n\n\n\n keys.length ", keys.length ,"]\n\n\n")
+        let index = Number(keys[i])
+        console.log(typeof(keys[i]) , " typeof(keys[i])\n\n", keys[i] , " keys[i]\n", typeof(index), " typeof(index)\n")
+        // Validate mime type
+        if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
           return res.status(400).json({
             success: false,
-            message: `Invalid file type: ${files[keys[i]].mimetype}. Only JPEG/JPG and PNG files are allowed.`
+            message: `Invalid file type: ${file.mimetype}. Only JPEG/JPG and PNG files are allowed.`
           });
         }
 
-      //   // Optional: Check file size
-      //   if (file.size > MAX_FILE_SIZE) {
-      //     return res.status(400).json({
-      //       success: false,
-      //       message: `File ${file.name} is too large. Maximum size is 5MB.`
-      //     });
-      //   }
-      // }
-       
-        let profilePictureSet = false;
-       
-          const file = files[keys[i]]
-          const img_db_index = keys[i].replace("image_hna_", ""); 
-          console.log(img_db_index, " image index\n\n\n\n\n\n\n") ; // Output: "2"
-          // Upload to ImageKit
-          const ret = await imagekitUploader.upload({
-            file: file.data,
-            fileName: file.name,
-          });
-          // console.log(ret, "<- Uploaded file response");
+        // Upload to ImageKit
+        const ret = await imagekitUploader.upload({
+          file: file.data,
+          fileName: file.name,
+        });
 
-          if (!profilePictureSet && keys[i] == 'image_hna_0') {
-            // Set profile picture for the first valid file
-            await session.run(
-              `MATCH (u:User {username: $username})
-             SET u.profile_picture = $profile_picture
-             RETURN u.profile_picture`,
-              { username: _user.username, profile_picture: ret.url }
-            );
-            profilePictureSet = true;
-          } else {
-            // Set additional pictures with dynamic properties
-            await session.run(
-              `MATCH (u:User {username: $username})
-             SET u.pic_${img_db_index} = $url
+        // Handle profile picture (first image)
+        if (index === 0) {
+          existingPics[index] = ret.url
+          await session.run(
+            `MATCH (u:User {username: $username})
+              SET u.profile_picture = $profile_picture
              RETURN u`,
-              { username: _user.username, url: ret.url }
-            );
-          }
+            { username: _user.username, profile_picture: ret.url}
+          );
         }
 
-        session.close(); // Close Neo4j session
-
-        return res.status(200).json("Images uploaded successfully.");
+        existingPics[index] = ret.url
       }
-      return res.status(200).json("No files");
+
+      // Update the pics array in the database
+      await session.run(
+        `MATCH (u:User {username: $username})
+         SET u.pics = $pics
+         RETURN u`,
+        { username: _user.username, pics: existingPics }
+      );
+
+      session.close();
+      return res.status(200).json("Images uploaded successfully.");
+      
     } catch (error) {
       console.error("Image upload failed:", error);
       return res.status(400).json("Image upload failed.");
     }
   }
 );
+user_information_Router.get(
 
+
+  "/user/is_logged",
+  authenticateToken_Middleware,
+  async function (req: any, res: any) {
+    console.log("is_looged is called ")
+      return res.status(200).json("IS LOGGED")
+  }
+    
+)
+
+
+
+// -------------
 user_information_Router.get(
   "/user/info",
   authenticateToken_Middleware,
@@ -437,81 +454,53 @@ user_information_Router.get(
     try {
       const user = req.user;
 
-      console.log("-------------------------------", user, "\n\n\n\n\n");
       if(user.setup_done == false)
         return res.status(405).json("Complete Profile Setup first")
       // console.log(req, " req is here");
-      console.log("-------------------------------");
       if (user) {
-        console.log(user.username, " -----------------------------the user who is logged in now");
+        // console.log(user.username, " -----------------------------the user who is logged in now");
         const session = driver.session();
         if (session) {
-          // const res = await session.run('MATCH (n:User) WHERE n.username = $username  RETURN n',{username:user.username})
-          const res_of_query = await session.run(
-            "MATCH (n:User {username: $username})-[:onta_wla_dakar]->(g:Sex)  RETURN n, g",
-            { username: user.username }
-          );
+          const res_of_query = await session.run('MATCH (n:User) WHERE n.username = $username  RETURN n',{username:user.username})
+          // const res_of_query = await session.run(
+          //   "MATCH (n:User {username: $username})-[:onta_wla_dakar]->(g:Sex)  RETURN n, g",
+          //   { username: user.username }
+          // );
           const res_interest = await session.run(
             "MATCH (n:User {username: $username})-[:has_this_interest]->(t:Tags)  RETURN  t",
             { username: user.username }
           );
-          console.log(res_of_query, "++++++++++++++++++++++++++=res_of_query");
-          console.log(res_interest, " -------------res_interest");
           if (res_of_query.records.length > 0 && res_interest.records.length > 0) {
             console.log("here");
             const tags_interest = res_interest.records;
             let i = 0;
             let arr_ = [];
             while (res_interest.records[i] != null) {
-              console.log(
-                // res_interest.records[i]._fields[0].properties.interests,
-                res_interest.records[i].get(0).properties.interests,
+              // console.log(
+              //   // res_interest.records[i]._fields[0].properties.interests,
+              //   res_interest.records[i].get(0).properties.interests,
 
-                " (- -) \n"
-              );
+              //   " (- -) \n"
+              // );
               arr_.push(res_interest.records[i].get(0).properties.interests);
-              // arr_.push(res_interest.records[i]._fields[0].properties.interests);
               i++;
             }
-            console.log(arr_, "  arr_   =============================================");
+            // console.log(arr_, "  arr_   =============================================");
             const userNode = res_of_query.records[0].get(0).properties;
-            const gender = res_of_query.records[0].get(1).properties.gender;
-            // console.log(userNode, " --------- USER---------");
-            // const userNode = res_of_query.records[0]._fields[0].properties;
-            // const gender = res_of_query.records[0]._fields[1].properties.gender;
-            // console.log(userNode, " --------- USER---------");
-            // console.log(
-            //   gender,
-            //   " --------=========+++++ GENDER_---+++++========++++"
-            // );
-            // const return_data = {
-            //   username: userNode.username,
-            //   profile_picture: userNode.profile_picture,
-            //   last_name: userNode.last_name,
-            //   "first_name:": userNode.first_name,
-            //   "email:": userNode.email,
-            //   "biography:": userNode.biography,
-            //   gender: gender,
-            //   tags: arr_,
-            // };
+            
+            
             const return_data = {
-              username: userNode.username,
-              profile_picture: userNode.profile_picture,
-              last_name: userNode.last_name,
+              "username": userNode.username,
+              "profile_picture": userNode.profile_picture,
+              "last_name": userNode.last_name,
               "first_name:": userNode.first_name,
               "email:": userNode.email,
               "biography:": userNode.biography,
-              pic_1: userNode.pic_1,
-
-              pic_2: userNode.pic_2,
-
-              pic_3: userNode.pic_3,
-
-              pic_4: userNode.pic_4,
-              gender: gender,
-              tags: arr_,
+              "pics": userNode.pics || [],
+              "gender": userNode.gender,
+              "age":userNode.age,
+              "tags": arr_,
             };
-            // console.log(return_data, "--=---(- -)");
             return res.status(200).json(return_data);
           }
           return res.status(400).json("user infos are not completed");

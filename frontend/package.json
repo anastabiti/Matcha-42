@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --port 7070",
+    "dev": "vite --host 0.0.0.0 --port 7070",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview --port 7070"
@@ -22,7 +22,8 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-google-button": "^0.8.0",
-    "react-router-dom": "^7.1.2"
+    "react-router-dom": "^7.1.2",
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

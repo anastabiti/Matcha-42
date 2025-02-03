@@ -25,7 +25,7 @@ passport.use(
       {
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: "http://localhost:3000/api/auth/google/callback",
+        callbackURL: `${process.env.back_end_ip}/api/auth/google/callback`,
       },
   
       async function (
@@ -46,6 +46,7 @@ passport.use(
               const resu_ = await new_session.run(
                 // `MATCH (n:User) WHERE n.email = $email RETURN {n.username, n.email, n.first_name, n.last_name, n.verified} as n`,
                 `MATCH (n:User) WHERE n.email = $email
+                  SET n.is_logged = true
             RETURN {
             username: n.username,
             email: n.email,
@@ -151,10 +152,10 @@ passport.use(
                     gender: "",
                     biography: "",
                     setup_done:false,
-                    pic_1: "",
-              pic_2: "",
-              pic_3: "",
-              pic_4: ""
+                      pics: ["","","","",""],
+                        fame_rating:0,            
+                      age:18,
+              is_logged:  true
                   }) 
                    RETURN {
       username: n.username,
@@ -249,9 +250,9 @@ passport.use(
 
           // return res.status(200).json("login successful");
           if ( user.setup_done == true) {
-            return res.status(200).redirect("http://localhost:7070/home");
+            return res.status(200).redirect(`${process.env.front_end_ip}/home`);
           } else {
-            return res.status(200).redirect("http://localhost:7070/setup");
+            return res.status(200).redirect(`${process.env.front_end_ip}/setup`);
           }
 
         } catch (tokenError) {
