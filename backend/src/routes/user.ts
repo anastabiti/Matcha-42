@@ -402,16 +402,13 @@ user_information_Router.post(
         });
 
         // Handle profile picture (first image)
-        if (!i) {
+        if (index === 0) {
           existingPics[index] = ret.url
           await session.run(
             `MATCH (u:User {username: $username})
-             SET u.profile_picture = $profile_picture
-            SET u.pics = $pics
-               u.pics = $pics
-
+              SET u.profile_picture = $profile_picture
              RETURN u`,
-            { username: _user.username, profile_picture: ret.url , pics: existingPics }
+            { username: _user.username, profile_picture: ret.url}
           );
         }
 
