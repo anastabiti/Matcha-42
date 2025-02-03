@@ -126,7 +126,8 @@ function Profile() {
             data.pics[0] || null,
             data.pics[1] || null,
             data.pics[2] || null,
-            data.pics[3] || null
+            data.pics[3] || null,
+            data.pics[4] || null
           ]);
         }
         if (response.status == 405) {
