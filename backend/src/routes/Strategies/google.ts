@@ -152,7 +152,7 @@ passport.use(
                     gender: "",
                     biography: "",
                     setup_done:false,
-                      pics: [],
+                      pics: ["","","","",""],
                         fame_rating:0,            
                       age:18,
               is_logged:  true

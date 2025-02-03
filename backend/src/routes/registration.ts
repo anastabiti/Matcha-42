@@ -134,7 +134,7 @@ registrationRouter.post(
               last_name: $last_name,verified:false,
                verfication_token:$verfication_token,setup_done:$setup_done,
                gender:"",
-                pics: [],
+                pics: ["","","","",""],
             fame_rating:0,              is_logged:  false,
             age:$age,
                password_reset_token:$password_reset_token}) RETURN a`,
