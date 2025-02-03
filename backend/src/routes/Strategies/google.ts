@@ -154,7 +154,7 @@ passport.use(
                     setup_done:false,
                       pics: [],
                         fame_rating:0,            
-                      age:18
+                      age:18,
               is_logged:  true
                   }) 
                    RETURN {
