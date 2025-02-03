@@ -66,8 +66,7 @@ registrationRouter.post(
     //   location: 'body'
     // }
     if (!errors.isEmpty()) {
-      if (errors.array()[0].path === "email")
-        res.status(400).json("Invalid email");
+      if (errors.array()[0].path === "email") res.status(400).json("Invalid email");
       else if (errors.array()[0].path === "password")
         res.status(400).json("Password must be between 6 and 30 characters");
       else if (errors.array()[0].path === "username")
@@ -100,7 +99,7 @@ registrationRouter.post(
         password_reset_token: "",
         gender: "",
         biography: "",
-        setup_done:false
+        setup_done: false,
       };
       const session = await driver.session();
       // console.log(process.env.database_username, process.env.database_password, "database");
@@ -112,24 +111,19 @@ registrationRouter.post(
           // "MATCH (u:User {email: $email}) RETURN u",
           "MATCH (u:User) WHERE u.email = $email RETURN u",
           { email: user.email, username: user.username }
-        ); 
+        );
         const check_username = await session.run(
           "MATCH (u:User) WHERE u.username = $username RETURN u",
           { username: user.username }
         );
 
-
         if (_check_email_.records.length > 0) {
           res.status(400).json("Email already exists");
-        }
-       
-        else if (check_username.records.length > 0) {
+        } else if (check_username.records.length > 0) {
           res.status(400).json("Username already exists");
         } else {
           console.log("new User");
-          user.verfication_token = (await crypto)
-            .randomBytes(20)
-            .toString("hex");
+          user.verfication_token = (await crypto).randomBytes(20).toString("hex");
           console.log(user.verfication_token, "verfication_token");
           await session.run(
             `CREATE (a:User {username: $username, email: $email, password: $password,
@@ -141,7 +135,12 @@ registrationRouter.post(
               pic_2: "",
               pic_3: "",
               pic_4: "",
-               password_reset_token:$password_reset_token}) RETURN a`,
+               password_reset_token:$password_reset_token
+
+              fame_rating: 0,
+              
+              }) RETURN a`,
+
             user
           );
 
@@ -197,7 +196,6 @@ registrationRouter.post(
 // Verify email route
 registrationRouter.get("/verify-email", async (req: Request, res: Response) => {
   try {
-
     const token = req.query.token;
     console.log(token, " token");
     if (token) {

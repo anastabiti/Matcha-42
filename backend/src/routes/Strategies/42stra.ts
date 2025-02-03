@@ -37,6 +37,7 @@ export const create_new_user_cipher = `CREATE (n:User {
               pic_2: "",
               pic_3: "",
               pic_4: ""
+              fame_rating: 0,
             })
             RETURN {
               username: n.username,

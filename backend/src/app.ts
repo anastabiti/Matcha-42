@@ -66,21 +66,21 @@ export const imagekitUploader = new ImageKit({
 
 
 
-async function init_gender() {
-  const new_session = driver.session();
+// async function init_gender() {
+//   const new_session = driver.session();
 
-  if (new_session) {
-    await new_session.run(
-      `
-    MERGE (m:Sex {gender: "male"})
-    MERGE (f:Sex {gender: "female"})        `,
+//   if (new_session) {
+//     await new_session.run(
+//       `
+//     MERGE (m:Sex {gender: "male"})
+//     MERGE (f:Sex {gender: "female"})        `,
     
-    );
-    console.log("init_gender is called ----------------------------");
-  }
-}
+//     );
+//     console.log("init_gender is called ----------------------------");
+//   }
+// }
 
-init_gender();
+// init_gender();
 // app.use(session({
 //   genid: function(req) {
 //     return genuuid() // use UUIDs for session IDs
