@@ -10,7 +10,8 @@ const RegistrationForm = () => {
     username: "",
     first_name: "",
     last_name: "",
-    password: ""
+    password: "",
+    age:18
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -47,7 +48,8 @@ const RegistrationForm = () => {
           username: "",
           first_name: "",
           last_name: "",
-          password: ""
+          password: "",
+          age:0
         });
       } else {
         console.log(data, " error");
@@ -109,6 +111,21 @@ const RegistrationForm = () => {
                 onChange={(e) => {
                   if (e.target.value.length <= 20) {
                     setFormData({ ...formData, username: e.target.value });
+                  }
+                }}
+                required
+              />
+              <input
+                type="number"
+                placeholder="age"
+                className="w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-400"
+                min={18}
+                max={100}
+                value={formData.age}
+                onChange={(e) => {
+                  const age = parseInt(e.target.value, 10);
+                  if (!isNaN(age) && age >= 18 && age <= 100) {
+                    setFormData({ ...formData, age });
                   }
                 }}
                 required

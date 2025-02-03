@@ -14,6 +14,7 @@ interface FormData {
   gender: string;
   biography: string;
   interests: string[];
+  age:Number;
 }
 
 import {
@@ -28,7 +29,7 @@ import {
   MusicNote,
   SportsEsports,
   Pool,
-  DirectionsRun,
+  DirectionsRun
 } from "@mui/icons-material";
 
 type FormFields = "gender" | "biography" | "interests";
@@ -47,7 +48,7 @@ function Setup_page() {
     "#Music",
     "#Video games",
     "#Swimming",
-    "#Running",
+    "#Running"
   ];
 
   // State declarations
@@ -58,6 +59,7 @@ function Setup_page() {
     gender: "",
     biography: "",
     interests: [],
+    age: 18
   });
 
   const navigate = useNavigate();
@@ -90,7 +92,7 @@ function Setup_page() {
 
       return {
         ...prevFormData,
-        interests: updatedInterests,
+        interests: updatedInterests
       };
     }
 
@@ -102,7 +104,7 @@ function Setup_page() {
     function updateFormData(prevFormData: FormData): FormData {
       return {
         ...prevFormData,
-        interests: [],
+        interests: []
       };
     }
     setFormData(updateFormData);
@@ -141,7 +143,7 @@ function Setup_page() {
       function updateFormData(prevFormData: FormData): FormData {
         return {
           ...prevFormData,
-          interests: [...prevFormData.interests, formattedInterest],
+          interests: [...prevFormData.interests, formattedInterest]
         };
       }
       setFormData(updateFormData);
@@ -156,7 +158,7 @@ function Setup_page() {
     function updateFormData(prevFormData: FormData) {
       return {
         ...prevFormData,
-        [field]: value,
+        [field]: value
       };
     }
     setFormData(updateFormData);
@@ -237,9 +239,9 @@ function Setup_page() {
           method: "POST",
           credentials: "include",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type": "application/json"
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(formData)
         }
       );
 
@@ -257,16 +259,16 @@ function Setup_page() {
           for (let index = 0; index < images_FILES.length; index++) {
             const file = images_FILES[index];
             if (file) {
-              new_data.append(`image_hna_${index}`, file); // Append valid files
+              new_data.append(index, file); // Append valid files
             } else {
-              new_data.append(`image_hna_${index}`, "NULL"); // Append "NULL" for null entries
+              new_data.append(index, "NULL"); // Append "NULL" for null entries
             }
           }
           // new_data.append("image_hna", images_FILES);
           await fetch("http://localhost:3000/api/user/upload", {
             method: "POST",
             credentials: "include",
-            body: new_data,
+            body: new_data
           });
         }
         setSuccess("Your information has been submitted successfully.");
@@ -276,6 +278,7 @@ function Setup_page() {
           // sexual_preferences: "",
           biography: "",
           interests: [],
+          age:18
         });
 
         navigate("/home");
@@ -327,56 +330,24 @@ function Setup_page() {
                   />
                 </RadioGroup>
               </FormControl>
+              <TextField
+                fullWidth
+                type="number"
+                label="Age"
+                placeholder="Age"
+                inputProps={{ min: 18, max: 100 }}
+                value={formData.age ?? ""}
+                onChange={(e) => {
+                  let age = e.target.value ? parseInt(e.target.value, 10) : "";
+                  if ((age >= 18 && age <= 100)) {
+                    setFormData({ ...formData, age });
+                  }
+                }}
+                required
+                className="bg-white rounded"
+              />
 
-              {/* <FormControl> */}
-              {/* <FormLabel id="sexual_preferences">
-                  Sexual preferences
-                </FormLabel> */}
-              {/* <RadioGroup
-                  aria-labelledby="sexual_preferences"
-                  value={formData.sexual_preferences}
-                  name="sexual_preferences"
-                  onChange={function (event) {
-                    handleFormChange("sexual_preferences", event.target.value);
-                  }}
-                >
-                  <FormControlLabel
-                    value="homosexual"
-                    control={<Radio />}
-                    label="Homosexual"
-                  />
-                  <FormControlLabel
-                    value="heterosexual"
-                    control={<Radio />}
-                    label="Heterosexual"
-                  />
-                  <FormControlLabel
-                    value="bisexual"
-                    control={<Radio />}
-                    label="Bisexual"
-                  />
-                  <FormControlLabel
-                    value="other"
-                    control={<Radio />}
-                    label="Other"
-                  />
-                </RadioGroup> */}
-              {/* </FormControl> */}
-
-              {/* <div className="relative">
-                <div className="text-white mb-2">Biography</div>
-                <input
-                  type="text"
-                  placeholder="Biography"
-                  className="w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-400"
-                  value={formData.biography}
-                  onChange={function(event) {
-                    handleFormChange("biography", event.target.value);
-                  }}
-                  required
-                />
-              </div> */}
-                   <TextField
+              <TextField
                 fullWidth
                 label="Biography"
                 multiline
@@ -392,7 +363,6 @@ function Setup_page() {
                     handleFormChange("biography", e.target.value);
                   }
                 }}
-               
                 className="bg-white rounded"
               />
               <div className="space-y-6">

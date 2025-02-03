@@ -152,10 +152,9 @@ passport.use(
                     gender: "",
                     biography: "",
                     setup_done:false,
-                    pic_1: "",
-              pic_2: "",
-              pic_3: "",
-              pic_4: "",
+                      pics: [],
+                        fame_rating:0,            
+                      age:18
               is_logged:  true
                   }) 
                    RETURN {

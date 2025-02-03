@@ -78,7 +78,7 @@ async function init_gender() {
     console.log("init_gender is called ----------------------------");
   }
 }
-init_gender();
+// init_gender();
 // app.use(session({
 //   genid: function(req) {
 //     return genuuid() // use UUIDs for session IDs

@@ -45,6 +45,7 @@ registrationRouter.post(
   body("username").isLength({ min: 6, max: 20 }),
   body("first_name").isLength({ min: 3, max: 30 }),
   body("last_name").isLength({ min: 3, max: 30 }),
+  body("age").isInt({ min: 18, max: 100 }),
 
   async (req: Request, res: Response) => {
     if (schema.validate(req.body.password) === false) {
@@ -66,8 +67,7 @@ registrationRouter.post(
     //   location: 'body'
     // }
     if (!errors.isEmpty()) {
-      if (errors.array()[0].path === "email")
-        res.status(400).json("Invalid email");
+      if (errors.array()[0].path === "email") res.status(400).json("Invalid email");
       else if (errors.array()[0].path === "password")
         res.status(400).json("Password must be between 6 and 30 characters");
       else if (errors.array()[0].path === "username")
@@ -76,6 +76,7 @@ registrationRouter.post(
         res.status(400).json("First name must be between 3 and 30 characters");
       else if (errors.array()[0].path === "last_name")
         res.status(400).json("Last name must be between 3 and 30 characters");
+      else if (errors.array()[0].path === "age") res.status(400).json("Age  must be above 18");
     } else {
       // console.log(req.body, 'req.body');
       // console.log(req.body.username, " username");
@@ -100,7 +101,8 @@ registrationRouter.post(
         password_reset_token: "",
         gender: "",
         biography: "",
-        setup_done:false
+        setup_done: false,
+        age: req.body.age,
       };
       const session = await driver.session();
       // console.log(process.env.database_username, process.env.database_password, "database");
@@ -112,35 +114,29 @@ registrationRouter.post(
           // "MATCH (u:User {email: $email}) RETURN u",
           "MATCH (u:User) WHERE u.email = $email RETURN u",
           { email: user.email, username: user.username }
-        ); 
+        );
         const check_username = await session.run(
           "MATCH (u:User) WHERE u.username = $username RETURN u",
           { username: user.username }
         );
 
-
         if (_check_email_.records.length > 0) {
           res.status(400).json("Email already exists");
-        }
-       
-        else if (check_username.records.length > 0) {
+        } else if (check_username.records.length > 0) {
           res.status(400).json("Username already exists");
         } else {
           console.log("new User");
-          user.verfication_token = (await crypto)
-            .randomBytes(20)
-            .toString("hex");
+          user.verfication_token = (await crypto).randomBytes(20).toString("hex");
           console.log(user.verfication_token, "verfication_token");
           await session.run(
             `CREATE (a:User {username: $username, email: $email, password: $password,
              first_name: $first_name,
               last_name: $last_name,verified:false,
                verfication_token:$verfication_token,setup_done:$setup_done,
-               
-               pic_1: "",
-              pic_2: "",
-              pic_3: "",
-              pic_4: "",
+               gender:"",
+                pics: [],
+            fame_rating:0,              is_logged:  false,
+            age:$age,
                password_reset_token:$password_reset_token}) RETURN a`,
             user
           );
@@ -197,7 +193,6 @@ registrationRouter.post(
 // Verify email route
 registrationRouter.get("/verify-email", async (req: Request, res: Response) => {
   try {
-
     const token = req.query.token;
     console.log(token, " token");
     if (token) {
@@ -240,3 +235,5 @@ registrationRouter.get("/verify-email", async (req: Request, res: Response) => {
 });
 
 export default registrationRouter;
+//atabiti_a
+//sjjJh77^$hJ$uyh

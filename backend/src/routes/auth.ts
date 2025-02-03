@@ -27,10 +27,6 @@ export type User = {
   profile_picture: string;
   setup_done: boolean;
   verfication_token: string;
-  pic_1: string;
-  pic_2: string;
-  pic_3: string;
-  pic_4: string;
 };
 
 interface User_jwt {

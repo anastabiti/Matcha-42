@@ -31,6 +31,7 @@ interface UserInfo {
   pic_2: string | null;
   pic_3: string | null;
   pic_4: string | null;
+  pics: string[];
   gender: string;
   tags: string[];
 }
@@ -58,7 +59,7 @@ function Profile() {
     "#Swimming",
     "#Running"
   ];
-  
+
   interface EmailChangeForm {
     newEmail: string;
     password: string;
@@ -73,7 +74,8 @@ function Profile() {
     email: "",
     gender: "",
     biography: "",
-    interests: []
+    interests: [],
+    age:18
   });
 
   const navigate = useNavigate();
@@ -102,36 +104,34 @@ function Profile() {
         const response = await fetch("http://localhost:3000/api/user/info", {
           credentials: "include"
         });
-        if(response.ok)
-        {
-
+        if (response.ok) {
           const data: UserInfo = await response.json();
-          console.log(data.tags, "        data.tags ");
+          console.log(data.pics, "        pics ----");
           setFormData({
-          last_name: data.last_name || "",
-          first_name: data["first_name:"] || "",
-          email: data["email:"] || "",
-          gender: data.gender || "",
-          biography: data["biography:"] || "",
-          interests: data.tags || []
-        });
-        if (data.tags) {
-          setAvailableInterests([]);
-          setAvailableInterests(data.tags);
+            last_name: data.last_name || "",
+            first_name: data["first_name:"] || "",
+            email: data["email:"] || "",
+            gender: data.gender || "",
+            biography: data["biography:"] || "",
+            interests: data.tags || [],
+            pics: data.pics || [],
+            age:data.age
+          });
+          if (data.tags) {
+            setAvailableInterests([]);
+            setAvailableInterests(data.tags);
+          }
+
+          setimages_url([
+            data.pics[0] || null,
+            data.pics[1] || null,
+            data.pics[2] || null,
+            data.pics[3] || null
+          ]);
         }
-        
-        setimages_url([
-          data.profile_picture || null,
-          data.pic_1 || null,
-          data.pic_2 || null,
-          data.pic_3 || null,
-          data.pic_4 || null
-        ]);
-      }
-      if(response.status == 405)
-      {
-        navigate('/setup')
-      }
+        if (response.status == 405) {
+          navigate("/setup");
+        }
       } catch (error) {
         console.error("Error fetching user info:", error);
         setError("Failed to load user information");
@@ -186,8 +186,6 @@ function Profile() {
 
     setIsEmailChangeLoading(false);
   }
-
-
 
   function clearInterest() {
     setFormData(function (prevFormData) {
@@ -321,13 +319,13 @@ function Profile() {
           const new_data = new FormData();
           images_FILES.forEach(function (file, index) {
             if (file) {
-              new_data.append(`image_hna_${index}`, file);
+              new_data.append(index, file);
             } else {
-              new_data.append(`image_hna_${index}`, "NULL");
+              new_data.append(index, "NULL");
             }
           });
 
-         const resu_= await fetch("http://localhost:3000/api/user/upload", {
+          const resu_ = await fetch("http://localhost:3000/api/user/upload", {
             method: "POST",
             credentials: "include",
             body: new_data
@@ -360,7 +358,7 @@ function Profile() {
         <div className="bg-[#E94075] rounded-2xl p-9">
           <div className="space-y-6">
             <h2 className="text-2xl font-semibold text-white mb-8">
-            Edit your profile
+              Edit your profile
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -396,7 +394,6 @@ function Profile() {
                 className="bg-white rounded"
               />
 
-             
               <FormControl className="w-full">
                 <FormLabel id="gender" className="text-white">
                   Gender
@@ -435,6 +432,24 @@ function Profile() {
                 onChange={function(e) { handleFormChange("biography", e.target.value); }}
                 className="bg-white rounded"
               /> */}
+
+              <TextField
+                fullWidth
+                type="number"
+                label="Age"
+                placeholder="Age"
+                inputProps={{ min: 18, max: 100 }}
+                value={formData.age ?? ""}
+                onChange={(e) => {
+                  let age = e.target.value ? parseInt(e.target.value, 10) : "";
+                  if ((age >= 18 && age <= 100)) {
+                    setFormData({ ...formData, age });
+                  }
+                }}
+                required
+                className="bg-white rounded"
+              />
+
               <TextField
                 fullWidth
                 label="Biography"
@@ -540,68 +555,77 @@ function Profile() {
             </form>
           </div>
 
-           {/* Email Change Section */}
-        <div className="bg-[#E94075] rounded-2xl p-9">
-          
-          <h2 className="text-2xl font-semibold text-white mb-8">Change Email</h2>
-          <TextField
-                fullWidth
-                label="Old Email"
-                type="email"
-                inputProps={{
-                  minLength: 7,
-                  maxLength: 30
-                  , 
-                  readOnly: true
-                }}
-
-                value={formData.email}
-                // onChange={function (e) {
-                //   if (e.target.value.length <= 30) {
-                //     handleFormChange("email", e.target.value);
-                //   }
-                // }}
-                className="bg-white rounded"
-              />
-
-          <form onSubmit={handleEmailChange} className="space-y-4">
+          {/* Email Change Section */}
+          <div className="bg-[#E94075] rounded-2xl p-9">
+            <h2 className="text-2xl font-semibold text-white mb-8">
+              Change Email
+            </h2>
             <TextField
               fullWidth
-              label="New Email"
+              label="Old Email"
               type="email"
-              value={emailForm.newEmail}
-              onChange={(e) => setEmailForm(prev => ({ ...prev, newEmail: e.target.value }))}
+              inputProps={{
+                minLength: 7,
+                maxLength: 30,
+                readOnly: true
+              }}
+              value={formData.email}
+              // onChange={function (e) {
+              //   if (e.target.value.length <= 30) {
+              //     handleFormChange("email", e.target.value);
+              //   }
+              // }}
               className="bg-white rounded"
-              required
             />
-            <TextField
-              fullWidth
-              label="Password"
-              type="spassword"
-              value={emailForm.password}
-              onChange={(e) => setEmailForm(prev => ({ ...prev, password: e.target.value }))}
-              className="bg-white rounded"
-              required
-            />
-            {emailChangeError && (
-              <div className="text-red-500 text-sm bg-red-100 p-2 rounded">
-                {emailChangeError}
-              </div>
-            )}
-            {emailChangeSuccess && (
-              <div className="text-green-500 text-sm bg-green-100 p-2 rounded">
-                {emailChangeSuccess}
-              </div>
-            )}
-            <button
-              type="submit"
-              className="w-full bg-pink-600 hover:bg-pink-700 text-white rounded-xl py-3 font-semibold"
-              disabled={isEmailChangeLoading}
-            >
-              {isEmailChangeLoading ? "Updating Email..." : "Change Email"}
-            </button>
-          </form>
-        </div>
+
+            <form onSubmit={handleEmailChange} className="space-y-4">
+              <TextField
+                fullWidth
+                label="New Email"
+                type="email"
+                value={emailForm.newEmail}
+                onChange={(e) =>
+                  setEmailForm((prev) => ({
+                    ...prev,
+                    newEmail: e.target.value
+                  }))
+                }
+                className="bg-white rounded"
+                required
+              />
+              <TextField
+                fullWidth
+                label="Password"
+                type="spassword"
+                value={emailForm.password}
+                onChange={(e) =>
+                  setEmailForm((prev) => ({
+                    ...prev,
+                    password: e.target.value
+                  }))
+                }
+                className="bg-white rounded"
+                required
+              />
+              {emailChangeError && (
+                <div className="text-red-500 text-sm bg-red-100 p-2 rounded">
+                  {emailChangeError}
+                </div>
+              )}
+              {emailChangeSuccess && (
+                <div className="text-green-500 text-sm bg-green-100 p-2 rounded">
+                  {emailChangeSuccess}
+                </div>
+              )}
+              <button
+                type="submit"
+                className="w-full bg-pink-600 hover:bg-pink-700 text-white rounded-xl py-3 font-semibold"
+                disabled={isEmailChangeLoading}
+              >
+                {isEmailChangeLoading ? "Updating Email..." : "Change Email"}
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>
