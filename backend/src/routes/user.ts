@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import { body, ValidationError, validationResult } from "express-validator";
 import neo4j from "neo4j-driver";
 import { imagekitUploader } from "./../app";
@@ -9,6 +9,17 @@ const driver = neo4j.driver(
   "neo4j://localhost:7687",
   neo4j.auth.basic(process.env.database_username as string, process.env.database_password as string)
 );
+
+export type UserJWTPayload = {
+  username: string;
+  email: string;
+  setup_done: boolean;
+  /** Issued At timestamp (in seconds since Unix epoch) */
+  iat: number;
+  /** Expiration timestamp (in seconds since Unix epoch) */
+  exp: number;
+};
+
 user_information_Router.post(
   "/user/information",
   authenticateToken_Middleware,
@@ -17,7 +28,7 @@ user_information_Router.post(
     .withMessage("Gender cannot be empty")
     .isIn(["male", "female"])
     .withMessage("Gender must be 'male' or 'female'"),
-    body("age").isInt({ min: 18, max: 100 }),
+  body("age").isInt({ min: 18, max: 100 }),
   body("biography")
     .notEmpty()
     .withMessage("Biography cannot be empty")
@@ -76,27 +87,32 @@ user_information_Router.post(
                         set n.age = $age
                         RETURN n.username
               `,
-            { username: _user.username, biography: req.body.biography ,gender:req.body.gender,age:req.body.age}
+            {
+              username: _user.username,
+              biography: req.body.biography,
+              gender: req.body.gender,
+              age: req.body.age,
+            }
           );
         }
-    //     if (await req.body.gender) {
-    //       //delete old gender
-    //       await session.run(
-    //         `MATCH (u:User {username: $username})-[r:onta_wla_dakar]->(g:Sex)
-    //           DELETE r`,
-    //         { username: _user.username }
-    //       );
+        //     if (await req.body.gender) {
+        //       //delete old gender
+        //       await session.run(
+        //         `MATCH (u:User {username: $username})-[r:onta_wla_dakar]->(g:Sex)
+        //           DELETE r`,
+        //         { username: _user.username }
+        //       );
 
-    //       await session.run(
-    //         `MATCH (U:User) WHERE U.username = $username
-    //           MATCH (G:Sex) WHERE G.gender = $gender
-    //           MERGE (U)-[:onta_wla_dakar]->(G)
+        //       await session.run(
+        //         `MATCH (U:User) WHERE U.username = $username
+        //           MATCH (G:Sex) WHERE G.gender = $gender
+        //           MERGE (U)-[:onta_wla_dakar]->(G)
 
-    // `,
+        // `,
 
-    //         { username: _user.username, gender: await req.body.gender }
-    //       );
-    //     }
+        //         { username: _user.username, gender: await req.body.gender }
+        //       );
+        //     }
       }
       console.log("llllllllllllllllllllllllllll");
       await session.close();
@@ -196,7 +212,7 @@ user_information_Router.post(
             first_name: user_copy.first_name,
             gender: gender,
             biography: user_copy.biography,
-            age:user_copy.age
+            age: user_copy.age,
           }
         );
 
@@ -257,108 +273,9 @@ user_information_Router.post(
     }
   }
 );
-// user_information_Router.post(
-//   "/user/settings",
-//   authenticateToken_Middleware,
-//   body("last_name").notEmpty().withMessage("last_name cannot be empty"),
-//   body("first_name").notEmpty().withMessage("first_name cannot be empty"),
-//   body("email").notEmpty().withMessage("email cannot be empty").isEmail(),
-//   body("gender").notEmpty().withMessage("Gender cannot be empty").isIn(["male", "female"]).withMessage("Gender must be 'male' or 'female'"),
-//   body("biography").notEmpty().withMessage("Biography cannot be empty"),
 
-//   async (req: any, res: any) => {
-//     const errors = validationResult(req);
-//     if (!errors.isEmpty()) {
-//       const firstError = errors.array()[0] as any;
-//       // {
-//       //   type: 'field',
-//       //   value: 'atabitistudent.1337.ma',
-//       //   msg: 'Invalid value',
-//       //   path: 'email',
-//       //   location: 'body'
-//       // }
-//       return res.status(400).json(`Invalid : ${firstError.path}`);
-//     }
-
-//     console.log(req.user, " user is ");
-//     const logged_user = req.user;
-//     if (!logged_user) return res.status(401).json("UNAUTH");
-//     console.log(req.body, "\n");
-
-//     //   last_name: 'Tabiti',
-//     //   first_name: 'Anas',
-//     //   email: 'atabiti@student.1337.ma',
-//     //   gender: 'male',
-//     //   biography: 'new day new me',
-//     //   interests: [
-//     //     '#42',          '#1337',
-//     //     '#Swimming',    '#Shopping',
-//     //     '#Yoga',        '#Cooking',
-//     //     '#Art',         '#Video games',
-//     //     '#Traveling',   '#Karaoke',
-//     //     '#Photography'
-//     //   ]
-//     // }
-
-//     const user_copy = { ...req.body };
-//     console.log(user_copy, "user_copy\n");
-//     const new_session = driver.session();
-//     if (new_session) {
-//       const gender = req.body.gender;
-//       const update_db = await new_session.run(
-//         `
-//           MATCH (n:User)
-//           WHERE n.username = $username
-//           SET n.last_name = $last_name,
-//               n.first_name = $first_name,
-//               n.gender = $gender,
-//               n.biography = $biography
-//           RETURN n
-//           `,
-//         { username: logged_user.username, last_name: user_copy.last_name, first_name: user_copy.first_name, gender: gender, biography: user_copy.biography }
-//       );
-//       if (gender) {
-//         //delete old gender
-//         await new_session.run(
-//           `MATCH (u:User {username: $username})-[r:onta_wla_dakar]->(g:Sex)
-//             DELETE r`,
-//           { username: logged_user.username }
-//         );
-
-//         await new_session.run(
-//           `MATCH (U:User) WHERE U.username = $username
-//             MATCH (G:Sex) WHERE G.gender = $gender
-//             MERGE (U)-[:onta_wla_dakar]->(G)
-
-//   `,
-
-//           { username: logged_user.username, gender: gender }
-//         );
-//       }
-//       if (update_db.records.length > 0) return res.status(200).json("SUCESS");
-//       else return res.status(400).json("Error");
-//     } else {
-//       return res.status(400).json("Error DB");
-//     }
-//   }
-// );
-
-// //----------------------------------------
-
-// user_information_Router.get(
-//   "/user/is_auth",
-//   // authenticateToken,
-//   async function (req: any, res: any) {
-//     // console.log(await req.session.user);
-//     // console.log(await req.session, " session");
-//     console.log(req.user);
-//     return res.status(200).json("f");
-//   }
-// );
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
+const ALLOWED_MIME_TYPES = ["image/jpeg", "image/jpg", "image/png"];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-
-
 
 user_information_Router.post(
   "/user/upload",
@@ -373,25 +290,45 @@ user_information_Router.post(
 
       const session = driver.session();
       const keys: string[] = Object.keys(files);
-      
+
       // Get existing pics array
       const result = await session.run(
         `MATCH (u:User {username: $username}) 
          RETURN u.pics as pics`,
         { username: _user.username }
       );
-      let existingPics = result.records[0]?.get('pics') || [];
-      console.log()
+      let existingPics = result.records[0]?.get("pics") || [];
+      console.log();
       for (let i = 0; i < keys.length; i++) {
         const file = files[keys[i]];
-        console.log("[",files[keys[i]] , " ----------files[keys[i]];\n",keys[i],"\n\n\n",files, " ---files", " i is ", i , "\n\n\n\n\n\n\n keys.length ", keys.length ,"]\n\n\n")
-        let index = Number(keys[i])
-        console.log(typeof(keys[i]) , " typeof(keys[i])\n\n", keys[i] , " keys[i]\n", typeof(index), " typeof(index)\n")
+        console.log(
+          "[",
+          files[keys[i]],
+          " ----------files[keys[i]];\n",
+          keys[i],
+          "\n\n\n",
+          files,
+          " ---files",
+          " i is ",
+          i,
+          "\n\n\n\n\n\n\n keys.length ",
+          keys.length,
+          "]\n\n\n"
+        );
+        let index = Number(keys[i]);
+        console.log(
+          typeof keys[i],
+          " typeof(keys[i])\n\n",
+          keys[i],
+          " keys[i]\n",
+          typeof index,
+          " typeof(index)\n"
+        );
         // Validate mime type
         if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
           return res.status(400).json({
             success: false,
-            message: `Invalid file type: ${file.mimetype}. Only JPEG/JPG and PNG files are allowed.`
+            message: `Invalid file type: ${file.mimetype}. Only JPEG/JPG and PNG files are allowed.`,
           });
         }
 
@@ -403,16 +340,16 @@ user_information_Router.post(
 
         // Handle profile picture (first image)
         if (index === 0) {
-          existingPics[index] = ret.url
+          existingPics[index] = ret.url;
           await session.run(
             `MATCH (u:User {username: $username})
               SET u.profile_picture = $profile_picture
              RETURN u`,
-            { username: _user.username, profile_picture: ret.url}
+            { username: _user.username, profile_picture: ret.url }
           );
         }
 
-        existingPics[index] = ret.url
+        existingPics[index] = ret.url;
       }
 
       // Update the pics array in the database
@@ -425,7 +362,6 @@ user_information_Router.post(
 
       session.close();
       return res.status(200).json("Images uploaded successfully.");
-      
     } catch (error) {
       console.error("Image upload failed:", error);
       return res.status(400).json("Image upload failed.");
@@ -433,18 +369,13 @@ user_information_Router.post(
   }
 );
 user_information_Router.get(
-
-
   "/user/is_logged",
   authenticateToken_Middleware,
   async function (req: any, res: any) {
-    console.log("is_looged is called ")
-      return res.status(200).json("IS LOGGED")
+    console.log("is_looged is called ");
+    return res.status(200).json("IS LOGGED");
   }
-    
-)
-
-
+);
 
 // -------------
 user_information_Router.get(
@@ -454,14 +385,16 @@ user_information_Router.get(
     try {
       const user = req.user;
 
-      if(user.setup_done == false)
-        return res.status(405).json("Complete Profile Setup first")
+      if (user.setup_done == false) return res.status(405).json("Complete Profile Setup first");
       // console.log(req, " req is here");
       if (user) {
         // console.log(user.username, " -----------------------------the user who is logged in now");
         const session = driver.session();
         if (session) {
-          const res_of_query = await session.run('MATCH (n:User) WHERE n.username = $username  RETURN n',{username:user.username})
+          const res_of_query = await session.run(
+            "MATCH (n:User) WHERE n.username = $username  RETURN n",
+            { username: user.username }
+          );
           // const res_of_query = await session.run(
           //   "MATCH (n:User {username: $username})-[:onta_wla_dakar]->(g:Sex)  RETURN n, g",
           //   { username: user.username }
@@ -487,19 +420,18 @@ user_information_Router.get(
             }
             // console.log(arr_, "  arr_   =============================================");
             const userNode = res_of_query.records[0].get(0).properties;
-            
-            
+
             const return_data = {
-              "username": userNode.username,
-              "profile_picture": userNode.profile_picture,
-              "last_name": userNode.last_name,
+              username: userNode.username,
+              profile_picture: userNode.profile_picture,
+              last_name: userNode.last_name,
               "first_name:": userNode.first_name,
               "email:": userNode.email,
               "biography:": userNode.biography,
-              "pics": userNode.pics || [],
-              "gender": userNode.gender,
-              "age":userNode.age,
-              "tags": arr_,
+              pics: userNode.pics || [],
+              gender: userNode.gender,
+              age: userNode.age,
+              tags: arr_,
             };
             return res.status(200).json(return_data);
           }
@@ -511,6 +443,58 @@ user_information_Router.get(
     } catch {
       return res.status(400).json("Error occured");
     }
+  }
+);
+
+const axios = require("axios");
+
+user_information_Router.post(
+  "/location",
+  authenticateToken_Middleware,
+  async function (req: Request, res: Response) {
+    // try {
+    const latitude = req.body.latitude;
+    const longitude = req.body.longitude;
+
+    const user: any = req.user;
+    console.log(user, "  user");
+    if (latitude && longitude && user) {
+      const response = await axios.get(
+        `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
+      );
+      console.log(response.data, " -----------------------------data\n\n\n\n");
+
+      const cityName =
+        (await response.data.address.city.split(" ")[0]) || "Unknown City"; //  city: 'Khouribga ⵅⵯⵔⵉⴱⴳⴰ خريبكة',
+      const country  =  response.data.address.country.split(" ")[0] || "NA"// country: 'Maroc ⵍⵎⵖⵔⵉⴱ المغرب',
+      
+      
+
+      const db_session = driver.session();
+      if (db_session) {
+        // https://neo4j.com/docs/cypher-manual/current/values-and-types/spatial/
+        const result = await db_session.run(
+          `
+            MATCH (n:User) WHERE n.username = $username
+            SET   n.location = point({latitude: $latitude, longitude: $longitude}),
+            n.city = $cityName, n.country = $country_name
+        
+            RETURN n
+            
+            `,
+          { username: user.username, latitude: latitude, longitude: longitude, cityName: cityName,country_name:country }
+        );
+        console.log(req.body);
+        res.status(200).json("location saved");
+        return;
+      }
+      res.status(400).json("error in db session");
+      return;
+    } else {
+      res.status(400).json("Cannot access location");
+      return;
+    }
+    // } catch {}
   }
 );
 

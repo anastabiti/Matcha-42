@@ -40,11 +40,12 @@ const Gps = () => {
 
   const saveLocation = async (coords) => {
     try {
-      const response = await fetch('/api/location', {
+      const response = await fetch('http://localhost:3000/api/location', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials:'include',
         body: JSON.stringify(coords),
       });
       
