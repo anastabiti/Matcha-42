@@ -460,15 +460,14 @@ user_information_Router.post(
     console.log(user, "  user");
     if (latitude && longitude && user) {
       const response = await axios.get(
-        `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
+        `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,{ headers: {
+          'Accept-Language': 'en'//city we country names in english better
+        }}
       );
       console.log(response.data, " -----------------------------data\n\n\n\n");
 
-      const cityName =
-        (await response.data.address.city.split(" ")[0]) || "Unknown City"; //  city: 'Khouribga ⵅⵯⵔⵉⴱⴳⴰ خريبكة',
-      const country  =  response.data.address.country.split(" ")[0] || "NA"// country: 'Maroc ⵍⵎⵖⵔⵉⴱ المغرب',
-      
-      
+      const cityName = (await response.data.address.city.split(" ")[0]) || "Unknown City"; //  city: 'Khouribga ⵅⵯⵔⵉⴱⴳⴰ خريبكة',
+      const country = response.data.address.country.split(" ")[0] || "NA"; // country: 'Maroc ⵍⵎⵖⵔⵉⴱ المغرب',
 
       const db_session = driver.session();
       if (db_session) {
@@ -482,7 +481,13 @@ user_information_Router.post(
             RETURN n
             
             `,
-          { username: user.username, latitude: latitude, longitude: longitude, cityName: cityName,country_name:country }
+          {
+            username: user.username,
+            latitude: latitude,
+            longitude: longitude,
+            cityName: cityName,
+            country_name: country,
+          }
         );
         console.log(req.body);
         res.status(200).json("location saved");
@@ -495,6 +500,86 @@ user_information_Router.post(
       return;
     }
     // } catch {}
+  }
+);
+
+user_information_Router.post(
+  "/location/WTK",
+  authenticateToken_Middleware,
+  async function (req: Request, res: Response) {
+    const response = await axios.get("http://api.ipify.org");
+    console.log(response.data, " , -------res");
+
+    const pub_ip = response.data;
+   
+    const url = `https://apiip.net/api/check?ip=${pub_ip}&accessKey=${process.env.ip_finder_pub}`;
+    const responses = await axios.get(url);
+    const result = responses.data;
+    console.log(result, "sssss---------------result");
+
+
+    // {
+    //   ip: 'hhhhhh'
+    //   continentCode: 'AF',
+    //   continentName: 'Africa',
+    //   countryCode: 'MA',
+    //   countryName: 'Morocco',
+    //   countryNameNative: 'المغرب',
+    //   officialCountryName: 'Kingdom of Morocco',
+    //   regionCode: '05',
+    //   regionName: 'Béni Mellal-Khénifra',
+    //   cityGeoNameId: 2544248,
+    //   city: 'Khouribga',
+    //   cityWOSC: 'Khouribga',
+    //   latitude: 32.8804,
+    //   longitude: -6.9057,
+    //   capital: 'Rabat',
+    //   phoneCode: '212',
+    //   countryFlagEmoj: '🇲🇦',
+    //   countryFlagEmojUnicode: 'U+1F1F2 U+1F1E6',
+    //   isEu: false,
+    //   borders: [ 'DZA', 'ESH', 'ESP' ],
+    //   topLevelDomains: [ '.ma', 'المغرب.' ]
+    // } 
+
+
+    const latitude = result.latitude;
+    const longitude = result.longitude;
+
+    const user: any = req.user;
+
+
+
+    if (user) {
+      
+      const cityName = result.city
+       
+      const country  = result.countryName
+
+      const db_session = driver.session();
+      if (db_session) {
+        // https://neo4j.com/docs/cypher-manual/current/values-and-types/spatial/
+        const result = await db_session.run(
+          `
+            MATCH (n:User) WHERE n.username = $username
+            SET   n.location_WTK = point({latitude: $latitude_WTK, longitude: $longitude_WTK}),
+            n.city_WTK = $cityName_WTK, n.country_WTK = $country_name_WTK
+
+            RETURN n
+
+            `,
+          { username: user.username, latitude_WTK: latitude, longitude_WTK: longitude, cityName_WTK: cityName,country_name_WTK:country }
+        );
+        console.log(req.body);
+        res.status(200).json("location saved");
+        return;
+      }
+      res.status(400).json("error in db session");
+      return;
+    } else {
+      res.status(400).json("Cannot access location");
+      return;
+    }
   }
 );
 

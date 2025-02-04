@@ -10,6 +10,7 @@ import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { TextField } from "@mui/material";
 import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 import { useNavigate } from "react-router-dom";
+import Gps from "../components/Gps";
 
 interface FormData {
   last_name: string;
@@ -75,8 +76,9 @@ function Profile() {
     gender: "",
     biography: "",
     interests: [],
-    age:18
+    age: 18
   });
+  const [showGps, setShowGps] = useState(false);
 
   const navigate = useNavigate();
   const [images_url, setimages_url] = useState<(string | null)[]>(
@@ -115,7 +117,7 @@ function Profile() {
             biography: data["biography:"] || "",
             interests: data.tags || [],
             pics: data.pics || [],
-            age:data.age
+            age: data.age
           });
           if (data.tags) {
             setAvailableInterests([]);
@@ -443,7 +445,7 @@ function Profile() {
                 value={formData.age ?? ""}
                 onChange={(e) => {
                   let age = e.target.value ? parseInt(e.target.value, 10) : "";
-                  if ((age >= 18 && age <= 100)) {
+                  if (age >= 18 && age <= 100) {
                     setFormData({ ...formData, age });
                   }
                 }}
@@ -626,6 +628,17 @@ function Profile() {
                 {isEmailChangeLoading ? "Updating Email..." : "Change Email"}
               </button>
             </form>
+          </div>
+          {/* <Gps></Gps> */}
+
+          <div>
+            {showGps && <Gps />}
+            <button
+              onClick={() => setShowGps(true)}
+              className="w-full bg-pink-600 hover:bg-pink-700 text-white rounded-xl py-3 font-semibold"
+            >
+              Update Location
+            </button>
           </div>
         </div>
       </div>

