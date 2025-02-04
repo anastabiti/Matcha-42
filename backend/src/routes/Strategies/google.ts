@@ -155,7 +155,13 @@ passport.use(
                       pics: ["","","","",""],
                         fame_rating:0,            
                       age:18,
-              is_logged:  true
+              is_logged:  true,
+    country: "",
+    city: "",
+    country_WTK: "",
+    city_WTK: "",
+    location: null,
+    location_WTK: null
                   }) 
                    RETURN {
       username: n.username,

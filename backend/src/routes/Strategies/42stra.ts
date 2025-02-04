@@ -39,7 +39,13 @@ export const create_new_user_cipher = `CREATE (n:User {
                pics: ["","","","",""],
               fame_rating:0,            
               is_logged:  true,
-              age:18
+              age:18,
+    country: "",
+    city: "",
+    country_WTK: "",
+    city_WTK: "",
+    location: null,
+    location_WTK: null
             })
             RETURN {
               username: n.username,
@@ -214,7 +220,6 @@ forty_two_str.get("/auth/intra42/callback", function (req: any, res: Response) {
       } else {
         return res.status(200).redirect(`${process.env.front_end_ip}/setup`);
       }
-
     } catch (tokenError) {
       console.error("Error generating token:", tokenError);
       return res.status(400).json("Error generating token");
