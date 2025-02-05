@@ -205,6 +205,8 @@ authRouter.post("/login", async (req: any, res: Response) => {
         res.status(400).json("Username does not exist or Email not verified");
       }
     }
+    res.status(400).json("User does not exist");
+
   }
 });
 
