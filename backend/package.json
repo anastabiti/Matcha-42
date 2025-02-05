@@ -17,7 +17,7 @@
   "dependencies": {
     "@types/jsonwebtoken": "^9.0.8",
     "@types/passport-google-oauth20": "^2.0.16",
-    "bcrypt": "^5.1.1",
+    "argon2": "^0.41.1",
     "body-parser": "^1.20.3",
     "connect-neo4j": "^1.0.1",
     "cors": "^2.8.5",
@@ -50,6 +50,8 @@
     "@types/node": "^22.10.10",
     "@types/nodemailer": "^6.4.17",
     "@types/passport": "^1.0.17",
+    "@typescript-eslint/eslint-plugin": "^8.23.0",
+    "@typescript-eslint/parser": "^8.23.0",
     "nodemon": "^3.1.9",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3"

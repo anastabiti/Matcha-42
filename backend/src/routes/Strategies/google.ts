@@ -3,7 +3,6 @@ import express, { Request, Response } from "express";
 import { env } from "process";
 const router = express.Router();
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
 const Google_auth = express.Router();
 const crypto = import("crypto");
 import { Profile, VerifyCallback } from "passport-google-oauth20";

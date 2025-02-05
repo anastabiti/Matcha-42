@@ -1,7 +1,8 @@
 import express, { Request, Response } from "express";
 const { body, validationResult } = require("express-validator");
-const bcrypt = require("bcrypt");
+// const bcrypt = require("bcrypt");
 const crypto = import("crypto");
+import argon2 from 'argon2';
 
 const passwordValidator = require("password-validator");
 import nodemailer from "nodemailer";
@@ -87,9 +88,11 @@ registrationRouter.post(
 
       // store these to neo4j
       // hash passwrod before storing it
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(req.body.password, salt);
 
+      // const salt = await bcrypt.genSalt(10);
+      // const hashedPassword = await bcrypt.hash(req.body.password, salt);
+      const plain_pass =req.body.password
+      const hashedPassword = await argon2.hash(plain_pass)
       const user = {
         username: req.body.username,
         email: req.body.email,

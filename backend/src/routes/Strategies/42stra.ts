@@ -3,7 +3,8 @@ import { env } from "process";
 const { body, validationResult } = require("express-validator");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
+
+
 const forty_two_str = express.Router();
 const crypto = import("crypto");
 import nodemailer from "nodemailer";

@@ -2,7 +2,9 @@ import express from "express";
 import { body, ValidationError, validationResult } from "express-validator";
 import neo4j from "neo4j-driver";
 import { authenticateToken_Middleware, generateAccessToken } from "./auth";
-import bcrypt from "bcrypt";
+// import bcrypt from "bcrypt";
+import argon2 from "argon2";
+
 import { transporter } from "./registration";
 // import jwt from 'jsonwebtoken';
 const jwt = require("jsonwebtoken");
@@ -54,7 +56,8 @@ email_change.patch(
             "  user is\n\n\n\n"
           );
 
-          const check_pass = await bcrypt.compare(password, tmp_user.password);
+          // const check_pass = await bcrypt.compare(password, tmp_user.password);
+          const check_pass = await argon2.verify(tmp_user.password,password);
           console.log(check_pass, " pass check");
           if (check_pass) {
             console.log(tmp_user, " user data");
@@ -128,6 +131,12 @@ email_change.patch(
             }
             await new_session.close();
             return res.status(400).json("FAILED");
+          }
+          else
+          {
+            return res.status(400).json("WRONG PASSWORD!");
+
+
           }
         }
       }
