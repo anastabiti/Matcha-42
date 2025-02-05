@@ -9,6 +9,7 @@ import jwt from "jsonwebtoken";
 
 import http from "http";
 import { Server } from "socket.io";
+import { driver } from "../backend/src/database/index";
 const server = http.createServer(app);
 
 const io = new Server(server, {
@@ -45,39 +46,79 @@ io.on("connection", async (socket: any) => {
         const socketIds = sockets.map((s) => s.id);
         console.log(`Sockets in room ${decoded.username}:`, socketIds);
       });
-      
-      socket.on("disconnect", () => {
-        console.log("User disconnected");
-      });
-      socket.on("sendMessage", (message: any) => {
-    console.log("sendMessage", message);
+
+    socket.on("disconnect", () => {
+      console.log("User disconnected");
+    });
+
+
+
+
+    socket.on("sendMessage", async (message: any) => {
+      console.log("sendMessage", message);
     
-    // Create a message object with timestamp
-    const newMessage = {
-      content: message.message,
-      timestamp: new Date(),
-      id: Date.now(),
-      to:message.to,
-      sender:decoded.username
-    };
+      const session_db = await driver.session();
+      try {
+        // Create a message object with timestamp
+        const newMessage = {
+          content: message.message,
+          timestamp: new Date(),
+          id: Date.now(),
+          to: message.to,
+          sender: decoded.username,
+        };
     
-      // io.emit("newMessage", newMessage);
-    socket.to(message.to).emit("newMessage", newMessage);
-    io.to(decoded.username).emit("newMessage", newMessage);
-  });
-}
+        console.log("New message:", newMessage);
+    
+        // Store message in database
+        
+        if (!session_db) {
+          throw new Error("Failed to create database session");
+        }
+    
+        const query = `
+          MATCH (sender:User {username: $sender})
+          MATCH (receiver:User {username: $to})
+          CREATE (m:Message {
+            content: $content,
+            status: 'sent'
+          })
+          CREATE (sender)-[:SENT]->(m)
+          CREATE (m)-[:RECEIVED_BY]->(receiver)
+          RETURN m
+        `;
+    
+        const params = {
+          sender: newMessage.sender,
+          to: newMessage.to,
+          content: newMessage.content,
+        };
+    
+        const result = await session_db.run(query, params);
+    
+        socket.to(message.to).emit("newMessage", newMessage);
+        io.to(decoded.username).emit("newMessage", newMessage);
+    
+      } catch (error) {
+        console.error("Error in sendMessage handler:", error);
+        socket.emit("messageError", { message: "Failed to send message" });
+      } finally {
+        if (session_db) {
+          await session_db.close();
+        }
+      }
+    });
+  }
 });
 
 // const axios = require("axios");
 
-
 // app.get("/location_specific_service", async (req: any, res: any) => {
 //   //get public ip first
 
-
 //     const response = await axios.get("http://api.ipify.org");
 //     console.log(response.data, " , -------res");
-    
+
 //   const pub_ip = response.data
 //   console.log(
 //     req.ip,
