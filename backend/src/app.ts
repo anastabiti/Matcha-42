@@ -12,6 +12,7 @@ import forty_two_str from "./routes/Strategies/42stra";
 import user_information_Router from "./routes/user";
 import email_change from "./routes/email_change";
 import match from "./routes/matchRoutes";
+import discord_auth from "./routes/Strategies/discord";
 const fileUpload = require('express-fileupload');
 
 
@@ -114,5 +115,6 @@ app.use("/api", forty_two_str);
 app.use("/api", user_information_Router);
 app.use("/api", email_change);
 app.use('/', match);
+app.use("/api", discord_auth);
 
 export default app;

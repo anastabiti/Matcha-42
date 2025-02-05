@@ -135,7 +135,14 @@ registrationRouter.post(
                verfication_token:$verfication_token,setup_done:$setup_done,
                gender:"",
                 pics: ["","","","",""],
-            fame_rating:0,              is_logged:  false,
+            fame_rating:0,              is_logged:  false
+      ,
+    country: "",
+    city: "",
+    country_WTK: "",
+    city_WTK: "",
+    location: null,
+    location_WTK: null,
             age:$age,
                password_reset_token:$password_reset_token}) RETURN a`,
             user

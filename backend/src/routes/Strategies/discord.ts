@@ -4,7 +4,7 @@ const { body, validationResult } = require("express-validator");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const forty_two_str = express.Router();
+const discord_auth = express.Router();
 const crypto = import("crypto");
 import nodemailer from "nodemailer";
 import { auth } from "neo4j-driver-core";
@@ -59,36 +59,57 @@ export const create_new_user_cipher = `CREATE (n:User {
               AS user`;
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const FortyTwoStrategy = require("passport-42").Strategy;
+var scopes = ['identify', 'email'];
+
+var DiscordStrategy = require('passport-discord').Strategy;
 passport.use(
-  new FortyTwoStrategy(
+  new DiscordStrategy(
     {
-      clientID: process.env.FORTYTWO_APP_ID,
-      clientSecret: process.env.FORTYTWO_APP_SECRET,
-      callbackURL: `${process.env.back_end_ip}/api/auth/intra42/callback`,
+      clientID: process.env.DISCORD_CLIENT_ID,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET,
+      callbackURL: `${process.env.back_end_ip}/api/auth/discord/callback`,
+      scope: scopes
     },
 
     async function (
       accessToken: string,
       refreshToken: string,
-      profile: Profile,
+      profile: any,
       cb: VerifyCallback
     ) {
       try {
-        //   id: '90435',
-        // username: 'atabiti',
-        // displayName: 'Anas Tabiti',
-        // name: { familyName: 'Tabiti', givenName: 'Anas' },
-        // profileUrl: 'https://api.intra.42.fr/v2/users/atabiti',
-        // emails: [ { value: 'atabiti@student.1337.ma' } ],
-        // phoneNumbers: [ { value: 'hidden' } ],
-        // photos: [ { value: undefined } ],
-        // provider: '42',
-        console.log(profile.id, "  42 profile");
+      
+// {
+//     id: '904690300059017262',
+//     username: 'test',
+//     avatar: '',
+//     discriminator: '0',
+//     public_flags: 64,
+//     flags: 64,
+//     banner: null,
+//     accent_color: 4253569,
+//     global_name: '! 𝔞𝔱𝔞𝔟𝔦𝔱𝔦',
+//     avatar_decoration_data: {
+//       asset: '',
+//       sku_id: '',
+//       expires_at: 1739001600
+//     },
+//     banner_color: '#40e781',
+//     clan: null,
+//     primary_guild: null,
+//     mfa_enabled: true,
+//     locale: 'en-US',
+//     premium_type: 0,
+//     email: 'test@gmail.com',
+//     verified: true,
+//     provider: 'discord',
+//     accessToken: '',
+//     fetchedAt: 2025-02-04T18:08:15.618Z
+//   }   
+        console.log(profile.email, "  profile--------");
         const new_session = await driver.session();
         if (new_session) {
-          const email_ = profile.emails?.[0]?.value || profile._json?.email;
-
+          const email_ = profile.email;
           if (email_) {
             //case: user with the same email can looged in with omntiauth
             const resu_ = await new_session.run(
@@ -122,7 +143,7 @@ passport.use(
               return cb(null, user_x);
             } else {
               console.log(
-                " create a new User 42 auth--------------- \n\n\n\n",
+                " create a new User discord auth--------------- \n\n\n\n",
                 profile.username,
                 " ]\n\n\n"
               );
@@ -140,8 +161,8 @@ passport.use(
                     username: diff_username,
                     email: email_,
                     password: (await crypto).randomBytes(25).toString("hex"),
-                    first_name: profile?.name?.givenName || "",
-                    last_name: profile?.name?.familyName || "",
+                    first_name: profile.global_name || "",
+                    last_name: profile?.global_name || "",
                     verfication_token: "",
                     verified: true,
                     password_reset_token: "",
@@ -157,8 +178,8 @@ passport.use(
                 username: profile.username,
                 email: email_,
                 password: (await crypto).randomBytes(25).toString("hex"),
-                first_name: profile?.name?.givenName || "",
-                last_name: profile?.name?.familyName || "",
+                first_name: profile.global_name || "",
+                last_name: profile.global_name || "",
                 verfication_token: "",
                 verified: true,
                 password_reset_token: "",
@@ -177,10 +198,10 @@ passport.use(
   )
 );
 
-forty_two_str.get("/auth/intra42", passport.authenticate("42"));
+discord_auth.get("/auth/discord", passport.authenticate("discord"));
 
-forty_two_str.get("/auth/intra42/callback", function (req: any, res: Response) {
-  passport.authenticate("42", { session: false }, async function (err: any, user: User, info: any) {
+discord_auth.get("/auth/discord/callback", function (req: any, res: Response) {
+  passport.authenticate("discord", { session: false }, async function (err: any, user: User, info: any) {
     try {
       if (err) {
         console.error("Error during authentication:");
@@ -224,8 +245,8 @@ forty_two_str.get("/auth/intra42/callback", function (req: any, res: Response) {
       console.error("Error generating token:", tokenError);
       return res.status(400).json("Error generating token");
     }
-  })(req, res);
+  
+})
+  (req, res);
 });
-export default forty_two_str;
-// atabiti_a
-//sjnj^*7t87t877dsKK
+export default discord_auth;

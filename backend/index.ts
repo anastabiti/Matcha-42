@@ -66,31 +66,31 @@ io.on("connection", async (socket: any) => {
   });
 });
 
-const axios = require("axios");
+// const axios = require("axios");
 
 
-app.get("/location_specific_service", async (req: any, res: any) => {
-  //get public ip first
+// app.get("/location_specific_service", async (req: any, res: any) => {
+//   //get public ip first
 
 
-    const response = await axios.get("http://api.ipify.org");
-    console.log(response.data, " , -------res");
+//     const response = await axios.get("http://api.ipify.org");
+//     console.log(response.data, " , -------res");
     
-  const pub_ip = response.data
-  console.log(
-    req.ip,
-    " ip --------------------------------------------\n\n\n\n",
-    req.socket.remoteAddress,
-    "}}}]",
-    req.headers["x-forwarded-for"]?.split(",")[0]
-  );
+//   const pub_ip = response.data
+//   console.log(
+//     req.ip,
+//     " ip --------------------------------------------\n\n\n\n",
+//     req.socket.remoteAddress,
+//     "}}}]",
+//     req.headers["x-forwarded-for"]?.split(",")[0]
+//   );
 
-  const url = `https://apiip.net/api/check?ip=${pub_ip}&accessKey=${process.env.ip_finder_pub}`;
-  const responses = await axios.get(url);
-  const result = responses.data;
-  console.log(result, "sssss---------------result");
+//   const url = `https://apiip.net/api/check?ip=${pub_ip}&accessKey=${process.env.ip_finder_pub}`;
+//   const responses = await axios.get(url);
+//   const result = responses.data;
+//   console.log(result, "sssss---------------result");
 
-});
+// });
 
 server.listen(port, () => {
   console.log(`Server is running on port ${port}`);
