@@ -45,25 +45,27 @@ io.on("connection", async (socket: any) => {
         const socketIds = sockets.map((s) => s.id);
         console.log(`Sockets in room ${decoded.username}:`, socketIds);
       });
-  }
-
-  socket.on("disconnect", () => {
-    console.log("User disconnected");
-  });
-  socket.on("sendMessage", (message: any) => {
+      
+      socket.on("disconnect", () => {
+        console.log("User disconnected");
+      });
+      socket.on("sendMessage", (message: any) => {
     console.log("sendMessage", message);
-
+    
     // Create a message object with timestamp
     const newMessage = {
       content: message.message,
       timestamp: new Date(),
       id: Date.now(),
+      to:message.to,
+      sender:decoded.username
     };
-
-    // Emit to all connected clients (including sender)
-    // io.emit("newMessage", newMessage);
-    socket.to("atabiti").emit("newMessage", newMessage);
+    
+      // io.emit("newMessage", newMessage);
+    socket.to(message.to).emit("newMessage", newMessage);
+    io.to(decoded.username).emit("newMessage", newMessage);
   });
+}
 });
 
 // const axios = require("axios");

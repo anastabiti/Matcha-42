@@ -29,7 +29,8 @@ function App() {
               <Route path="/setup" element={<Setup_page />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/discover" element={<DiscoverPage />} />
-              <Route path="/messages" element={<Chat />} />
+              {/* <Route path="/chat" element={<Chat />} /> */}
+              <Route path="/chat/:username" element={<Chat />} />
               <Route path="/profile/:username" element={<ProfilePage />} />
 
             </Route>
