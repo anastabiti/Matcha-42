@@ -9,6 +9,7 @@ import Profile from './pages/Profile'
 import DiscoverPage from './pages/Discover'
 import IsLogged from './components/Is_Logged'
 import Chat from './components/Chat'
+import ProfilePage from './pages/Profilepage'
 
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/discover" element={<DiscoverPage />} />
               <Route path="/messages" element={<Chat />} />
+              <Route path="/profile/:username" element={<ProfilePage />} />
 
             </Route>
           </Route>
