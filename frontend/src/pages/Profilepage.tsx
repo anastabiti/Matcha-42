@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { MapPin, ArrowLeft, Heart, MessageCircle, Phone, Video, Camera, MapPinned, Calendar, User,Star } from 'lucide-react';
+import { MapPin, ArrowLeft, Heart, MessageCircle, Phone, Video, Camera, MapPinned, Calendar, User, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
+import ProfileActions from '../components/ProfileActions';
 
 type Profile = {
   username: string;
@@ -118,13 +119,17 @@ const ProfilePage = () => {
   return (
     <div className="min-h-screen bg-[#1a1625] mt-14">
       <div className="max-w-7xl mx-auto px-4 py-6">
+
+
         <button
           onClick={() => navigate('/discover')}
           className="mb-6 flex items-center text-white hover:text-[#e94057] transition-colors"
         >
           <ArrowLeft className="w-6 h-6 mr-2" />
-          Back to Discover
+          Go Back
+
         </button>
+
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Photos Section */}
@@ -195,29 +200,41 @@ const ProfilePage = () => {
                     <div className="text-[#e94057] text-sm font-medium">Online Now</div>
                   </div>
                 </div>
-                <div className="flex space-x-3">
-                  <ActionButton
-                    onClick={toggleLike}
-                    icon={<Heart className={`w-6 h-6 ${isLiked ? 'fill-current' : ''}`} />}
-                    variant={isLiked ? "primary" : "secondary"}
-                  />
-                  <ActionButton
-                    onClick={() => navigate(`/chat/${username}`)}
-                    icon={<MessageCircle className="w-6 h-6" />}
-                    variant="secondary"
-                  />
-                  <ActionButton
-                    onClick={() => navigate(`/call/audio/${username}`)}
-                    icon={<Phone className="w-6 h-6" />}
-                    variant="secondary"
-                  />
-                  <ActionButton
-                    onClick={() => navigate(`/call/video/${username}`)}
-                    icon={<Video className="w-6 h-6" />}
-                    variant="secondary"
-                  />
-                </div>
+                <ProfileActions username={profile.username} /> 
               </div>
+
+            </div>
+
+
+            {/* Connect */}
+            <div className='bg-[#2a2435] rounded-3xl p-6'>
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                <MessageCircle className="w-5 h-5 mr-2 text-[#e94057]" />
+                Connect
+              </h3>
+              <div className="flex space-x-3 gap-4 px-4">
+                <ActionButton
+                  onClick={toggleLike}
+                  icon={<Heart className={`w-6 h-6 ${isLiked ? 'fill-current' : ''}`} />}
+                  variant={isLiked ? "primary" : "secondary"}
+                />
+                <ActionButton
+                  onClick={() => navigate(`/chat/${username}`)}
+                  icon={<MessageCircle className="w-6 h-6" />}
+                  variant="secondary"
+                />
+                <ActionButton
+                  onClick={() => navigate(`/call/audio/${username}`)}
+                  icon={<Phone className="w-6 h-6" />}
+                  variant="secondary"
+                />
+                <ActionButton
+                  onClick={() => navigate(`/call/video/${username}`)}
+                  icon={<Video className="w-6 h-6" />}
+                  variant="secondary"
+                />
+              </div>
+
             </div>
 
             {/* Basic Info */}

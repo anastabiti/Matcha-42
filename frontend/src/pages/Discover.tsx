@@ -1,29 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, X, MapPin, Filter } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Profile, FilterOptions } from '../types/types';
+import ActionButtons from '../components/ActionButton';
+import FilterDialog from '../components/FilterDialog';
+import ProfileCard from '../components/ProfileCard';
 
-type Profile = {
-	id: number;
-	username: string;
-	name: string;
-	age: number;
-	distance: string;
-	pics: string[];
-	preview: {
-		interests: string[];
-		bio: string;
-	};
-};
-
-type FilterOptions = {
-	minAge: number;
-	maxAge: number;
-	minFame: number;
-	maxFame: number;
-	sortBy: 'age' | 'fame' | 'common_tags';
-	filterTags: string[];
-};
 
 const DiscoverPage = () => {
 	const navigate = useNavigate();
@@ -127,7 +110,6 @@ const DiscoverPage = () => {
 		}
 	};
 
-
 	if (loading && profiles.length === 0) {
 		return (
 			<div className="h-screen bg-[#1a1625] flex items-center justify-center">
@@ -208,15 +190,24 @@ const DiscoverPage = () => {
 										View Full Profile
 									</button>
 								</div>
-
 								<div className="mt-6">
-									<h3 className="text-lg font-semibold mb-3 text-white">Interests</h3>
+									<div className="flex items-center justify-between mb-3">
+										<h3 className="text-lg font-semibold text-white">Interests</h3>
+										<button
+											onClick={() => handleProfileClick(profiles[currentIndex].username)}
+											className="text-[#e94057] text-sm font-medium hover:underline"
+										>
+											View all
+										</button>
+									</div>
 									<div className="flex flex-wrap gap-2">
-										{profiles[currentIndex].preview.interests.map((interest: string) => (
+										{profiles[currentIndex].preview.interests.slice(0, 2).map((interest: string) => (
 											<span
 												key={interest}
-												className="px-4 py-2 bg-[#3a3445] rounded-full text-sm font-medium
-                                                    text-white hover:bg-[#4a4455] transition-colors"
+												className="px-4 py-2 bg-[#3a3445] rounded-full text-sm 
+												font-medium text-white hover:bg-[#e94057] transition-colors
+												border border-[#e94057]/10 hover:border-transparent cursor-pointer"
+											
 											>
 												{interest}
 											</span>
@@ -224,7 +215,6 @@ const DiscoverPage = () => {
 									</div>
 								</div>
 							</div>
-
 							<div className="bg-[#2a2435] rounded-3xl p-8 border border-[#3a3445]">
 								<ActionButtons onSwipe={handleSwipe} onLike={likeUser} />
 							</div>
@@ -248,213 +238,5 @@ const DiscoverPage = () => {
 		</div>
 	);
 };
-
-const FilterDialog = ({
-	filters,
-	onFilterChange
-}: {
-	filters: FilterOptions;
-	onFilterChange: (filters: FilterOptions) => void;
-}) => {
-	const [isOpen, setIsOpen] = useState(false);
-	const [tempFilters, setTempFilters] = useState(filters);
-
-	const handleApply = () => {
-		onFilterChange(tempFilters);
-		setIsOpen(false);
-	};
-
-	return (
-		<>
-			<button
-				onClick={() => setIsOpen(true)}
-				className="fixed bottom-24 right-4 lg:right-8 w-12 h-12 bg-[#e94057] rounded-full flex items-center justify-center text-white shadow-lg"
-			>
-				<Filter className="w-6 h-6" />
-			</button>
-
-			{isOpen && (
-				<div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-					<div className="bg-[#2a2435] rounded-3xl p-8 w-full max-w-md">
-						<h2 className="text-2xl font-bold text-white mb-6">Filter Preferences</h2>
-
-						<div className="space-y-6">
-							<div>
-								<label className="text-white font-medium">Age Range</label>
-								<div className="flex items-center gap-4 mt-2">
-									<input
-										type="number"
-										value={tempFilters.minAge}
-										onChange={(e) => setTempFilters(prev => ({
-											...prev,
-											minAge: parseInt(e.target.value)
-										}))}
-										className="w-24 px-3 py-2 bg-[#3a3445] rounded-lg text-white"
-										min="18"
-										max={tempFilters.maxAge}
-									/>
-									<span className="text-white">to</span>
-									<input
-										type="number"
-										value={tempFilters.maxAge}
-										onChange={(e) => setTempFilters(prev => ({
-											...prev,
-											maxAge: parseInt(e.target.value)
-										}))}
-										className="w-24 px-3 py-2 bg-[#3a3445] rounded-lg text-white"
-										min={tempFilters.minAge}
-										max="100"
-									/>
-								</div>
-							</div>
-
-							<div>
-								<label className="text-white font-medium">Fame Rating Range</label>
-								<div className="flex items-center gap-4 mt-2">
-									<input
-										type="number"
-										value={tempFilters.minFame}
-										onChange={(e) => setTempFilters(prev => ({
-											...prev,
-											minFame: parseInt(e.target.value)
-										}))}
-										className="w-24 px-3 py-2 bg-[#3a3445] rounded-lg text-white"
-										min="0"
-										max={tempFilters.maxFame}
-									/>
-									<span className="text-white">to</span>
-									<input
-										type="number"
-										value={tempFilters.maxFame}
-										onChange={(e) => setTempFilters(prev => ({
-											...prev,
-											maxFame: parseInt(e.target.value)
-										}))}
-										className="w-24 px-3 py-2 bg-[#3a3445] rounded-lg text-white"
-										min={tempFilters.minFame}
-										max="100"
-									/>
-								</div>
-							</div>
-
-							<div>
-								<label className="text-white font-medium">Sort By</label>
-								<select
-									value={tempFilters.sortBy}
-									onChange={(e) => setTempFilters(prev => ({
-										...prev,
-										sortBy: e.target.value as FilterOptions['sortBy']
-									}))}
-									className="w-full mt-2 px-3 py-2 bg-[#3a3445] rounded-lg text-white"
-								>
-									<option value="age">Age</option>
-									<option value="fame">Fame Rating</option>
-									<option value="common_tags">Common Interests</option>
-								</select>
-							</div>
-						</div>
-
-						<div className="flex gap-4 mt-8">
-							<button
-								onClick={() => setIsOpen(false)}
-								className="flex-1 px-6 py-3 bg-[#3a3445] rounded-xl text-white font-medium"
-							>
-								Cancel
-							</button>
-							<button
-								onClick={handleApply}
-								className="flex-1 px-6 py-3 bg-[#e94057] rounded-xl text-white font-medium"
-							>
-								Apply
-							</button>
-						</div>
-					</div>
-				</div>
-			)}
-		</>
-	);
-};
-
-const ActionButtons = ({
-	onSwipe,
-	onLike
-}: {
-	onSwipe: (direction: 'left' | 'right') => void;
-	onLike: () => void;
-}) => (
-	<div className="flex items-center justify-center gap-x-16">
-		<ActionButton
-			onClick={() => onSwipe('left')}
-			icon={<X className="w-7 h-7" />}
-			variant="secondary"
-		/>
-		<ActionButton
-			onClick={onLike}
-			icon={<Heart className="w-7 h-7" />}
-			variant="primary"
-		/>
-	</div>
-);
-
-const ActionButton = ({
-	onClick,
-	icon,
-	variant = 'secondary'
-}: {
-	onClick?: () => void;
-	icon: React.ReactNode;
-	variant: 'primary' | 'secondary';
-}) => (
-	<motion.button
-		whileHover={{ scale: 1.05 }}
-		whileTap={{ scale: 0.95 }}
-		onClick={onClick}
-		className={`
-				w-14 h-14 flex items-center justify-center rounded-full shadow-lg transition-colors
-				${variant === 'primary'
-				? 'bg-[#e94057] text-white hover:bg-[#d93a4f]'
-				: 'bg-[#3a3445] text-white/90 hover:bg-[#4a4455]'
-			}
-			`}
-	>
-		{icon}
-	</motion.button>
-);
-
-const ProfileCard = ({
-	profile,
-	currentPhoto,
-}: {
-	profile: Profile;
-	currentPhoto: number;
-}) => (
-	<div className="w-full h-full rounded-3xl overflow-hidden relative group">
-		<div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
-
-
-		<img
-			src={profile.pics[currentPhoto]}
-			alt={profile.name}
-			className="w-full h-full object-cover"
-		/>
-
-		<div className="absolute inset-x-0 bottom-0 p-6">
-			<div className="space-y-2">
-				<h2 className="text-2xl lg:text-3xl font-bold text-white">
-					{profile.name}, {profile.age}
-				</h2>
-				<div className="flex items-center space-x-4">
-					<span className="text-lg text-white/90 font-medium">
-						{profile.preview.interests.slice(0, 2).join(', ')}
-					</span>
-					<span className="flex items-center text-white/75">
-						<MapPin className="w-4 h-4 mr-1" />
-						{profile.distance} km
-					</span>
-				</div>
-			</div>
-		</div>
-	</div>
-);
 
 export default DiscoverPage;
