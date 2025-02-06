@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MapPin, ArrowLeft, Heart, MessageCircle, Phone, Video, Camera, MapPinned, Calendar, User, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
+import ProfileActions from '../components/ProfileActions';
 
 type Profile = {
   username: string;
@@ -118,6 +119,8 @@ const ProfilePage = () => {
   return (
     <div className="min-h-screen bg-[#1a1625] mt-14">
       <div className="max-w-7xl mx-auto px-4 py-6">
+
+
         <button
           onClick={() => navigate('/discover')}
           className="mb-6 flex items-center text-white hover:text-[#e94057] transition-colors"
@@ -126,6 +129,7 @@ const ProfilePage = () => {
           Go Back
 
         </button>
+
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Photos Section */}
@@ -196,6 +200,7 @@ const ProfilePage = () => {
                     <div className="text-[#e94057] text-sm font-medium">Online Now</div>
                   </div>
                 </div>
+                <ProfileActions username={profile.username} /> 
               </div>
 
             </div>

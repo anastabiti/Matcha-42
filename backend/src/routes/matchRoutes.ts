@@ -2,7 +2,7 @@ import express, { response } from "express";
 // import { driver, Driver } from 'neo4j-driver';
 import neo4j from "neo4j-driver";
 import { authenticateToken_Middleware } from "./auth";
-import { count } from "console";
+
 
 const match = express.Router();
 
@@ -25,18 +25,24 @@ match.post("/like-user", authenticateToken_Middleware, async (req: any, res: any
   const session = driver.session();
   try {
     const result = await session.run(
-      `MATCH (u:User {username: $username})
+      `
+      MATCH (u:User {username: $username})
       MATCH (otherUser:User {username: $likedUsername})
       WHERE u <> otherUser
       MERGE (u)-[r:LIKES {createdAt: datetime()}]->(otherUser)
       WITH u, otherUser, EXISTS((otherUser)-[:LIKES]->(u)) as isMatch
+      
       FOREACH(x IN CASE WHEN isMatch THEN [1] ELSE [] END |
-        MERGE (u)-[m:MATCHED {createdAt: datetime()}]->(otherUser)
-        MERGE (otherUser)-[:MATCHED {createdAt: datetime()}]->(u)
+          MERGE (u)-[m:MATCHED {createdAt: datetime()}]-(otherUser)
       )
-      RETURN {liked: true, isMatch: isMatch} as result`,
+      
+      RETURN {
+          liked: true, 
+          isMatch: isMatch,
+          matchedAt: CASE WHEN isMatch THEN datetime() ELSE null END
+      } as result`,
       { username, likedUsername }
-    );
+  );
 
     if (result.records.length > 0) {
       return res.status(200).json({ success: true });
@@ -86,7 +92,7 @@ match.post("/potential-matches", authenticateToken_Middleware, async (req: any, 
     limit: Math.floor(Number(limit))
   };
 
-  // Validate numbers are within acceptable ranges
+
   if (params.minAge < 18 || params.maxAge > 100 || params.minAge > params.maxAge) {
     return res.status(400).json({ error: "Invalid age range" });
   }
@@ -96,7 +102,7 @@ match.post("/potential-matches", authenticateToken_Middleware, async (req: any, 
   }
 
   if (params.limit <= 0 || params.limit > 50) {
-    params.limit = 10; // Reset to default if invalid
+    params.limit = 10;
   }
 
   const query = `
@@ -108,6 +114,8 @@ match.post("/potential-matches", authenticateToken_Middleware, async (req: any, 
     AND otherUser.age <= $maxAge
     AND otherUser.fame_rating >= $minFame
     AND otherUser.fame_rating <= $maxFame
+    AND NOT (u)-[:LIKES]->(otherUser)
+    AND NOT (u)-[:BLOCKED]->(otherUser)
 
     OPTIONAL MATCH (otherUser)-[r:has_this_interest]->(t:Tags)
     WITH otherUser, u, COLLECT(DISTINCT t.interests) as otherUserInterests
