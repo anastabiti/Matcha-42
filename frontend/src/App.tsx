@@ -10,6 +10,7 @@ import DiscoverPage from './pages/Discover'
 import IsLogged from './components/Is_Logged'
 import Chat from './components/Chat'
 import ProfilePage from './pages/Profilepage'
+import ChatUserList from './components/ChatUserList'
 
 
 function App() {
@@ -29,7 +30,8 @@ function App() {
               <Route path="/setup" element={<Setup_page />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/discover" element={<DiscoverPage />} />
-              {/* <Route path="/chat" element={<Chat />} /> */}
+              <Route path="/messages" element={<ChatUserList />} />
+              
               <Route path="/chat/:username" element={<Chat />} />
               <Route path="/profile/:username" element={<ProfilePage />} />
 

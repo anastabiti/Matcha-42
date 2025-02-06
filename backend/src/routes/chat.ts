@@ -76,23 +76,33 @@ chat.get(
   authenticateToken_Middleware,
   async function (req: Request, res: Response) {
     const logged_user: any = req.user;
-    console.log(logged_user, " logged user is ")
+    console.log(logged_user, " logged user is ");
     const new_session = driver.session();
     if (new_session) {
-      const result =await new_session.run(
-        `
-      
-        MATCH (sender:User {username: $me})-[:SENT]->(m:Message)-[:RECEIVED_BY]-(receivers:User)
-        RETURN receivers
+      // MATCH (sender:User {username: $me})-[:SENT]->(m:Message)-[:RECEIVED_BY]-(receivers:User)
+      // RETURN receivers
+      const query = `
+  MATCH (u:User {username: $username}), (other:User)
+WHERE (u)-[:SENT]->(:Message)-[:RECEIVED_BY]->(other)
+   OR (other)-[:SENT]->(:Message)-[:RECEIVED_BY]->(u)
+RETURN DISTINCT other.username AS username, other.pics[0] AS profilePic
 
-        `,
-        { me: logged_user.username }
-      );
 
-      console.log(result.records[0].get("receivers").properties.username, "-----|||||||\n")
-      const all_users= result.records[0].get("receivers").properties.username
-      res.status(200).json(all_users)
-      return
+    `;
+
+      const params = {
+        username: logged_user.username,
+      };
+
+      const result = await new_session.run(query, params);
+      // const all_users = result.records.map((record: Record) => record.get("chatPartners"));
+      const all_users = result.records.map((record: Record) => ({
+        username: record.get('username'),
+        profilePic: record.get('profilePic')
+      }));;
+      console.log(all_users, "Users that the current user has chatted with");
+      res.status(200).json(all_users);
+      return;
     }
   }
 );
