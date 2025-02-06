@@ -63,7 +63,7 @@ io.on("connection", async (socket: any) => {
         const newMessage = {
           content: message.message,
           timestamp: new Date(),
-          id: Date.now(),
+          id:  new Date().toISOString(),
           to: message.to,
           sender: decoded.username,
         };
@@ -75,11 +75,32 @@ io.on("connection", async (socket: any) => {
         if (!session_db) {
           throw new Error("Failed to create database session");
         }
-    
+        
+
+        //check if users matched
+
+//         MATCH (u1:User)-[r:MATCHED]-(u2:User)
+//         WHERE u1.username = "atabiti" AND u2.username = "atabiti_4eecf55234f59899774b"
+//         RETURN r
+// ----------------
+// MATCH p=(u:User {username:"atabiti_4eecf55234f59899774b"})-[:MATCHED]-(o:User {username:"atabiti"})
+// RETURN p
+// ------------------------
+        const check_matching = await session_db.run( `
+          MATCH p=(u:User {username:$user1})-[:MATCHED]-(o:User {username:$user2})
+          RETURN p
+
+          `,{user1:decoded.username,user2:newMessage.to}
+        )
+        if(check_matching.records.length > 0)
+        {
+
+
         const query = `
           MATCH (sender:User {username: $sender})
           MATCH (receiver:User {username: $to})
           CREATE (m:Message {
+            date:datetime($sending_date),
             content: $content,
             status: 'sent'
           })
@@ -91,14 +112,19 @@ io.on("connection", async (socket: any) => {
         const params = {
           sender: newMessage.sender,
           to: newMessage.to,
-          content: newMessage.content,
+          content: newMessage.content,sending_date:newMessage.id
         };
     
         const result = await session_db.run(query, params);
     
         socket.to(message.to).emit("newMessage", newMessage);
         io.to(decoded.username).emit("newMessage", newMessage);
-    
+      }
+    else
+    {
+      console.log("not matched \n\n")
+      socket.emit("messageError", { message: "Not matched users" });
+    }
       } catch (error) {
         console.error("Error in sendMessage handler:", error);
         socket.emit("messageError", { message: "Failed to send message" });

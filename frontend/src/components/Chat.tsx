@@ -2,10 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 import { Send } from "lucide-react";
-
+import { ToastContainer, toast } from 'react-toastify';
+// https://www.npmjs.com/package/react-toastify
 const socket = io("http://localhost:3000", {
   withCredentials: true
 });
+
+
 
 const Chat = () => {
   const { username } = useParams();
@@ -16,6 +19,23 @@ const Chat = () => {
   useEffect(() => {
     // Join the room specific to this chat
     socket.emit("joinRoom", { username });
+    socket.on("messageError", ({ message }) => {
+      
+
+
+      toast.error(message, {
+        position: "top-right",
+        autoClose: 1000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "dark",
+        });
+
+
+
+    });
 
     // Listen for new messages in this specific chat
     socket.on("newMessage", (message) => {
@@ -32,6 +52,7 @@ const Chat = () => {
       socket.emit("leaveRoom", { username });
       socket.off("newMessage");
       socket.off("previousMessages");
+      socket.off("messageError");
     };
   }, [username]);
 
@@ -53,6 +74,7 @@ const Chat = () => {
 
   return (
     <div className="flex flex-col h-[80vh] bg-[#242033] rounded-lg overflow-hidden p-12">
+            <ToastContainer></ToastContainer>
       {/* Chat header */}
       <div className="p-4 bg-[#2a2639] border-b border-[#342f45]">
         <h2 className="text-xl font-semibold">Chat with {username}</h2>
