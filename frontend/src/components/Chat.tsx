@@ -126,8 +126,8 @@ const Chat = () => {
             }`}
           >
             <p className="text-sm text-white">{msg.sender}</p>
-            <p>{msg.content}</p>
-          </div>
+            <p className="break-words whitespace-normal text-orange-300">{msg.content}</p>
+            </div>
         ))}
         <div ref={messagesEndRef} />
       </div>
