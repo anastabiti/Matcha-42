@@ -51,56 +51,83 @@ io.on("connection", async (socket: any) => {
       console.log("User disconnected");
     });
 
-
-
-
     socket.on("sendMessage", async (message: any) => {
       console.log("sendMessage", message);
-    
+
       const session_db = await driver.session();
       try {
+
+
+
+        if(message.length <= 0)
+        {
+          socket.emit("messageError", {
+            message: "Message cannot be empty",
+          });
+          return;
+        }
+
+        // if(message.to !== null)
+        // {
+        //   if(message.to === decoded.username)
+        //   socket.emit("messageError", {
+        //     message: "You cannot send a message to yourself ! (-,-)",
+        //   });
+        //   return;
+        // }
+
         // Create a message object with timestamp
         const newMessage = {
           content: message.message,
-          timestamp: new Date(),
-          id:  new Date().toISOString(),
+          id: new Date().toISOString(),
           to: message.to,
           sender: decoded.username,
         };
-    
-        console.log("New message:", newMessage);
-    
+
+        // Validate message length
+        const wordCount = message.message.length;
+        if (wordCount > 300) {
+          socket.emit("messageError", {
+            message: "Message exceeds 300 word limit",
+          });
+          return;
+        }
+
+        console.log("New message:------------------", newMessage);
+
         // Store message in database
-        
+
         if (!session_db) {
           throw new Error("Failed to create database session");
         }
-        
 
         //check if users matched
 
-//         MATCH (u1:User)-[r:MATCHED]-(u2:User)
-//         WHERE u1.username = "atabiti" AND u2.username = "atabiti_4eecf55234f59899774b"
-//         RETURN r
-// ----------------
-// MATCH p=(u:User {username:"atabiti_4eecf55234f59899774b"})-[:MATCHED]-(o:User {username:"atabiti"})
-// RETURN p
-// ------------------------
-        const check_matching = await session_db.run( `
+        //         MATCH (u1:User)-[r:MATCHED]-(u2:User)
+        //         WHERE u1.username = "atabiti" AND u2.username = "atabiti_4eecf55234f59899774b"
+        //         RETURN r
+        // ----------------
+        // MATCH p=(u:User {username:"atabiti_4eecf55234f59899774b"})-[:MATCHED]-(o:User {username:"atabiti"})
+        // RETURN p
+        // ------------------------
+        const check_matching = await session_db.run(
+          `
           MATCH p=(u:User {username:$user1})-[:MATCHED]-(o:User {username:$user2})
           RETURN p
 
-          `,{user1:decoded.username,user2:newMessage.to}
-        )
-        if(check_matching.records.length > 0)
-        {
+          `,
+          { user1: decoded.username, user2: newMessage.to }
+        );
+        if (check_matching.records.length > 0) {
+
+          const createdAt = Date.now();
 
 
-        const query = `
+          const query = `
           MATCH (sender:User {username: $sender})
           MATCH (receiver:User {username: $to})
           CREATE (m:Message {
-            date:datetime($sending_date),
+          createdAt: $createdAt,
             content: $content,
             status: 'sent'
           })
@@ -108,23 +135,23 @@ io.on("connection", async (socket: any) => {
           CREATE (m)-[:RECEIVED_BY]->(receiver)
           RETURN m
         `;
-    
-        const params = {
-          sender: newMessage.sender,
-          to: newMessage.to,
-          content: newMessage.content,sending_date:newMessage.id
-        };
-    
-        const result = await session_db.run(query, params);
-    
-        socket.to(message.to).emit("newMessage", newMessage);
-        io.to(decoded.username).emit("newMessage", newMessage);
-      }
-    else
-    {
-      console.log("not matched \n\n")
-      socket.emit("messageError", { message: "Not matched users" });
-    }
+
+          const params = {
+            sender: newMessage.sender,
+            to: newMessage.to,
+            content: newMessage.content
+           ,createdAt:createdAt
+          };
+          console.log(newMessage.id  , " newMessage.id----------ID")
+
+          const result = await session_db.run(query, params);
+          console.log("here -----12345")
+          socket.to(message.to).emit("newMessage", newMessage);
+          io.to(decoded.username).emit("newMessage", newMessage);
+        } else {
+          console.log("not matched \n\n");
+          socket.emit("messageError", { message: "Not matched users" });
+        }
       } catch (error) {
         console.error("Error in sendMessage handler:", error);
         socket.emit("messageError", { message: "Failed to send message" });

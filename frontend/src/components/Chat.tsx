@@ -3,26 +3,71 @@ import { useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 import { Send } from "lucide-react";
 import { ToastContainer, toast } from 'react-toastify';
-// https://www.npmjs.com/package/react-toastify
+import sortBy from 'lodash/sortBy';
+
+interface Message {
+  content: string;
+  createdAt: number;
+  sender: string;
+  receiver: string;
+}
 const socket = io("http://localhost:3000", {
   withCredentials: true
 });
 
-
+interface Message {
+  content: string;
+  date: string;
+  sender: string;
+  receiver: string;
+}
 
 const Chat = () => {
   const { username } = useParams();
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const messagesEndRef = useRef(null);
 
+  // Fetch old messages
   useEffect(() => {
-    // Join the room specific to this chat
+    const fetchMessages = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/chat/get_messages/${username}`, {
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch messages');
+        }
+        
+        const oldMessages:Message[] = await response.json();
+        console.log(oldMessages,  "----")
+
+        
+       const sorted_messages = await sortBy(oldMessages,['createdAt'])
+       console.log(sorted_messages.length);
+       if(sorted_messages.length > 0)
+       {
+         setMessages(sorted_messages);
+       }
+
+       
+      } catch (error) {
+        toast.error("Failed to load previous messages", {
+          position: "top-right",
+          autoClose: 3000,
+          theme: "dark",
+        });
+      }
+    };
+
+    fetchMessages();
+  }, [username]);
+
+  useEffect(() => {
     socket.emit("joinRoom", { username });
+
     socket.on("messageError", ({ message }) => {
-      
-
-
       toast.error(message, {
         position: "top-right",
         autoClose: 1000,
@@ -31,21 +76,12 @@ const Chat = () => {
         pauseOnHover: true,
         draggable: true,
         theme: "dark",
-        });
-
-
-
+      });
     });
 
-    // Listen for new messages in this specific chat
     socket.on("newMessage", (message) => {
+      console.log(message, " new message is here\n\n")
       setMessages((prev) => [...prev, message]);
-    });
-
-    // Load previous messages
-    socket.emit("loadMessages", { username });
-    socket.on("previousMessages", (previousMessages) => {
-      setMessages(previousMessages);
     });
 
     return () => {
@@ -57,7 +93,6 @@ const Chat = () => {
   }, [username]);
 
   useEffect(() => {
-    // Scroll to bottom when messages update
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
@@ -74,7 +109,8 @@ const Chat = () => {
 
   return (
     <div className="flex flex-col h-[80vh] bg-[#242033] rounded-lg overflow-hidden p-12">
-            <ToastContainer></ToastContainer>
+      <ToastContainer></ToastContainer>
+      
       {/* Chat header */}
       <div className="p-4 bg-[#2a2639] border-b border-[#342f45]">
         <h2 className="text-xl font-semibold">Chat with {username}</h2>
@@ -85,18 +121,15 @@ const Chat = () => {
         {messages.map((msg, index) => (
           <div
             key={index}
-            className={`p-3 rounded-lg max-w-[80%]  ${msg.sender === username ? "bg-[#E80356] ml-auto" : "bg-[#A3195B] mr-auto"}`}>
-
-
-
-
-            <p className="text-sm text-white"    >{msg.sender}</p>
-
-
-
+            className={`p-3 rounded-lg max-w-[80%] ${
+              msg.sender === username ? "bg-[#E80356] ml-auto" : "bg-[#A3195B] mr-auto"
+            }`}
+          >
+            <p className="text-sm text-white">{msg.sender}</p>
             <p>{msg.content}</p>
           </div>
         ))}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Message input */}
@@ -108,6 +141,8 @@ const Chat = () => {
           type="text"
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
+          minLength={1}
+          maxLength={300}
           placeholder={`Message ${username}...`}
           className="flex-1 bg-[#1a1625] rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-purple-500"
         />

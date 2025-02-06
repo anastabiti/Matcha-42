@@ -14,6 +14,7 @@ import email_change from "./routes/email_change";
 import match from "./routes/matchRoutes";
 import discord_auth from "./routes/Strategies/discord";
 import interactions from "./routes/interactions";
+import chat from "./routes/chat";
 const fileUpload = require('express-fileupload');
 
 
@@ -118,5 +119,6 @@ app.use("/api", email_change);
 app.use('/', match);
 app.use("/", interactions);
 app.use("/api", discord_auth);
+app.use("/api", chat);
 
 export default app;
