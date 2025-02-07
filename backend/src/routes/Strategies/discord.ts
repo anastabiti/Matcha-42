@@ -39,6 +39,7 @@ export const create_new_user_cipher = `CREATE (n:User {
               fame_rating:0,            
               is_logged:  true,
               age:18,
+              notifications:[],
     country: "",
     city: "",
     country_WTK: "",

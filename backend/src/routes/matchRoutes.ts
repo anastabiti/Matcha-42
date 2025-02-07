@@ -89,13 +89,21 @@ match.post("/like-user", authenticateToken_Middleware, async (req: any, res: any
     );
 
     /*----------------------------------------------------- Notifications by atabiti-----------------------------------------------------------------------------*/
-    
-    getSocketIO().emit("Liked", { msg: `User ${likedUsername} liked you!` });
-    
 
+    getSocketIO().emit("Liked", { msg: `User ${likedUsername} liked you!` });
+
+    const add_notification = `
+MATCH (n:User {username: $username})
+SET n.notifications = n.notifications + $notification
+RETURN n`;
+
+    const notificationArray = (new Date().toISOString(), `User ${likedUsername} liked you!`);
+    await session.run(add_notification, {
+      username: username,
+      notification: notificationArray,
+    });
 
     if (result.records.length > 0) {
-
       return res.status(200).json({ success: true });
     } else {
       return res.status(400).json({ error: "Failed to like user" });

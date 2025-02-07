@@ -148,7 +148,7 @@ registrationRouter.post(
                 pics: ["","","","",""],
             fame_rating:0,              is_logged:  false
       ,
-    country: "",
+    country: "",notifications:[],
     city: "",
     country_WTK: "",
     city_WTK: "",
