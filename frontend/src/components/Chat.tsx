@@ -11,7 +11,7 @@ interface Message {
   sender: string;
   receiver: string;
 }
-const socket = io("http://localhost:3000", {
+export const socket = io("http://localhost:3000", {
   withCredentials: true
 });
 

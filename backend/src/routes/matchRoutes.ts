@@ -2,6 +2,7 @@ import express, { response } from "express";
 // import { driver, Driver } from 'neo4j-driver';
 import neo4j, { int } from "neo4j-driver";
 import { authenticateToken_Middleware } from "./auth";
+import { getSocketIO } from "../socket";
 // import app from "../app";
 
 const match = express.Router();
@@ -87,17 +88,13 @@ match.post("/like-user", authenticateToken_Middleware, async (req: any, res: any
       { username, likedUsername }
     );
 
-    if (result.records.length > 0) {
-      console.log("----------NOTIFY USER-------- ", likedUsername);
-      
-      /*----------------------------------------------------- Notifications by atabiti-----------------------------------------------------------------------------*/
-      // console.log(req.app.get("socketio"), "--------");
-      const io = req.app.get("socketio"); //https://stackoverflow.com/questions/61608574/how-to-use-socket-io-instance-on-multiple-files-in-express-js-app
-      const rooms = io.sockets.adapter.rooms;
-      console.log(rooms, " rooms ----=-===++=")
-      io.to(likedUsername).emit("User_is_Liked", { m1: "newMessage", m2: "test" });
+    /*----------------------------------------------------- Notifications by atabiti-----------------------------------------------------------------------------*/
     
-      /*----------------------------------------------------- Notifications by atabiti-----------------------------------------------------------------------------*/
+    getSocketIO().emit("Liked", { msg: `User ${likedUsername} liked you!` });
+    
+
+
+    if (result.records.length > 0) {
 
       return res.status(200).json({ success: true });
     } else {
