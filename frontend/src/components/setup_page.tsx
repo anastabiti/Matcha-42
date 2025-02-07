@@ -289,7 +289,7 @@ function Setup_page() {
           age:18
         });
 
-        navigate("/home");
+        navigate("/discover");
       } else {
         console.log(data, " |||");
         console.log(data, " |||");

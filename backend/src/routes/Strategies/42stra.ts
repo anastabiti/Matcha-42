@@ -217,7 +217,7 @@ forty_two_str.get("/auth/intra42/callback", function (req: any, res: Response) {
       });
 
       if (user.setup_done) {
-        return res.status(200).redirect(`${process.env.front_end_ip}/home`);
+        return res.status(200).redirect(`${process.env.front_end_ip}/discover`);
       } else {
         return res.status(200).redirect(`${process.env.front_end_ip}/setup`);
       }

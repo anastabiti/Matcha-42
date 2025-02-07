@@ -343,7 +343,7 @@ user_information_Router.post(
         console.log('Processing file:', file); // Debug log
         console.log('Processing file:', file[0]); // Debug log
 
-        
+        //create  a data URI scheme
         const uploadResult = await cloudinary.uploader.upload(`data:${file.mimetype};base64,${file.data.toString('base64')}`, {
         })
 

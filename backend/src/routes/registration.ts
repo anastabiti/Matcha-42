@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 const { body, validationResult } = require("express-validator");
 // const bcrypt = require("bcrypt");
 const crypto = import("crypto");
-import argon2 from 'argon2';
+import argon2 from "argon2";
 
 const passwordValidator = require("password-validator");
 import nodemailer from "nodemailer";
@@ -43,7 +43,15 @@ registrationRouter.post(
   "/registration",
   body("email").isEmail().isLength({ min: 7, max: 30 }),
   body("password").isLength({ min: 8, max: 50 }),
-  body("username").isLength({ min: 6, max: 20 }),
+  body("username")
+    .isLength({ min: 6, max: 20 })
+    .not()
+    .contains(" ")
+    .withMessage("Username cannot contain spaces")
+    .not()
+    .contains("\t")
+    .withMessage("Username cannot contain tabs")
+    .isAlphanumeric(),
   body("first_name").isLength({ min: 3, max: 30 }),
   body("last_name").isLength({ min: 3, max: 30 }),
   body("age").isInt({ min: 18, max: 100 }),
@@ -72,7 +80,7 @@ registrationRouter.post(
       else if (errors.array()[0].path === "password")
         res.status(400).json("Password must be between 6 and 30 characters");
       else if (errors.array()[0].path === "username")
-        res.status(400).json("Username must be between 6 and 20 characters");
+        res.status(400).json("Username must be between 6 and 20 characters,No spaces,No tabs,must be alphanumeric");
       else if (errors.array()[0].path === "first_name")
         res.status(400).json("First name must be between 3 and 30 characters");
       else if (errors.array()[0].path === "last_name")
@@ -91,8 +99,8 @@ registrationRouter.post(
 
       // const salt = await bcrypt.genSalt(10);
       // const hashedPassword = await bcrypt.hash(req.body.password, salt);
-      const plain_pass =req.body.password
-      const hashedPassword = await argon2.hash(plain_pass)
+      const plain_pass = req.body.password;
+      const hashedPassword = await argon2.hash(plain_pass);
       const user = {
         username: req.body.username,
         email: req.body.email,
