@@ -2,7 +2,7 @@ import express, { response } from "express";
 // import { driver, Driver } from 'neo4j-driver';
 import neo4j, { int } from "neo4j-driver";
 import { authenticateToken_Middleware } from "./auth";
-
+// import app from "../app";
 
 const match = express.Router();
 
@@ -11,54 +11,50 @@ const driver = neo4j.driver(
   neo4j.auth.basic(process.env.database_username as string, process.env.database_password as string)
 );
 
-
 match.get("/matches", authenticateToken_Middleware, async (req: any, res: any) => {
-if (!req.user) {
+  if (!req.user) {
     return res.status(401).json({ error: "Unauthorized" });
-}
+  }
 
-
-const session = driver.session();
+  const session = driver.session();
   try {
-      const result = await session.run(
-          `
+    const result = await session.run(
+      `
           MATCH (u:User {username: $username})
           MATCH (otherUser:User)
           WHERE (u)-[:MATCHED]-(otherUser)
           RETURN otherUser
           `,
-          { username: req.user.username }
-      );
+      { username: req.user.username }
+    );
 
-      const matches = result.records.map((record) => {
-          const user = record.get("otherUser");
-          return {
-              id: user.identity.low,
-              username: user.properties.username,
-              name: `${user.properties.first_name} ${user.properties.last_name}`,
-              age: user.properties.age,
-              // distance: ,
-              profile_picture: user.properties.pics.slice(0, 1),
-              preview: {
-                  bio: user.properties.biography.substring(0, 100) + "..."
-              },
-              interests: user.properties.interests,
-              isOnline: true,
-          };
-      });
+    const matches = result.records.map((record) => {
+      const user = record.get("otherUser");
+      return {
+        id: user.identity.low,
+        username: user.properties.username,
+        name: `${user.properties.first_name} ${user.properties.last_name}`,
+        age: user.properties.age,
+        // distance: ,
+        profile_picture: user.properties.pics.slice(0, 1),
+        preview: {
+          bio: user.properties.biography.substring(0, 100) + "...",
+        },
+        interests: user.properties.interests,
+        isOnline: true,
+      };
+    });
 
-      return res.status(200).json({
-          success: true,
-          data: matches,
-          count: matches.length
-      });
-
-  } catch (error) {}
-  finally {
-      await session.close();
+    return res.status(200).json({
+      success: true,
+      data: matches,
+      count: matches.length,
+    });
+  } catch (error) {
+  } finally {
+    await session.close();
   }
 });
-
 
 match.post("/like-user", authenticateToken_Middleware, async (req: any, res: any) => {
   if (!req.user) {
@@ -89,9 +85,20 @@ match.post("/like-user", authenticateToken_Middleware, async (req: any, res: any
           matchedAt: CASE WHEN isMatch THEN datetime() ELSE null END
       } as result`,
       { username, likedUsername }
-  );
+    );
 
     if (result.records.length > 0) {
+      console.log("----------NOTIFY USER-------- ", likedUsername);
+      
+      /*----------------------------------------------------- Notifications by atabiti-----------------------------------------------------------------------------*/
+      // console.log(req.app.get("socketio"), "--------");
+      const io = req.app.get("socketio"); //https://stackoverflow.com/questions/61608574/how-to-use-socket-io-instance-on-multiple-files-in-express-js-app
+      const rooms = io.sockets.adapter.rooms;
+      console.log(rooms, " rooms ----=-===++=")
+      io.to(likedUsername).emit("User_is_Liked", { m1: "newMessage", m2: "test" });
+    
+      /*----------------------------------------------------- Notifications by atabiti-----------------------------------------------------------------------------*/
+
       return res.status(200).json({ success: true });
     } else {
       return res.status(400).json({ error: "Failed to like user" });
@@ -105,7 +112,6 @@ match.post("/like-user", authenticateToken_Middleware, async (req: any, res: any
 });
 
 export default match;
-
 
 match.post("/potential-matches", authenticateToken_Middleware, async (req: any, res: any) => {
   if (!req.user) {
@@ -122,7 +128,7 @@ match.post("/potential-matches", authenticateToken_Middleware, async (req: any, 
     maxFame = 100,
     sortBy = "age",
     page = 1,
-    limit = 10
+    limit = 10,
   } = req.body;
 
   // Ensure all numeric values are integers
@@ -136,9 +142,8 @@ match.post("/potential-matches", authenticateToken_Middleware, async (req: any, 
     maxFame: Math.floor(Number(maxFame)),
     sortBy: String(sortBy),
     skip: Math.max(0, Math.floor(Number(page) - 1)) * Math.floor(Number(limit)),
-    limit: Math.floor(Number(limit))
+    limit: Math.floor(Number(limit)),
   };
-
 
   if (params.minAge < 18 || params.maxAge > 100 || params.minAge > params.maxAge) {
     return res.status(400).json({ error: "Invalid age range" });
@@ -224,8 +229,8 @@ match.post("/potential-matches", authenticateToken_Middleware, async (req: any, 
         pics: user.properties.pics.slice(0, 1), // Only return first picture for card view
         preview: {
           interests: interests.slice(0, 3), // Only first 3 interests
-          bio: user.properties.biography.substring(0, 100) + "..." // Truncated bio
-        }
+          bio: user.properties.biography.substring(0, 100) + "...", // Truncated bio
+        },
       };
     });
 
@@ -236,8 +241,8 @@ match.post("/potential-matches", authenticateToken_Middleware, async (req: any, 
       pagination: {
         page: Math.floor(Number(page)),
         limit: params.limit,
-        hasMore: profiles.length === params.limit
-      }
+        hasMore: profiles.length === params.limit,
+      },
     });
   } catch (error) {
     console.error("Error in potential-matches:", error);
@@ -247,17 +252,16 @@ match.post("/potential-matches", authenticateToken_Middleware, async (req: any, 
   }
 });
 
-
 match.get("/profile/:username", authenticateToken_Middleware, async (req: any, res: any) => {
   if (!req.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: "Unauthorized" });
   }
 
   const username = req.params.username;
   const session = driver.session();
 
   try {
-      const query = `
+    const query = `
           MATCH (user:User {username: $username})
           OPTIONAL MATCH (user)-[:has_this_interest]->(t:Tags)
           WITH user, COLLECT(DISTINCT t.interests) as interests
@@ -278,41 +282,41 @@ match.get("/profile/:username", authenticateToken_Middleware, async (req: any, r
                  user.fame_rating as fame_rating
       `;
 
-      const result = await session.run(query, { username });
-      
-      if (result.records.length === 0) {
-          return res.status(404).json({ error: "Profile not found" });
-      }
+    const result = await session.run(query, { username });
 
-      const record = result.records[0];
-      const user = record.get("user");
-      const interests = record.get("interests");
-      const profile_completeness = record.get("profile_completeness").low;
-      const points = record.get("points")?.low || 0;
-      const fame_rating = record.get("fame_rating")?.low || 0;
+    if (result.records.length === 0) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
 
-      return res.status(200).json({
-          success: true,
-          data: {
-              username: user.properties.username,
-              first_name: user.properties.first_name,
-              last_name: user.properties.last_name,
-              age: user.properties.age,
-              gender: user.properties.gender,
-              biography: user.properties.biography,
-              location: user.properties.location,
-              distance: user.properties.distance,
-              profile_picture: user.properties.profile_picture,
-              pics: user.properties.pics,
-              interests: interests,
-              fame_rating: fame_rating,
-              city: user.properties.city,
-          }
-      });
+    const record = result.records[0];
+    const user = record.get("user");
+    const interests = record.get("interests");
+    const profile_completeness = record.get("profile_completeness").low;
+    const points = record.get("points")?.low || 0;
+    const fame_rating = record.get("fame_rating")?.low || 0;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        username: user.properties.username,
+        first_name: user.properties.first_name,
+        last_name: user.properties.last_name,
+        age: user.properties.age,
+        gender: user.properties.gender,
+        biography: user.properties.biography,
+        location: user.properties.location,
+        distance: user.properties.distance,
+        profile_picture: user.properties.profile_picture,
+        pics: user.properties.pics,
+        interests: interests,
+        fame_rating: fame_rating,
+        city: user.properties.city,
+      },
+    });
   } catch (error) {
-      console.error("Error fetching profile:", error);
-      return res.status(500).json({ error: "Internal Server Error" });
+    console.error("Error fetching profile:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
   } finally {
-      await session.close();
+    await session.close();
   }
 });

@@ -31,6 +31,31 @@ import { NavLink as RouterLink } from 'react-router-dom';
 //   }
 // };
 
+import React, { useState } from "react";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+
+const NotificationButton = () => {
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  return (
+    <div>
+      <NotificationsIcon color="primary" onClick={() => setShowNotifications(!showNotifications)}>
+      </NotificationsIcon>
+      {showNotifications && (
+        <div className='absolute bg-white rounded-lg'>
+          <p className='text-black'>All unread notifications</p>
+          <p className='text-black'>atabiti liked you</p>
+          <p className='text-black'>New message from someone</p>
+          <p className='text-black'>message three</p>
+          
+        </div>
+      )}
+    </div>
+  );
+};
+
+ NotificationButton;
+
 const Navigation = () => (
   <nav className="h-16 lg:h-20 px-4 lg:px-8 flex items-center justify-between bg-[#2a2435] border-b border-[#3a3445] fixed top-0 w-full z-50">
     <RouterLink to="/" className="text-[#e94057] text-2xl lg:text-3xl font-bold">
@@ -42,7 +67,7 @@ const Navigation = () => (
       <NavLink to="/matches" icon={<Heart />} text="Matches" />
       <NavLink to="/messages" icon={<MessageCircle />} text="Messages" />
       <NavLink to="/profile" icon={<User />} text="Profile" />
-      <NavLink to="/notifications" icon={<Bell />} text="" />
+      <NotificationButton></NotificationButton>
 
 
     </div>
@@ -51,7 +76,7 @@ const Navigation = () => (
       <MobileNavLink to="/discover" icon={<Search />} />
       <MobileNavLink to="/matches" icon={<Heart />} />
       <MobileNavLink to="/messages" icon={<MessageCircle />} />
-      <MobileNavLink to="/notifications" icon={<Bell />} />
+      {/* <MobileNavLink to="/notifications" icon={<Bell />} /> */}
       <MobileNavLink to="/profile" icon={<User />} />
     </div>
 

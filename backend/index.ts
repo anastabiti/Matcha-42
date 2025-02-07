@@ -21,6 +21,9 @@ const io = new Server(server, {
   },
 });
 
+
+
+
 io.on("connection", async (socket: any) => {
   const cookie_jwt = socket.handshake.headers.cookie?.split(";") || [];
   console.log(typeof cookie_jwt, "\n\n\n");
@@ -49,6 +52,11 @@ io.on("connection", async (socket: any) => {
 
     socket.on("disconnect", () => {
       console.log("User disconnected");
+    });
+
+    //user liked a user
+    socket.on("User_is_Liked", async (message:any) => {
+      console.log(message, " User_is_Liked -----------------\n\n\n");
     });
 
     socket.on("sendMessage", async (message: any) => {
@@ -187,6 +195,8 @@ io.on("connection", async (socket: any) => {
 //   console.log(result, "sssss---------------result");
 
 // });
+
+app.set('socketio', io);//here you export my socket.io to a global       
 
 server.listen(port, () => {
   console.log(`Server is running on port ${port}`);
