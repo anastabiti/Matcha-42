@@ -12,6 +12,7 @@ import Chat from './components/Chat'
 import ProfilePage from './pages/Profilepage'
 import ChatUserList from './components/ChatUserList'
 
+import MatchedPage from './pages/matches'
 
 function App() {
 
@@ -31,7 +32,8 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/discover" element={<DiscoverPage />} />
               <Route path="/messages" element={<ChatUserList />} />
-              
+              <Route path="matches" element={<MatchedPage />} />
+              <Route path="/" />
               <Route path="/chat/:username" element={<Chat />} />
               <Route path="/profile/:username" element={<ProfilePage />} />
 

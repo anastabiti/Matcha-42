@@ -122,7 +122,7 @@ const ProfilePage = () => {
 
 
         <button
-          onClick={() => navigate('/discover')}
+          onClick={() => navigate(-1)}
           className="mb-6 flex items-center text-white hover:text-[#e94057] transition-colors"
         >
           <ArrowLeft className="w-6 h-6 mr-2" />
@@ -342,4 +342,3 @@ const ActionButton = ({
 );
 
 export default ProfilePage;
-

@@ -1,8 +1,9 @@
 import express, { Request, Response } from "express";
 import { body, ValidationError, validationResult } from "express-validator";
 import neo4j from "neo4j-driver";
-import { imagekitUploader } from "./../app";
+// import { imagekitUploader } from "./../app";
 import { authenticateToken_Middleware, generateAccessToken } from "./auth";
+import { v2 as cloudinary } from 'cloudinary';
 
 const user_information_Router = express.Router();
 const driver = neo4j.driver(
@@ -332,24 +333,37 @@ user_information_Router.post(
           });
         }
 
-        // Upload to ImageKit
-        const ret = await imagekitUploader.upload({
-          file: file.data,
-          fileName: file.name,
-        });
+        // // Upload to ImageKit
+        // const ret = await imagekitUploader.upload({
+        //   file: file.data,
+        //   fileName: file.name,
+        // });
+
+        // Upload an image
+        console.log('Processing file:', file); // Debug log
+        console.log('Processing file:', file[0]); // Debug log
+
+        
+        const uploadResult = await cloudinary.uploader.upload(`data:${file.mimetype};base64,${file.data.toString('base64')}`, {
+        })
+
+          .catch((error) => {
+            console.log(error);
+          });
+          console.log(uploadResult?.url,  "------uploadResult--------")
 
         // Handle profile picture (first image)
         if (index === 0) {
-          existingPics[index] = ret.url;
+          existingPics[index] = uploadResult?.url;
           await session.run(
             `MATCH (u:User {username: $username})
               SET u.profile_picture = $profile_picture
              RETURN u`,
-            { username: _user.username, profile_picture: ret.url }
+            { username: _user.username, profile_picture: uploadResult?.url }
           );
         }
 
-        existingPics[index] = ret.url;
+        existingPics[index] = uploadResult?.url;
       }
 
       // Update the pics array in the database
@@ -460,9 +474,12 @@ user_information_Router.post(
     console.log(user, "  user");
     if (latitude && longitude && user) {
       const response = await axios.get(
-        `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,{ headers: {
-          'Accept-Language': 'en'//city we country names in english better
-        }}
+        `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+        {
+          headers: {
+            "Accept-Language": "en", //city we country names in english better
+          },
+        }
       );
       console.log(response.data, " -----------------------------data\n\n\n\n");
 
@@ -511,12 +528,11 @@ user_information_Router.post(
     console.log(response.data, " , -------res");
 
     const pub_ip = response.data;
-   
+
     const url = `https://apiip.net/api/check?ip=${pub_ip}&accessKey=${process.env.ip_finder_pub}`;
     const responses = await axios.get(url);
     const result = responses.data;
     console.log(result, "sssss---------------result");
-
 
     // {
     //   ip: 'hhhhhh'
@@ -540,21 +556,17 @@ user_information_Router.post(
     //   isEu: false,
     //   borders: [ 'DZA', 'ESH', 'ESP' ],
     //   topLevelDomains: [ '.ma', 'المغرب.' ]
-    // } 
-
+    // }
 
     const latitude = result.latitude;
     const longitude = result.longitude;
 
     const user: any = req.user;
 
-
-
     if (user) {
-      
-      const cityName = result.city
-       
-      const country  = result.countryName
+      const cityName = result.city;
+
+      const country = result.countryName;
 
       const db_session = driver.session();
       if (db_session) {
@@ -568,7 +580,13 @@ user_information_Router.post(
             RETURN n
 
             `,
-          { username: user.username, latitude_WTK: latitude, longitude_WTK: longitude, cityName_WTK: cityName,country_name_WTK:country }
+          {
+            username: user.username,
+            latitude_WTK: latitude,
+            longitude_WTK: longitude,
+            cityName_WTK: cityName,
+            country_name_WTK: country,
+          }
         );
         console.log(req.body);
         res.status(200).json("location saved");
