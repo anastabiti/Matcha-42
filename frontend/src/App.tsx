@@ -10,6 +10,7 @@ import DiscoverPage from './pages/Discover'
 import IsLogged from './components/Is_Logged'
 import Chat from './components/Chat'
 import ProfilePage from './pages/Profilepage'
+import MatchedPage from './pages/matches'
 
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
               <Route path="/discover" element={<DiscoverPage />} />
               <Route path="/messages" element={<Chat />} />
               <Route path="/profile/:username" element={<ProfilePage />} />
+              <Route path="matches"  element={<MatchedPage/>} />
 
             </Route>
           </Route>

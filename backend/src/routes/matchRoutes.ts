@@ -1,6 +1,6 @@
 import express, { response } from "express";
 // import { driver, Driver } from 'neo4j-driver';
-import neo4j from "neo4j-driver";
+import neo4j, { int } from "neo4j-driver";
 import { authenticateToken_Middleware } from "./auth";
 
 
@@ -11,6 +11,53 @@ const driver = neo4j.driver(
   neo4j.auth.basic(process.env.database_username as string, process.env.database_password as string)
 );
 
+
+match.get("/matches", authenticateToken_Middleware, async (req: any, res: any) => {
+if (!req.user) {
+    return res.status(401).json({ error: "Unauthorized" });
+}
+
+
+const session = driver.session();
+  try {
+      const result = await session.run(
+          `
+          MATCH (u:User {username: $username})
+          MATCH (otherUser:User)
+          WHERE (u)-[:LIKES]->(otherUser) OR (u)-[:MATCHED]->(otherUser)
+          RETURN otherUser
+          `,
+          { username: req.user.username }
+      );
+
+      const matches = result.records.map((record) => {
+          const user = record.get("otherUser");
+          return {
+              id: user.identity.low,
+              username: user.properties.username,
+              name: `${user.properties.first_name} ${user.properties.last_name}`,
+              age: user.properties.age,
+              // distance: ,
+              profile_picture: user.properties.pics.slice(0, 1),
+              preview: {
+                  bio: user.properties.biography.substring(0, 100) + "..."
+              },
+              interests: user.properties.interests,
+              isOnline: true,
+          };
+      });
+
+      return res.status(200).json({
+          success: true,
+          data: matches,
+          count: matches.length
+      });
+
+  } catch (error) {}
+  finally {
+      await session.close();
+  }
+});
 
 
 match.post("/like-user", authenticateToken_Middleware, async (req: any, res: any) => {
