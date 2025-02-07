@@ -32,7 +32,8 @@ function App() {
               <Route path="/discover" element={<DiscoverPage />} />
               <Route path="/messages" element={<Chat />} />
               <Route path="/profile/:username" element={<ProfilePage />} />
-              <Route path="matches"  element={<MatchedPage/>} />
+              <Route path="matches" element={<MatchedPage />} />
+              <Route path="/" />
 
             </Route>
           </Route>

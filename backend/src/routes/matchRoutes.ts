@@ -24,7 +24,7 @@ const session = driver.session();
           `
           MATCH (u:User {username: $username})
           MATCH (otherUser:User)
-          WHERE (u)-[:LIKES]->(otherUser) OR (u)-[:MATCHED]->(otherUser)
+          WHERE (u)-[:MATCHED]-(otherUser)
           RETURN otherUser
           `,
           { username: req.user.username }
