@@ -93,8 +93,6 @@ match.post("/like-user", authenticateToken_Middleware, async (req: any, res: any
     if (result.records.length > 0) {
          /*----------------------------------------------------- Notifications by atabiti-----------------------------------------------------------------------------*/
          
-        //  getSocketIO().to(likedUsername).emit("Liked", { msg: `User ${username} liked you!` });
-         
 
          const query = `
          MATCH (user:User {username: $username})
@@ -281,6 +279,11 @@ match.get("/profile/:username", authenticateToken_Middleware, async (req: any, r
   }
 
   const username = req.params.username;
+  console.log("you viewed ",username , " Profile")
+
+
+
+
   const session = driver.session();
 
   try {
@@ -310,6 +313,35 @@ match.get("/profile/:username", authenticateToken_Middleware, async (req: any, r
     if (result.records.length === 0) {
       return res.status(404).json({ error: "Profile not found" });
     }
+
+
+
+         /*----------------------------------------------------- Notifications by atabiti-----------------------------------------------------------------------------*/
+          
+       const notificationArray = (`${username} viewed your profile!`);
+       const result_ = await session.run(`
+         MATCH (user:User {username: $username})
+         CREATE (n:Notification {
+           notify_id: randomUUID(),
+           fromUsername: $fromUsername,
+           type: $type,
+           content: $content,
+           createdAt: date(),
+           isRead: false
+         })
+         CREATE (user)-[:YOU_HAVE_A_NOTIFICATION]->(n)
+         RETURN n
+       `, {
+        fromUsername:req.user.username,
+        username:username,
+         type:"Liked",
+         content:notificationArray
+       });
+
+       const notification = result_.records[0].get('n').properties;
+       getSocketIO().to(username).emit("notification", notification);
+
+          /*----------------------------------------------------- Notifications by atabiti-----------------------------------------------------------------------------*/
 
     const record = result.records[0];
     const user = record.get("user");
