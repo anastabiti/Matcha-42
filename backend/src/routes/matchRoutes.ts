@@ -88,22 +88,40 @@ match.post("/like-user", authenticateToken_Middleware, async (req: any, res: any
       { username, likedUsername }
     );
 
-    /*----------------------------------------------------- Notifications by atabiti-----------------------------------------------------------------------------*/
-
-    getSocketIO().emit("Liked", { msg: `User ${likedUsername} liked you!` });
-
-    const add_notification = `
-MATCH (n:User {username: $username})
-SET n.notifications = n.notifications + $notification
-RETURN n`;
-
-    const notificationArray = (new Date().toISOString(), `User ${likedUsername} liked you!`);
-    await session.run(add_notification, {
-      username: username,
-      notification: notificationArray,
-    });
+ ;
 
     if (result.records.length > 0) {
+         /*----------------------------------------------------- Notifications by atabiti-----------------------------------------------------------------------------*/
+         
+        //  getSocketIO().to(likedUsername).emit("Liked", { msg: `User ${username} liked you!` });
+         
+
+         const query = `
+         MATCH (user:User {username: $username})
+         CREATE (n:Notification {
+           notify_id: randomUUID(),
+           fromUsername: $fromUsername,
+           type: $type,
+           content: $content,
+           createdAt: date(),
+           isRead: false
+         })
+         CREATE (user)-[:YOU_HAVE_A_NOTIFICATION]->(n)
+         RETURN n
+       `;
+ 
+       const notificationArray = (`User ${username} liked you!`);
+       const result = await session.run(query, {
+        fromUsername:username,
+        username:likedUsername,
+         type:"Liked",
+         content:notificationArray
+       });
+
+       const notification = result.records[0].get('n').properties;
+       getSocketIO().to(likedUsername).emit("notification", notification);
+
+          /*----------------------------------------------------- Notifications by atabiti-----------------------------------------------------------------------------*/
       return res.status(200).json({ success: true });
     } else {
       return res.status(400).json({ error: "Failed to like user" });

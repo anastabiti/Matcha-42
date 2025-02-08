@@ -18,6 +18,7 @@ import chat from "./routes/chat";
 const fileUpload = require('express-fileupload');
 
 import { v2 as cloudinary } from 'cloudinary';
+import notify from "./routes/notifications";
 
 const app: Application = express();
 // https://www.npmjs.com/package/connect-neo4j
@@ -92,5 +93,6 @@ app.use('/', match);
 app.use("/", interactions);
 app.use("/api", discord_auth);
 app.use("/api", chat);
+app.use("/api", notify);
 
 export default app;
