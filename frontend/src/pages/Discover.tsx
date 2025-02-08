@@ -23,7 +23,9 @@ const DiscoverPage = () => {
 		maxAge: 100,
 		minFame: 0,
 		maxFame: 100,
-		sortBy: 'age',
+		sortBy: 'distance',
+		maxDistance: 100,
+		minCommonTags: 0,
 		filterTags: []
 	});
 

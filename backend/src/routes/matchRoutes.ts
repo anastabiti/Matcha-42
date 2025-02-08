@@ -112,7 +112,6 @@ match.post("/potential-matches", authenticateToken_Middleware, async (req: any, 
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  // Parse and validate numeric inputs
   const {
     minAge = 18,
     maxAge = 100,
@@ -120,12 +119,12 @@ match.post("/potential-matches", authenticateToken_Middleware, async (req: any, 
     filterTags = [],
     minFame = 0,
     maxFame = 100,
-    sortBy = "age",
+    maxDistance = 100,
+    sortBy = 'distance',
     page = 1,
     limit = 10
   } = req.body;
 
-  // Ensure all numeric values are integers
   const params = {
     username: req.user.username,
     minAge: Math.floor(Number(minAge)),
@@ -134,12 +133,13 @@ match.post("/potential-matches", authenticateToken_Middleware, async (req: any, 
     filterTags: Array.isArray(filterTags) ? filterTags : [],
     minFame: Math.floor(Number(minFame)),
     maxFame: Math.floor(Number(maxFame)),
+    maxDistance: Math.floor(Number(maxDistance)),
     sortBy: String(sortBy),
     skip: Math.max(0, Math.floor(Number(page) - 1)) * Math.floor(Number(limit)),
     limit: Math.floor(Number(limit))
   };
 
-
+  // Validation checks
   if (params.minAge < 18 || params.maxAge > 100 || params.minAge > params.maxAge) {
     return res.status(400).json({ error: "Invalid age range" });
   }
@@ -148,62 +148,75 @@ match.post("/potential-matches", authenticateToken_Middleware, async (req: any, 
     return res.status(400).json({ error: "Invalid fame range" });
   }
 
+  if (params.maxDistance < 0 || params.maxDistance > 20000) { // 20000km is roughly half Earth's circumference
+    return res.status(400).json({ error: "Invalid distance range" });
+  }
+
   if (params.limit <= 0 || params.limit > 50) {
     params.limit = 10;
   }
 
   const query = `
-    MATCH (u:User {username: $username})
-    MATCH (otherUser:User)
-    WHERE otherUser.username <> u.username 
-    AND otherUser.gender <> u.gender
-    AND otherUser.age >= $minAge 
-    AND otherUser.age <= $maxAge
-    AND otherUser.fame_rating >= $minFame
-    AND otherUser.fame_rating <= $maxFame
-    AND NOT (u)-[:LIKES]->(otherUser)
-    AND NOT (u)-[:BLOCKED]->(otherUser)
+  MATCH (u:User {username: $username})
+  MATCH (otherUser:User)
+  WHERE otherUser.username <> u.username 
+  AND otherUser.gender <> u.gender
+  AND otherUser.age >= $minAge 
+  AND otherUser.age <= $maxAge
+  AND otherUser.fame_rating >= $minFame
+  AND otherUser.fame_rating <= $maxFame
+  AND NOT (u)-[:LIKES]->(otherUser)
+  AND NOT (u)-[:BLOCKED]->(otherUser)
 
-    OPTIONAL MATCH (otherUser)-[r:has_this_interest]->(t:Tags)
-    WITH otherUser, u, COLLECT(DISTINCT t.interests) as otherUserInterests
+  // Calculate distance between users using point distance
+  WITH u, otherUser,
+       point.distance(u.location_WTK, otherUser.location_WTK) / 1000 as distance // Convert to kilometers
 
-    OPTIONAL MATCH (u)-[:has_this_interest]->(userTags:Tags)
-    WHERE userTags.interests IN otherUserInterests
+  WHERE distance <= $maxDistance
 
-    WITH otherUser,
-         otherUserInterests as interests,
-         COUNT(DISTINCT userTags) as commonTags
+  OPTIONAL MATCH (otherUser)-[r:has_this_interest]->(t:Tags)
+  WITH otherUser, u, distance, COLLECT(DISTINCT t.interests) as otherUserInterests
 
-    WHERE
-        CASE
-            WHEN $minCommonTags > 0 THEN commonTags >= $minCommonTags
-            ELSE true
-        END
-    AND
-        CASE
-            WHEN size($filterTags) > 0 THEN
-                ANY(tag IN interests WHERE tag IN $filterTags)
-            ELSE true
-        END
+  OPTIONAL MATCH (u)-[:has_this_interest]->(userTags:Tags)
+  WHERE userTags.interests IN otherUserInterests
 
-    RETURN
-        otherUser,
-        interests,
-        commonTags,
-        otherUser.age as age,
-        otherUser.fame_rating as fameRating
+  WITH otherUser,
+       otherUserInterests as interests,
+       COUNT(DISTINCT userTags) as commonTags,
+       distance
 
-    ORDER BY
-        CASE $sortBy
-            WHEN 'age' THEN otherUser.age
-            WHEN 'fame' THEN otherUser.fame_rating
-            WHEN 'common_tags' THEN commonTags
-            ELSE otherUser.fame_rating
-        END DESC
-    
-    SKIP toInteger($skip)
-    LIMIT toInteger($limit)
-  `;
+  WHERE
+      CASE
+          WHEN $minCommonTags > 0 THEN commonTags >= $minCommonTags
+          ELSE true
+      END
+  AND
+      CASE
+          WHEN size($filterTags) > 0 THEN
+              ANY(tag IN interests WHERE tag IN $filterTags)
+          ELSE true
+      END
+
+  RETURN
+      otherUser,
+      interests,
+      commonTags,
+      distance,
+      otherUser.age as age,
+      otherUser.fame_rating as fameRating
+
+  ORDER BY
+      CASE $sortBy
+          WHEN 'common_tags' THEN -commonTags  // Using negative to reverse the sort order for common tags
+          WHEN 'distance' THEN distance
+          WHEN 'age' THEN otherUser.age
+          WHEN 'fame' THEN otherUser.fame_rating
+          ELSE distance
+      END ASC
+  
+  SKIP toInteger($skip)
+  LIMIT toInteger($limit)
+`;
 
   const session = driver.session();
   try {
@@ -213,18 +226,19 @@ match.post("/potential-matches", authenticateToken_Middleware, async (req: any, 
       const user = record.get("otherUser");
       const interests = record.get("interests");
       const commonTags = record.get("commonTags").low;
+      const distance = Math.round(record.get("distance"));
 
-      // Return limited information for card view
       return {
         id: user.identity.low,
         username: user.properties.username,
         name: `${user.properties.first_name} ${user.properties.last_name}`,
         age: user.properties.age,
-        distance: user.properties.distance,
-        pics: user.properties.pics.slice(0, 1), // Only return first picture for card view
+        distance: distance,
+        pics: user.properties.pics.slice(0, 1),
+        commonTags: commonTags,
         preview: {
-          interests: interests.slice(0, 3), // Only first 3 interests
-          bio: user.properties.biography.substring(0, 100) + "..." // Truncated bio
+          interests: interests.slice(0, 3),
+          bio: user.properties.biography.substring(0, 100) + "..."
         }
       };
     });

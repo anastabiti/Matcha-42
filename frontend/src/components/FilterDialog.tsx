@@ -1,14 +1,8 @@
 import { useState } from 'react';
 import { Filter, X } from 'lucide-react';
+import { FilterOptions } from '../types/types';
 
-export type FilterOptions = {
-    minAge: number;
-    maxAge: number;
-    minFame: number;
-    maxFame: number;
-    sortBy: 'age' | 'fame' | 'common_tags';
-    filterTags: string[];
-};
+
 
 type FilterDialogProps = {
     filters: FilterOptions;
@@ -29,18 +23,54 @@ export const FilterDialog = ({
         maxAge: filters.maxAge.toString(),
         minFame: filters.minFame.toString(),
         maxFame: filters.maxFame.toString(),
+        maxDistance: filters.maxDistance.toString(),
+        minCommonTags: filters.minCommonTags.toString(),
     });
 
     const handleApply = () => {
         const validatedFilters = {
             ...tempFilters,
-            minAge: Number(inputValues.minAge) || 18,
-            maxAge: Number(inputValues.maxAge) || 100,
-            minFame: Number(inputValues.minFame) || 0,
-            maxFame: Number(inputValues.maxFame) || 100,
+            minAge: Math.max(18, Math.min(100, Number(inputValues.minAge) || 18)),
+            maxAge: Math.max(18, Math.min(100, Number(inputValues.maxAge) || 100)),
+            minFame: Math.max(0, Math.min(100, Number(inputValues.minFame) || 0)),
+            maxFame: Math.max(0, Math.min(100, Number(inputValues.maxFame) || 100)),
+            maxDistance: Math.max(1, Math.min(20000, Number(inputValues.maxDistance) || 100)),
+            minCommonTags: Math.max(0, Math.min(20, Number(inputValues.minCommonTags) || 0)),
         };
+
+        // Ensure min values don't exceed max values
+        if (validatedFilters.minAge > validatedFilters.maxAge) {
+            validatedFilters.minAge = validatedFilters.maxAge;
+        }
+        if (validatedFilters.minFame > validatedFilters.maxFame) {
+            validatedFilters.minFame = validatedFilters.maxFame;
+        }
+
         onFilterChange(validatedFilters);
         setIsOpen(false);
+    };
+
+    const handleReset = () => {
+        const defaultFilters = {
+            minAge: 18,
+            maxAge: 100,
+            minFame: 0,
+            maxFame: 100,
+            maxDistance: 100,
+            minCommonTags: 0,
+            sortBy: 'distance' as const,
+            filterTags: [],
+        };
+
+        setTempFilters(defaultFilters);
+        setInputValues({
+            minAge: '18',
+            maxAge: '100',
+            minFame: '0',
+            maxFame: '100',
+            maxDistance: '100',
+            minCommonTags: '0',
+        });
     };
 
     const handleInputChange = (field: keyof typeof inputValues, value: string) => {
@@ -93,17 +123,27 @@ export const FilterDialog = ({
         <>
             <button
                 onClick={() => setIsOpen(true)}
-                className="fixed bottom-24 right-4 lg:right-8 w-12 h-12 bg-[#e94057] rounded-full flex items-center justify-center text-white shadow-lg"
+                className="fixed bottom-24 right-4 lg:right-8 w-12 h-12 bg-[#e94057] rounded-full flex items-center justify-center text-white shadow-lg hover:bg-[#d63a4f] transition-colors"
+                aria-label="Open filters"
             >
                 <Filter className="w-6 h-6" />
             </button>
 
             {isOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-[#2a2435] rounded-3xl p-6 w-full max-w-md">
-                        <h2 className="text-2xl font-bold text-white mb-6">Filter Preferences</h2>
+                    <div className="bg-[#2a2435] rounded-3xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold text-white">Filter Preferences</h2>
+                            <button
+                                onClick={handleReset}
+                                className="text-[#e94057] text-sm font-medium hover:underline"
+                            >
+                                Reset All
+                            </button>
+                        </div>
 
                         <div className="space-y-6">
+                            {/* Age Range Section */}
                             <div>
                                 <label className="text-white font-medium">Age Range</label>
                                 <div className="flex items-center gap-4 mt-2">
@@ -114,6 +154,7 @@ export const FilterDialog = ({
                                         className="w-24 px-3 py-2 bg-[#3a3445] rounded-lg text-white"
                                         min="18"
                                         max={tempFilters.maxAge}
+                                        placeholder="Min"
                                     />
                                     <span className="text-white">to</span>
                                     <input
@@ -123,10 +164,12 @@ export const FilterDialog = ({
                                         className="w-24 px-3 py-2 bg-[#3a3445] rounded-lg text-white"
                                         min={tempFilters.minAge}
                                         max="100"
+                                        placeholder="Max"
                                     />
                                 </div>
                             </div>
 
+                            {/* Fame Rating Section */}
                             <div>
                                 <label className="text-white font-medium">Fame Rating</label>
                                 <div className="flex items-center gap-4 mt-2">
@@ -137,6 +180,7 @@ export const FilterDialog = ({
                                         className="w-24 px-3 py-2 bg-[#3a3445] rounded-lg text-white"
                                         min="0"
                                         max={tempFilters.maxFame}
+                                        placeholder="Min"
                                     />
                                     <span className="text-white">to</span>
                                     <input
@@ -146,12 +190,42 @@ export const FilterDialog = ({
                                         className="w-24 px-3 py-2 bg-[#3a3445] rounded-lg text-white"
                                         min={tempFilters.minFame}
                                         max="100"
+                                        placeholder="Max"
                                     />
                                 </div>
                             </div>
 
+                            {/* Distance Section */}
                             <div>
-                                <label className="text-white font-medium">Tags</label>
+                                <label className="text-white font-medium">Maximum Distance (km)</label>
+                                <input
+                                    type="number"
+                                    value={inputValues.maxDistance}
+                                    onChange={(e) => handleInputChange('maxDistance', e.target.value)}
+                                    className="w-full px-3 py-2 bg-[#3a3445] rounded-lg text-white mt-2"
+                                    min="1"
+                                    max="20000"
+                                    placeholder="Maximum distance"
+                                />
+                            </div>
+
+                            {/* Common Tags Section */}
+                            <div>
+                                <label className="text-white font-medium">Minimum Common Tags</label>
+                                <input
+                                    type="number"
+                                    value={inputValues.minCommonTags}
+                                    onChange={(e) => handleInputChange('minCommonTags', e.target.value)}
+                                    className="w-full px-3 py-2 bg-[#3a3445] rounded-lg text-white mt-2"
+                                    min="0"
+                                    max="20"
+                                    placeholder="Minimum common tags"
+                                />
+                            </div>
+
+                            {/* Interest Tags Section */}
+                            <div>
+                                <label className="text-white font-medium">Filter by Tags</label>
                                 <div className="mt-2">
                                     <input
                                         type="text"
@@ -162,18 +236,20 @@ export const FilterDialog = ({
                                         className="w-full px-3 py-2 bg-[#3a3445] rounded-lg text-white mb-2"
                                     />
 
+                                    {/* Selected Tags */}
                                     <div className="flex flex-wrap gap-2 mb-2">
                                         {tempFilters.filterTags.map(tag => (
                                             <span
                                                 key={tag}
-                                                className="px-4 py-2 bg-[#3a3445] rounded-full flex items-center gap-1 text-sm 
-                                                font-medium text-white hover:bg-[#e94057] transition-colors
-                                                border border-[#e94057]/10 hover:border-transparent cursor-pointer"
+                                                className="px-3 py-1.5 bg-[#3a3445] rounded-full flex items-center gap-1 text-sm 
+                                                font-medium text-white group hover:bg-[#e94057] transition-colors
+                                                border border-[#e94057]/10"
                                             >
                                                 {tag}
                                                 <button
                                                     onClick={() => handleRemoveTag(tag)}
-                                                    className="hover:text-[#e94057]"
+                                                    className="group-hover:text-white"
+                                                    aria-label={`Remove ${tag} tag`}
                                                 >
                                                     <X className="w-4 h-4" />
                                                 </button>
@@ -181,6 +257,7 @@ export const FilterDialog = ({
                                         ))}
                                     </div>
 
+                                    {/* Suggested Tags */}
                                     <div className="text-white text-sm">
                                         <span className="font-medium">Suggested:</span>
                                         <div className="flex flex-wrap gap-2 mt-2">
@@ -188,9 +265,9 @@ export const FilterDialog = ({
                                                 <button
                                                     key={tag}
                                                     onClick={() => handleAddTag(tag)}
-                                                    className="px-4 py-2 bg-[#3a3445] rounded-full text-sm 
+                                                    className="px-3 py-1.5 bg-[#3a3445] rounded-full text-sm 
                                                     font-medium text-white hover:bg-[#e94057] transition-colors
-                                                    border border-[#e94057]/10 hover:border-transparent cursor-pointer"
+                                                    border border-[#e94057]/10"
                                                 >
                                                     {tag}
                                                 </button>
@@ -200,6 +277,7 @@ export const FilterDialog = ({
                                 </div>
                             </div>
 
+                            {/* Sort By Section */}
                             <div>
                                 <label className="text-white font-medium">Sort By</label>
                                 <select
@@ -210,6 +288,7 @@ export const FilterDialog = ({
                                     }))}
                                     className="w-full mt-2 px-3 py-2 bg-[#3a3445] rounded-lg text-white"
                                 >
+                                    <option value="distance">Distance</option>
                                     <option value="age">Age</option>
                                     <option value="fame">Fame Rating</option>
                                     <option value="common_tags">Common Interests</option>
@@ -217,16 +296,19 @@ export const FilterDialog = ({
                             </div>
                         </div>
 
+                        {/* Action Buttons */}
                         <div className="flex gap-4 mt-8">
                             <button
                                 onClick={() => setIsOpen(false)}
-                                className="flex-1 px-6 py-3 bg-[#3a3445] rounded-xl text-white font-medium"
+                                className="flex-1 px-6 py-3 bg-[#3a3445] rounded-xl text-white font-medium 
+                                hover:bg-[#4a4455] transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleApply}
-                                className="flex-1 px-6 py-3 bg-[#e94057] rounded-xl text-white font-medium"
+                                className="flex-1 px-6 py-3 bg-[#e94057] rounded-xl text-white font-medium 
+                                hover:bg-[#d63a4f] transition-colors"
                             >
                                 Apply
                             </button>
