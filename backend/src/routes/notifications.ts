@@ -52,17 +52,20 @@ notify.patch(
     const session = driver.session();
     const user: any = req.user;
     const notf_ID = req.params;
-    console.log(notf_ID, " notification id to mark as read");
-    console.log(user.username     , " user is hada0");
+
+    console.log("logged user is ", user.username  , " want too delete this notif " , notf_ID);
+
+
     try {
       if (session) {
+
         const result = await session.run(
           `MATCH (user:User {username: $username})-[r:YOU_HAVE_A_NOTIFICATION]->(n:Notification {notify_id: $notificationId}) 
-          DELETE r,n
+            DELETE r,n
            RETURN user`,
           {
             username: user.username,
-            notificationId: notf_ID,
+            notificationId: notf_ID.notificationId,
             isRead: true,
           }
         );
