@@ -128,6 +128,36 @@ const DiscoverPage = () => {
 		);
 	}
 
+	if (!loading && profiles.length === 0) {
+		return (
+			<div className="h-screen bg-[#1a1625] flex items-center justify-center flex-col gap-4">
+				<div className="text-white text-xl">No profiles found</div>
+				<p className="text-gray-400 text-center max-w-md">
+					Try adjusting your filters to see more people
+				</p>
+				<button
+					onClick={() => {
+						setFilters({
+							minAge: 18,
+							maxAge: 100,
+							minFame: 0,
+							maxFame: 100,
+							sortBy: 'distance',
+							maxDistance: 100,
+							minCommonTags: 0,
+							filterTags: []
+						});
+						setPage(1);
+					}}
+					className="px-6 py-2 bg-[#e94057] text-white rounded-full hover:bg-[#e94057]/90 transition-colors"
+				>
+					Reset Filters
+				</button>
+			</div>
+		);
+	}
+
+
 	return (
 		<div className="h-[calc(100vh-4rem)] bg-[#1a1625]">
 			<div className="h-full max-w-[2000px] mx-auto px-4 lg:px-8 py-6 flex flex-col lg:flex-row lg:items-center gap-6">
@@ -209,7 +239,7 @@ const DiscoverPage = () => {
 												className="px-4 py-2 bg-[#3a3445] rounded-full text-sm 
 												font-medium text-white hover:bg-[#e94057] transition-colors
 												border border-[#e94057]/10 hover:border-transparent cursor-pointer"
-											
+
 											>
 												{interest}
 											</span>
