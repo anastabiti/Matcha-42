@@ -318,8 +318,11 @@ match.get("/profile/:username", authenticateToken_Middleware, async (req: any, r
 
          /*----------------------------------------------------- Notifications by atabiti-----------------------------------------------------------------------------*/
           
-       const notificationArray = (`${username} viewed your profile!`);
-       const result_ = await session.run(`
+        if(req.user.username !== username)
+        {
+
+          const notificationArray = (`${username} viewed your profile!`);
+          const result_ = await session.run(`
          MATCH (user:User {username: $username})
          CREATE (n:Notification {
            notify_id: randomUUID(),
@@ -328,18 +331,19 @@ match.get("/profile/:username", authenticateToken_Middleware, async (req: any, r
            content: $content,
            createdAt: date(),
            isRead: false
-         })
-         CREATE (user)-[:YOU_HAVE_A_NOTIFICATION]->(n)
-         RETURN n
-       `, {
-        fromUsername:req.user.username,
-        username:username,
-         type:"Liked",
-         content:notificationArray
-       });
-
-       const notification = result_.records[0].get('n').properties;
-       getSocketIO().to(username).emit("notification", notification);
+           })
+           CREATE (user)-[:YOU_HAVE_A_NOTIFICATION]->(n)
+           RETURN n
+           `, {
+             fromUsername:req.user.username,
+             username:username,
+             type:"Liked",
+             content:notificationArray
+            });
+            
+            const notification = result_.records[0].get('n').properties;
+            getSocketIO().to(username).emit("notification", notification);
+          }
 
           /*----------------------------------------------------- Notifications by atabiti-----------------------------------------------------------------------------*/
 
