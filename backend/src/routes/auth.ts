@@ -148,7 +148,6 @@ authRouter.post("/login", async (req: any, res: Response) => {
   console.log(password, " password");
   console.log(req.body.username, "  username");
   const session = driver.session();
-  //get hashedPassword
   if (session) {
     const user_data = await session.run(
       "MATCH (n:User) WHERE n.username = $username AND n.verified = true RETURN n",
@@ -185,13 +184,7 @@ authRouter.post("/login", async (req: any, res: Response) => {
             maxAge: 3600000, // 1 hour in milliseconds
           });
 
-          // req.session.user = {
-          //   username: req.body.username,
-          //   email: req.body.email,
-          // };
-
-          // console.log(req.session.user, " session user");
-          // await req.session.save();
+          
           if (user.setup_done == true) {
             res.status(200).json("login successful");
             return;
@@ -203,10 +196,11 @@ authRouter.post("/login", async (req: any, res: Response) => {
       } else {
         console.log("username does not exist");
         res.status(400).json("Username does not exist or Email not verified");
+        return 
       }
     }
     res.status(400).json("User does not exist");
-
+    return
   }
 });
 
