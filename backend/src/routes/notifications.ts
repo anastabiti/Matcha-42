@@ -66,7 +66,37 @@ notify.patch(
           {
             username: user.username,
             notificationId: notf_ID.notificationId,
-            isRead: true,
+          }
+        );
+        console.log(result.records);
+        res.status(200).json("DONE");
+      }
+      return;
+    } finally {
+      await session.close();
+    }
+  }
+);
+
+notify.patch(
+  "/notifications/read-all",
+  authenticateToken_Middleware,
+  async function (req: Request, res: Response) {
+    console.log("here ------");
+    const session = driver.session();
+    const user: any = req.user;
+
+
+
+    try {
+      if (session) {
+
+        const result = await session.run(
+          `MATCH (user:User {username: $username})-[r:YOU_HAVE_A_NOTIFICATION]->(n:Notification) 
+            DELETE r,n
+           RETURN user`,
+          {
+            username: user.username,
           }
         );
         console.log(result.records);
