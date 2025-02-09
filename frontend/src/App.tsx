@@ -36,8 +36,6 @@ function App() {
               <Route path="/" />
               <Route path="/chat/:username" element={<Chat />} />
               <Route path="/profile/:username" element={<ProfilePage />} />
-              <Route path="matches" element={<MatchedPage />} />
-              <Route path="/" />
 
             </Route>
           </Route>

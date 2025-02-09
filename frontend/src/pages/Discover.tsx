@@ -235,7 +235,7 @@ const DiscoverPage = () => {
 									<div className="flex flex-wrap gap-2">
 										{profiles[currentIndex].preview.interests.slice(0, 2).map((interest: string) => (
 											<span
-												key={interest}
+												key={interest + profiles[currentIndex].id}
 												className="px-4 py-2 bg-[#3a3445] rounded-full text-sm 
 												font-medium text-white hover:bg-[#e94057] transition-colors
 												border border-[#e94057]/10 hover:border-transparent cursor-pointer"
