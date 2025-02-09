@@ -66,6 +66,7 @@ const Chat = () => {
 
   useEffect(() => {
     socket.emit("joinRoom", { username });
+    socket.emit("openChat", username);
 
     socket.on("messageError", ({ message }) => {
       toast.error(message, {
@@ -86,6 +87,7 @@ const Chat = () => {
 
     return () => {
       socket.emit("leaveRoom", { username });
+      socket.emit("closeChat");
       socket.off("newMessage");
       socket.off("previousMessages");
       socket.off("messageError");
