@@ -20,8 +20,17 @@ type Profile = {
   city: string;
 };
 
-const ProfilePage = () => {
-  const { username } = useParams();
+type ProfilePageProps = {
+  username?: string;
+  isOpen?: boolean;
+  setIsOpen?: (isOpen: boolean) => void;
+};
+
+
+
+const ProfilePage = (props: ProfilePageProps) => {
+  const { username: paramUsername } = useParams();
+  const username = props.username || paramUsername;
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [currentPhoto, setCurrentPhoto] = useState(0);
@@ -33,6 +42,15 @@ const ProfilePage = () => {
     fetchProfile();
     checkIfLiked();
   }, [username]);
+
+
+  const handleBack = () => {
+    if (props.username && props.setIsOpen) {
+      props.setIsOpen(false);
+    } else {
+      navigate(-1);
+    }
+  };
 
   const fetchProfile = async () => {
     try {
@@ -122,7 +140,7 @@ const ProfilePage = () => {
 
 
         <button
-          onClick={() => navigate(-1)}
+          onClick={handleBack}
           className="mb-6 flex items-center text-white hover:text-[#e94057] transition-colors"
         >
           <ArrowLeft className="w-6 h-6 mr-2" />
@@ -200,7 +218,7 @@ const ProfilePage = () => {
                     <div className="text-[#e94057] text-sm font-medium">Online Now</div>
                   </div>
                 </div>
-                <ProfileActions username={profile.username} /> 
+                <ProfileActions username={profile.username} />
               </div>
 
             </div>

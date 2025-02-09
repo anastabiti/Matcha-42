@@ -6,10 +6,11 @@ import { Profile, FilterOptions } from '../types/types';
 import ActionButtons from '../components/ActionButton';
 import FilterDialog from '../components/FilterDialog';
 import ProfileCard from '../components/ProfileCard';
+import ProfilePage from './Profilepage';
 
 
 const DiscoverPage = () => {
-	const navigate = useNavigate();
+	// const navigate = useNavigate();
 	const [currentIndex, setCurrentIndex] = useState(0);
 	const [exitDirection, setExitDirection] = useState<'left' | 'right' | null>(null);
 	const [currentPhoto, setCurrentPhoto] = useState(0);
@@ -18,6 +19,7 @@ const DiscoverPage = () => {
 	const [error, setError] = useState<string | null>(null);
 	const [page, setPage] = useState(1);
 	const [hasMore, setHasMore] = useState(true);
+	const [isProfileOpen, setIsProfileOpen] = useState(false);
 	const [filters, setFilters] = useState<FilterOptions>({
 		minAge: 18,
 		maxAge: 100,
@@ -28,6 +30,12 @@ const DiscoverPage = () => {
 		minCommonTags: 0,
 		filterTags: []
 	});
+
+	const handleProfileStateChange = (newState: boolean) => {
+        setIsProfileOpen(newState);
+    };
+
+
 
 	useEffect(() => {
 		fetchProfiles();
@@ -90,7 +98,8 @@ const DiscoverPage = () => {
 	}
 
 	const handleProfileClick = (username: string) => {
-		navigate(`/profile/${username}`);
+		// navigate(`/profile/${username}`);
+		setIsProfileOpen(true);
 	};
 
 	const handleSwipe = (direction: 'left' | 'right') => {
@@ -159,6 +168,12 @@ const DiscoverPage = () => {
 
 
 	return (
+		<div>
+
+		{isProfileOpen && <ProfilePage username={profiles[currentIndex].username}     isOpen={isProfileOpen}
+                setIsOpen={setIsProfileOpen}
+    />}
+
 		<div className="h-[calc(100vh-4rem)] bg-[#1a1625]">
 			<div className="h-full max-w-[2000px] mx-auto px-4 lg:px-8 py-6 flex flex-col lg:flex-row lg:items-center gap-6">
 				<div className="flex-1 relative h-[70vh] lg:h-full">
@@ -267,6 +282,7 @@ const DiscoverPage = () => {
 					}}
 				/>
 			</div>
+		</div>
 		</div>
 	);
 };
