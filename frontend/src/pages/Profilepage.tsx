@@ -18,6 +18,12 @@ type Profile = {
   interests: string[];
   fame_rating: number;
   city: string;
+  isOnline: boolean;
+};
+
+type ConnectionStatus = {
+  isLiked: boolean;
+  isMatched: boolean;
 };
 
 type ProfilePageProps = {
@@ -26,23 +32,22 @@ type ProfilePageProps = {
   setIsOpen?: (isOpen: boolean) => void;
 };
 
-
-
 const ProfilePage = (props: ProfilePageProps) => {
   const { username: paramUsername } = useParams();
   const username = props.username || paramUsername;
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
+    isLiked: false,
+    isMatched: false
+  });
   const [currentPhoto, setCurrentPhoto] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isLiked, setIsLiked] = useState(false);
 
   useEffect(() => {
     fetchProfile();
-    checkIfLiked();
   }, [username]);
-
 
   const handleBack = () => {
     if (props.username && props.setIsOpen) {
@@ -54,19 +59,29 @@ const ProfilePage = (props: ProfilePageProps) => {
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/profile/${username}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: 'include',
-      });
+      const [profileResponse, connectionResponse] = await Promise.all([
+        fetch(`http://localhost:3000/profile/${username}`, {
+          credentials: 'include',
+        }),
+        fetch(`http://localhost:3000/connection-status/${username}`, {
+          credentials: 'include',
+        })
+      ]);
 
-      const data = await response.json();
-      if (data.success) {
-        setProfile(data.data);
+      const [profileData, connectionData] = await Promise.all([
+        profileResponse.json(),
+        connectionResponse.json()
+      ]);
+
+      if (profileData.success) {
+        setProfile(profileData.data);
+
+        setConnectionStatus({
+          isLiked: connectionData.isLiked || false,
+          isMatched: connectionData.isMatched || false
+        });
       } else {
-        setError(data.error || 'Failed to fetch profile');
+        setError(profileData.error || 'Failed to fetch profile');
       }
     } catch (error) {
       setError('Failed to fetch profile');
@@ -75,23 +90,11 @@ const ProfilePage = (props: ProfilePageProps) => {
     }
   };
 
-  const checkIfLiked = async () => {
-    try {
-      const response = await fetch(`http://localhost:3000/check-like/${username}`, {
-        credentials: 'include',
-      });
-      const data = await response.json();
-      if (data.success) {
-        setIsLiked(data.isLiked);
-      }
-    } catch (error) {
-      console.error("Error checking like status:", error);
-    }
-  };
-
   const toggleLike = async () => {
+    if (!profile) return;
+
     try {
-      const endpoint = isLiked ? 'unlike-user' : 'like-user';
+      const endpoint = connectionStatus.isLiked ? 'unlike-user' : 'like-user';
       const response = await fetch(`http://localhost:3000/${endpoint}`, {
         method: "POST",
         headers: {
@@ -103,12 +106,62 @@ const ProfilePage = (props: ProfilePageProps) => {
 
       const data = await response.json();
       if (data.success) {
-        setIsLiked(!isLiked);
+        // Update both like and match status from response
+        setConnectionStatus(prev => ({
+          isLiked: !prev.isLiked,
+          isMatched: data.isMatched || false
+        }));
       }
     } catch (error) {
       console.error("Error toggling like:", error);
     }
   };
+
+  const ConnectSection = () => (
+    <div className="bg-[#2a2435] rounded-3xl p-6">
+      <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+        <MessageCircle className="w-5 h-5 mr-2 text-[#e94057]" />
+        Connect
+      </h3>
+      <div className="flex flex-col gap-4">
+        <div className="flex space-x-3 gap-4 px-4">
+          <ActionButton
+            onClick={toggleLike}
+            icon={<Heart className={`w-6 h-6 ${connectionStatus.isLiked ? 'fill-current' : ''}`} />}
+            variant={connectionStatus.isLiked ? "primary" : "secondary"}
+          />
+          {connectionStatus.isMatched && (
+            <>
+              <ActionButton
+                onClick={() => navigate(`/chat/${username}`)}
+                icon={<MessageCircle className="w-6 h-6" />}
+                variant="secondary"
+              />
+              <ActionButton
+                onClick={() => navigate(`/call/audio/${username}`)}
+                icon={<Phone className="w-6 h-6" />}
+                variant="secondary"
+              />
+              <ActionButton
+                onClick={() => navigate(`/call/video/${username}`)}
+                icon={<Video className="w-6 h-6" />}
+                variant="secondary"
+              />
+            </>
+          )}
+        </div>
+        <div className="text-sm text-white/70 px-4">
+          {connectionStatus.isMatched ? (
+            <span className="text-[#e94057]">✨ You are matched!</span>
+          ) : connectionStatus.isLiked ? (
+            "Waiting for them to like you back"
+          ) : (
+            "Like this profile to connect"
+          )}
+        </div>
+      </div>
+    </div>
+  );
 
   if (loading) {
     return (
@@ -137,17 +190,13 @@ const ProfilePage = (props: ProfilePageProps) => {
   return (
     <div className="min-h-screen bg-[#1a1625] mt-14">
       <div className="max-w-7xl mx-auto px-4 py-6">
-
-
         <button
           onClick={handleBack}
           className="mb-6 flex items-center text-white hover:text-[#e94057] transition-colors"
         >
           <ArrowLeft className="w-6 h-6 mr-2" />
           Go Back
-
         </button>
-
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Photos Section */}
@@ -199,8 +248,8 @@ const ProfilePage = (props: ProfilePageProps) => {
 
           {/* Profile Details Section */}
           <div className="space-y-6">
-            {/* Action Buttons */}
-            <div className="bg-[#2a2435] rounded-3xl p-6 ">
+            {/* Profile Header */}
+            <div className="bg-[#2a2435] rounded-3xl p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <div className="relative">
@@ -215,48 +264,20 @@ const ProfilePage = (props: ProfilePageProps) => {
                   </div>
                   <div>
                     <h2 className="text-white font-semibold">@{profile.username}</h2>
-                    <div className="text-[#e94057] text-sm font-medium">Online Now</div>
+                    <div className={`text-sm font-medium text-[#e94057] `}>
+                      {profile.isOnline ? 'Online Now' : 'Offline'}
+                    </div>
                   </div>
                 </div>
                 <ProfileActions username={profile.username} />
               </div>
-
             </div>
 
-
-            {/* Connect */}
-            <div className='bg-[#2a2435] rounded-3xl p-6'>
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-                <MessageCircle className="w-5 h-5 mr-2 text-[#e94057]" />
-                Connect
-              </h3>
-              <div className="flex space-x-3 gap-4 px-4">
-                <ActionButton
-                  onClick={toggleLike}
-                  icon={<Heart className={`w-6 h-6 ${isLiked ? 'fill-current' : ''}`} />}
-                  variant={isLiked ? "primary" : "secondary"}
-                />
-                <ActionButton
-                  onClick={() => navigate(`/chat/${username}`)}
-                  icon={<MessageCircle className="w-6 h-6" />}
-                  variant="secondary"
-                />
-                <ActionButton
-                  onClick={() => navigate(`/call/audio/${username}`)}
-                  icon={<Phone className="w-6 h-6" />}
-                  variant="secondary"
-                />
-                <ActionButton
-                  onClick={() => navigate(`/call/video/${username}`)}
-                  icon={<Video className="w-6 h-6" />}
-                  variant="secondary"
-                />
-              </div>
-
-            </div>
+            {/* Connect Section */}
+            <ConnectSection />
 
             {/* Basic Info */}
-            <div className="bg-[#2a2435] rounded-3xl p-6 ">
+            <div className="bg-[#2a2435] rounded-3xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
                 <User className="w-5 h-5 mr-2 text-[#e94057]" />
                 Basic Information
@@ -286,7 +307,7 @@ const ProfilePage = (props: ProfilePageProps) => {
             </div>
 
             {/* About Section */}
-            <div className="bg-[#2a2435] rounded-3xl p-6 ">
+            <div className="bg-[#2a2435] rounded-3xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
                 <MessageCircle className="w-5 h-5 mr-2 text-[#e94057]" />
                 About Me
@@ -297,7 +318,7 @@ const ProfilePage = (props: ProfilePageProps) => {
             </div>
 
             {/* Interests Section */}
-            <div className="bg-[#2a2435] rounded-3xl p-6 ">
+            <div className="bg-[#2a2435] rounded-3xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
                 <Star className="w-5 h-5 mr-2 text-[#e94057]" />
                 Interests

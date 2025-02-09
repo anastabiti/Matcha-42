@@ -268,29 +268,20 @@ match.get("/profile/:username", authenticateToken_Middleware, async (req: any, r
   }
 
   const username = req.params.username;
+  const user = req.user.username;
   const session = driver.session();
 
   try {
-      const query = `
-          MATCH (user:User {username: $username})
-          OPTIONAL MATCH (user)-[:has_this_interest]->(t:Tags)
-          WITH user, COLLECT(DISTINCT t.interests) as interests
-          
-          // Calculate profile completeness
-          WITH user, interests,
-               CASE 
-                  WHEN user.profile_picture IS NOT NULL THEN 20 ELSE 0 END +
-                  CASE WHEN user.biography IS NOT NULL AND size(user.biography) > 50 THEN 20 ELSE 0 END +
-                  CASE WHEN size(interests) > 2 THEN 20 ELSE 0 END +
-                  CASE WHEN user.occupation IS NOT NULL THEN 20 ELSE 0 END +
-                  CASE WHEN user.location IS NOT NULL THEN 20 ELSE 0 END as profile_completeness
-          
-          RETURN user, 
-                 interests,
-                 profile_completeness,
-                 user.points as points,
-                 user.fame_rating as fame_rating
-      `;
+    const query = `
+    MATCH (user:User {username: $username})
+    OPTIONAL MATCH (user)-[:has_this_interest]->(t:Tags)
+    WITH user, COLLECT(DISTINCT t.interests) as interests
+    
+    RETURN user, 
+           interests,
+           user.points as points,
+           user.fame_rating as fame_rating
+`;
 
       const result = await session.run(query, { username });
       
@@ -301,8 +292,6 @@ match.get("/profile/:username", authenticateToken_Middleware, async (req: any, r
       const record = result.records[0];
       const user = record.get("user");
       const interests = record.get("interests");
-      const profile_completeness = record.get("profile_completeness").low;
-      const points = record.get("points")?.low || 0;
       const fame_rating = record.get("fame_rating")?.low || 0;
 
       return res.status(200).json({
@@ -329,4 +318,45 @@ match.get("/profile/:username", authenticateToken_Middleware, async (req: any, r
   } finally {
       await session.close();
   }
+});
+
+match.get("/connection-status/:username", authenticateToken_Middleware, async (req: any, res: any) => {
+    const targetUsername = req.params.username;
+    const currentUsername = req.user.username;
+    const session = driver.session();
+
+    try {
+        const query = `
+        MATCH (current:User {username: $currentUsername})
+        MATCH (target:User {username: $targetUsername})
+        RETURN 
+            EXISTS((current)-[:LIKES]->(target)) as isLiked,
+            CASE 
+                WHEN EXISTS((current)-[:LIKES]->(target)) AND EXISTS((target)-[:LIKES]->(current))
+                THEN true 
+                ELSE false 
+            END as isMatched
+        `;
+
+        const result = await session.run(query, { 
+            currentUsername,
+            targetUsername
+        });
+
+        const record = result.records[0];
+        
+        return res.json({
+            success: true,
+            isLiked: record.get('isLiked'),
+            isMatched: record.get('isMatched')
+        });
+    } catch (error) {
+        console.error("Error checking connection status:", error);
+        return res.status(500).json({ 
+            success: false, 
+            error: "Internal Server Error" 
+        });
+    } finally {
+        await session.close();
+    }
 });
