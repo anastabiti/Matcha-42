@@ -137,61 +137,66 @@ export function generateAccessToken(user: User_jwt) {
 // ----------------------------------------------------------------------------------
 
 authRouter.post("/login", async (req: any, res: Response) => {
-  const password = req.body.password;
-  console.log(password, " password");
-  console.log(req.body.username, "  username");
-  const session = driver.session();
-  if (session) {
-    const user_data = await session.run(
-      "MATCH (n:User) WHERE n.username = $username AND n.verified = true RETURN n",
-      { username: req.body.username }
-    );
+  try {
+    const password = req.body.password;
+    console.log(password, " password");
+    console.log(req.body.username, "  username");
+    const session = driver.session();
+    if (session) {
+      const user_data = await session.run(
+        "MATCH (n:User) WHERE n.username = $username AND n.verified = true RETURN n",
+        { username: req.body.username }
+      );
 
-    if (user_data.records.length > 0) {
-      // console.log(user_data.records[0]._fields[0].properties, " user data");
-      const user = await user_data.records[0]._fields[0].properties;
-      // if (user.password) console.log(user.password, "password is ");
-      console.log(user.password, " User passwordn\n\n\n\n");
-      if (await argon2.verify(user.password, password)) {
-        console.log("matched");
-        const user_ = req.body.username;
-        if (user_) {
-          const token = generateAccessToken(user);
-          if (!token) {
-            console.error("Failed to generate authentication token");
-            res.status(401).json({ error: "Authentication failed" });
-            return;
-          }
-          console.log(token, " [-JWT TOKEN-]");
-          //check later
-          const res_db = await session.run(
-            `MATCH (n:User) WHERE n.username = $username AND n.verified = true
+      if (user_data.records.length > 0) {
+        // console.log(user_data.records[0]._fields[0].properties, " user data");
+        const user = await user_data.records[0]._fields[0].properties;
+        // if (user.password) console.log(user.password, "password is ");
+        console.log(user.password, " User passwordn\n\n\n\n");
+        if (await argon2.verify(user.password, password)) {
+          console.log("matched");
+          const user_ = req.body.username;
+          if (user_) {
+            const token = generateAccessToken(user);
+            if (!token) {
+              console.error("Failed to generate authentication token");
+              res.status(401).json({ error: "Authentication failed" });
+              return;
+            }
+            console.log(token, " [-JWT TOKEN-]");
+            //check later
+            const res_db = await session.run(
+              `MATCH (n:User) WHERE n.username = $username AND n.verified = true
                       SET n.is_logged  = true
                      RETURN n`,
-            { username: user_ }
-          );
+              { username: user_ }
+            );
 
-          res.cookie("jwt_token", token, {
-            httpOnly: true,
-            sameSite: "lax",
-            maxAge: 3600000, // 1 hour in milliseconds
-          });
+            res.cookie("jwt_token", token, {
+              httpOnly: true,
+              sameSite: "lax",
+              maxAge: 3600000, // 1 hour in milliseconds
+            });
 
-          if (user.setup_done == true) {
-            res.status(200).json("login successful");
-            return;
-          } else {
-            res.status(201).json("login successful");
-            return;
+            if (user.setup_done == true) {
+              res.status(200).json("login successful");
+              return;
+            } else {
+              res.status(201).json("login successful");
+              return;
+            }
           }
+        } else {
+          console.log("username does not exist");
+          res.status(400).json("Username does not exist or Email not verified");
+          return;
         }
-      } else {
-        console.log("username does not exist");
-        res.status(400).json("Username does not exist or Email not verified");
-        return;
       }
+      res.status(400).json("User does not exist");
+      return;
     }
-    res.status(400).json("User does not exist");
+  } catch {
+    res.status(400).json("Login failed");
     return;
   }
 });
@@ -231,26 +236,27 @@ authRouter.post("/password_reset", validateEmail, async (req: Request, res: Resp
         transporter.sendMail(mailOptions, (error, info) => {
           if (error) {
             res.status(400).json("Failed to send email try again ! Thank you ");
+            return;
           }
         });
 
         res
           .status(200)
           .json("password reset successful, check your email for further instructions");
+        return;
       } else {
         res.status(400).json("email does not exist");
+        return;
       }
     }
   } catch (Error) {
     res.status(400).json("Error in password reset");
+    return;
   }
 });
 
 authRouter.patch("/reset_it", validatePassword, async (req: any, res: any) => {
   try {
-    console.log(
-      "]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]"
-    );
     const token = req.body.token as string;
     const password = req.body.password;
     if (!token) {
@@ -269,10 +275,13 @@ authRouter.patch("/reset_it", validatePassword, async (req: any, res: any) => {
             n.password_reset_token = $tmp_password_reset_token
             RETURN n
             `,
-        { email: jwt_.email, password: await argon2.hash(password) ,tmp_password_reset_token:(await crypto).randomBytes(25).toString("hex")}
+        {
+          email: jwt_.email,
+          password: await argon2.hash(password),
+          tmp_password_reset_token: (await crypto).randomBytes(25).toString("hex"),
+        }
       );
     }
-    console.log(jwt_, "hna nnsnsn--------------------jwt_-----------------\n\n\n\n");
     return res.status(200).json("sucess");
   } catch (jwtError) {
     return res.status(400).send("Expired or invalid token");
@@ -294,11 +303,14 @@ authRouter.post("/logout", authenticateToken_Middleware, async (req: any, res: R
         { username: req.user.username }
       );
       res.status(200).json("LOGOUT SUCCESSFULLY");
+      return;
     } else {
       res.status(400).json("ERROR");
+      return;
     }
   } catch {
     res.status(400).json("ERROR !");
+    return;
   }
 });
 

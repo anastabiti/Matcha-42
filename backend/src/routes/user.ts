@@ -1,10 +1,10 @@
 import express, { Request, Response } from "express";
-import { body, ValidationError, validationResult } from "express-validator";
 import neo4j from "neo4j-driver";
 // import { imagekitUploader } from "./../app";
 import { authenticateToken_Middleware, generateAccessToken } from "./auth";
 import { v2 as cloudinary } from 'cloudinary';
 import { driver } from "../database";
+import { validateAge, validateBiography, validateEmail, validateGender, validateInterests, validateName } from "../validators/validate";
 
 const user_information_Router = express.Router();
 
@@ -21,25 +21,22 @@ export type UserJWTPayload = {
 user_information_Router.post(
   "/user/information",
   authenticateToken_Middleware,
-  body("gender")
-    .notEmpty()
-    .withMessage("Gender cannot be empty")
-    .isIn(["male", "female"])
-    .withMessage("Gender must be 'male' or 'female'"),
-  body("age").isInt({ min: 18, max: 100 }),
-  body("biography")
-    .notEmpty()
-    .withMessage("Biography cannot be empty")
-    .isLength({ min: 20, max: 200 })
-    .withMessage("Biography must be between 20 and 200 characters"),
+  // body("gender")
+  //   .notEmpty()
+  //   .withMessage("Gender cannot be empty")
+  //   .isIn(["male", "female"])
+  //   .withMessage("Gender must be 'male' or 'female'"),
+  // body("age").isInt({ min: 18, max: 100 }),
+  // body("biography")
+  //   .notEmpty()
+  //   .withMessage("Biography cannot be empty")
+  //   .isLength({ min: 20, max: 200 })
+  //   .withMessage("Biography must be between 20 and 200 characters"),
+  validateAge,validateBiography,validateGender,
   async (req: any, res: any) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      console.log(errors, " errors 13->>>.");
-      return res.status(400).json("Please! complete all fields");
-    }
-    console.log("------------------------------=-------=-=-=-[123]");
-    // const _user = authenticateToken(req);
+    
+    
+
     let _user = req.user;
     if (!_user) {
       console.log("User authentication failed");
@@ -147,39 +144,35 @@ user_information_Router.post(
 user_information_Router.post(
   "/user/settings",
   authenticateToken_Middleware,
-  body("last_name")
-    .isLength({ min: 3, max: 30 })
-    .notEmpty()
-    .withMessage("last_name cannot be empty"),
-  body("first_name")
-    .isLength({ min: 3, max: 30 })
-    .notEmpty()
-    .withMessage("first_name cannot be empty"),
-  body("email")
-    .notEmpty()
-    .isLength({ min: 7, max: 100 })
-    .withMessage("email cannot be empty")
-    .isEmail(),
-  body("gender")
-    .notEmpty()
-    .withMessage("Gender cannot be empty")
-    .isIn(["male", "female"])
-    .withMessage("Gender must be 'male' or 'female'"),
-  body("biography")
-    .notEmpty()
-    .withMessage("Biography cannot be empty")
-    .isLength({ min: 20, max: 200 })
-    .withMessage("Biography must be between 20 and 200 characters"),
-  body("interests").isArray().withMessage("Interests must be an array"),
-  body("age").isInt({ min: 18, max: 100 }),
+  // body("last_name")
+  //   .isLength({ min: 3, max: 30 })
+  //   .notEmpty()
+  //   .withMessage("last_name cannot be empty"),
+  // body("first_name")
+  //   .isLength({ min: 3, max: 30 })
+  //   .notEmpty()
+  //   .withMessage("first_name cannot be empty"),
+  // body("email")
+  //   .notEmpty()
+  //   .isLength({ min: 7, max: 100 })
+  //   .withMessage("email cannot be empty")
+  //   .isEmail(),
+  // body("gender")
+  //   .notEmpty()
+  //   .withMessage("Gender cannot be empty")
+  //   .isIn(["male", "female"])
+  //   .withMessage("Gender must be 'male' or 'female'"),
+  // body("biography")
+  //   .notEmpty()
+  //   .withMessage("Biography cannot be empty")
+  //   .isLength({ min: 20, max: 200 })
+  //   .withMessage("Biography must be between 20 and 200 characters"),
+  // body("interests").isArray().withMessage("Interests must be an array"),
+  // body("age").isInt({ min: 18, max: 100 }),
+  validateName,validateEmail,validateGender,validateBiography,validateAge,validateInterests,
 
   async (req: any, res: any) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      const firstError = errors.array()[0] as any;
-      return res.status(400).json(`Invalid : ${firstError.path}`);
-    }
-
+   
     const logged_user = req.user;
     console.log(logged_user.email, " >>>>>>>>>>>>-----------email is here-<<<<<<<<<<<");
     if (!logged_user) return res.status(401).json("UNAUTH");

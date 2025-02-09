@@ -1,6 +1,5 @@
 import express, { Request, Response } from "express";
 import { env } from "process";
-const { body, validationResult } = require("express-validator");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 

@@ -179,3 +179,54 @@ export function validateAge(req: Request, res: Response, next: NextFunction): vo
 
   next();
 }
+
+
+
+export function validateGender(req: Request, res: Response, next: NextFunction): void {
+    const gender = req.body.gender;
+  
+    if (!gender) {
+      res.status(400).json("Gender is required");
+      return;
+    }
+  
+    if (gender !== 'male' && gender !== 'female') {
+      res.status(400).json("Gender must be 'male' or 'female'");
+      return;
+    }
+  
+    next();
+  }
+  
+
+  
+  export function validateBiography(req: Request, res: Response, next: NextFunction): void {
+    const biography = req.body.biography;
+  
+    if (!biography) {
+      res.status(400).json("Biography is required");
+      return;
+    }
+  
+    if (biography.length < 20 || biography.length > 200) {
+      res.status(400).json("Biography must be between 20 and 200 characters");
+      return;
+    }
+  
+    next();
+  }
+  export function validateInterests(req: Request, res: Response, next: NextFunction): void {
+    const interests = req.body.interests;
+  
+    if (!interests) {
+      res.status(400).json("Interests are required");
+      return;
+    }
+  
+    if (!Array.isArray(interests)) {
+      res.status(400).json("Interests must be an array");
+      return;
+    }
+  
+    next();
+  }
