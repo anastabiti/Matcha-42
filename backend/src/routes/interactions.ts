@@ -54,6 +54,90 @@ interactions.post("/like-user", authenticateToken_Middleware, async (req: any, r
 });
 
 
+interactions.post("/unlike-user", authenticateToken_Middleware, async (req: any, res: any) => {
+    if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const user = req.user;
+    const username = user.username;
+    const { likedUsername } = req.body;
+
+    const session = driver.session();
+    try {
+        const result = await session.run(
+            `
+            MATCH (u:User {username: $username})
+            MATCH (otherUser:User {username: $likedUsername})
+            WHERE u <> otherUser
+            OPTIONAL MATCH (u)-[l:LIKES]->(otherUser)
+            OPTIONAL MATCH (u)-[m:MATCHED]-(otherUser)
+            DELETE l, m
+            RETURN {
+                unliked: true,
+                wasMatched: EXISTS((u)-[:MATCHED]-(otherUser))
+            } as result
+            `,
+            { username, likedUsername }
+        );
+
+        if (result.records.length > 0) {
+            return res.status(200).json({ success: true });
+        } else {
+            return res.status(400).json({ error: "Failed to unlike user" });
+        }
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+        await session.close();
+    }
+});
+
+
+interactions.post("/view-profile", authenticateToken_Middleware, async (req: any, res: any) => {
+    if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const user = req.user;
+    const username = user.username;
+    const { viewedUsername } = req.body;
+
+    const session = driver.session();
+    try {
+        const result = await session.run(
+            `
+            MATCH (viewer:User {username: $username})
+            MATCH (viewed:User {username: $viewedUsername})
+            WHERE viewer <> viewed
+            MERGE (viewer)-[r:VIEWED]->(viewed)
+            SET r.lastViewedAt = datetime()
+            RETURN {
+                success: true,
+                lastViewedAt: r.lastViewedAt
+            } as result
+            `,
+            { username, viewedUsername }
+        );
+
+        if (result.records.length > 0) {
+            const record = result.records[0].get('result');
+            return res.status(200).json({
+                success: true,
+                lastViewedAt: record.lastViewedAt
+            });
+        } else {
+            return res.status(400).json({ error: "Failed to record view" });
+        }
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+        await session.close();
+    }
+});
+
 
 interactions.post("/blocks/:username", authenticateToken_Middleware, async (req: any, res: any) => {
   if (!req.user) {
@@ -94,6 +178,45 @@ interactions.post("/blocks/:username", authenticateToken_Middleware, async (req:
     await session.close();
   }
 });
+
+interactions.get("/profile-viewers", authenticateToken_Middleware, async (req: any, res: any) => {
+    if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const username = req.user.username;
+    const session = driver.session();
+
+    try {
+        const result = await session.run(
+            `
+            MATCH (viewer:User)-[v:VIEWED]->(user:User {username: $username})
+            RETURN {
+                username: viewer.username,
+                first_name: viewer.first_name,
+                last_name: viewer.last_name,
+                profile_picture: viewer.profile_picture,
+                lastViewedAt: v.lastViewedAt
+            } as viewer
+            ORDER BY v.lastViewedAt DESC
+            `,
+            { username }
+        );
+
+        const viewers = result.records.map(record => record.get('viewer'));
+        
+        return res.status(200).json({
+            success: true,
+            viewers: viewers
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+        await session.close();
+    }
+});
+
 
 
 interactions.delete("/blocks/:username", authenticateToken_Middleware, async (req: any, res: any) => {

@@ -16,6 +16,8 @@ export type FilterOptions = {
     maxAge: number;
     minFame: number;
     maxFame: number;
-    sortBy: 'age' | 'fame' | 'common_tags';
+    maxDistance: number;
+    minCommonTags: number;
+    sortBy: 'age' | 'fame' | 'common_tags' | 'distance';
     filterTags: string[];
 };

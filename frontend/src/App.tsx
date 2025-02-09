@@ -10,9 +10,10 @@ import DiscoverPage from './pages/Discover'
 import IsLogged from './components/Is_Logged'
 import Chat from './components/Chat'
 import ProfilePage from './pages/Profilepage'
+import MatchedPage from './pages/matches'
 import ChatUserList from './components/ChatUserList'
 
-import MatchedPage from './pages/matches'
+
 
 function App() {
 
