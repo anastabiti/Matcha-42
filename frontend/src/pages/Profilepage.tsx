@@ -46,6 +46,26 @@ const ProfilePage = (props: ProfilePageProps) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+
+    const recordView = async () => {
+      try {
+        await fetch('http://localhost:3000/view-profile', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            viewedUsername: username // username of profile being viewed
+          })
+        });
+      } catch (error) {
+        console.error('Error recording view:', error);
+      }
+    };
+    if (username) {
+      recordView();
+    }
     fetchProfile();
   }, [username]);
 
@@ -56,6 +76,7 @@ const ProfilePage = (props: ProfilePageProps) => {
       navigate(-1);
     }
   };
+
 
   const fetchProfile = async () => {
     try {

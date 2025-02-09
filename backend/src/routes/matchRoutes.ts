@@ -2,6 +2,7 @@ import express, { response } from "express";
 // import { driver, Driver } from 'neo4j-driver';
 import neo4j, { int } from "neo4j-driver";
 import { authenticateToken_Middleware } from "./auth";
+import { getSocketIO } from "../socket";
 
 
 const match = express.Router();
@@ -246,6 +247,34 @@ match.get("/profile/:username", authenticateToken_Middleware, async (req: any, r
       const user = record.get("user");
       const interests = record.get("interests");
       const fame_rating = record.get("fame_rating")?.low || 0;
+
+      if(req.user.username !== username)
+        {
+
+          const notificationArray = `${username} viewed your profile!`;
+          const result_ = await session.run(`
+         MATCH (user:User {username: $username})
+         CREATE (n:Notification {
+           notify_id: randomUUID(),
+           fromUsername: $fromUsername,
+           type: $type,
+           content: $content,
+           createdAt: date(),
+           isRead: false
+           })
+           CREATE (user)-[:YOU_HAVE_A_NOTIFICATION]->(n)
+           RETURN n`
+           , {
+             fromUsername:req.user.username,
+             username:username,
+             type:"Liked",
+             content:notificationArray
+            });
+
+            const notification = result_.records[0].get('n').properties;
+            getSocketIO().to(username).emit("notification", notification);
+          }
+          
 
       return res.status(200).json({
           success: true,
