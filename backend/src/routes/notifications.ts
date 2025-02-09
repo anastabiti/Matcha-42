@@ -1,5 +1,4 @@
 import express, { Request, Response } from "express";
-import { body, ValidationError, validationResult } from "express-validator";
 import { authenticateToken_Middleware, generateAccessToken } from "./auth";
 import { driver } from "../database";
 import { Record } from "neo4j-driver";

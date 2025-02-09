@@ -1,5 +1,4 @@
 import express, { Request, Response } from "express";
-// const { body, validationResult } = require("express-validator");
 import jwt from "jsonwebtoken";
 import argon2 from "argon2";
 

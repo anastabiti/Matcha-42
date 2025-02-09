@@ -1,5 +1,4 @@
 import express from "express";
-import { body, ValidationError, validationResult } from "express-validator";
 import neo4j from "neo4j-driver";
 import { authenticateToken_Middleware, generateAccessToken } from "./auth";
 // import bcrypt from "bcrypt";
@@ -7,6 +6,7 @@ import argon2 from "argon2";
 
 import { transporter } from "./registration";
 import { driver } from "../database";
+import { validateEmail } from "../validators/validate";
 // import jwt from 'jsonwebtoken';
 const jwt = require("jsonwebtoken");
 
@@ -18,18 +18,14 @@ const email_change = express.Router();
 email_change.patch(
   "/change_email",
   authenticateToken_Middleware,
-  body("newEmail")
-    .notEmpty()
-    .isLength({ min: 7, max: 100 })
-    .withMessage("email cannot be empty")
-    .isEmail(),
+  // body("newEmail")
+  //   .notEmpty()
+  //   .isLength({ min: 7, max: 100 })
+  //   .withMessage("email cannot be empty")
+  //   .isEmail(),
+  validateEmail,
   async function (req: any, res: any) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      const firstError = errors.array()[0] as any;
-      return res.status(400).json(`Invalid : ${firstError.path}`);
-    }
-
+ 
     try {
       console.log(req.body, " -------req\n\n\n");
       console.log(req.user);
