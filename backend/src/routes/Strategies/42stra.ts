@@ -11,11 +11,8 @@ import nodemailer from "nodemailer";
 import { auth } from "neo4j-driver-core";
 import { Profile, VerifyCallback } from "passport-google-oauth20";
 import { generateAccessToken, User } from "../auth";
+import { driver } from "../../database";
 const neo4j = require("neo4j-driver");
-const driver = neo4j.driver(
-  "neo4j://localhost:7687",
-  neo4j.auth.basic(process.env.database_username, process.env.database_password)
-);
 
 const passport = require("passport");
 

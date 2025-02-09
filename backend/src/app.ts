@@ -6,7 +6,6 @@ import passport from "passport";
 import registrationRouter from "./routes/registration";
 import authRouter from "./routes/auth";
 import "./database/index";
-import Facebook_auth from "./routes/Strategies/facebook";
 import Google_auth from "./routes/Strategies/google";
 import forty_two_str from "./routes/Strategies/42stra";
 import user_information_Router from "./routes/user";
@@ -19,14 +18,12 @@ const fileUpload = require('express-fileupload');
 
 import { v2 as cloudinary } from 'cloudinary';
 import notify from "./routes/notifications";
+import { driver } from "./database/index";
 
 const app: Application = express();
 // https://www.npmjs.com/package/connect-neo4j
 const neo4j = require("neo4j-driver");
-const driver = neo4j.driver(
-  "neo4j://localhost:7687",
-  neo4j.auth.basic(process.env.database_username, process.env.database_password)
-);
+
 // const Neo4jStore = require("connect-neo4j")(session);
 
 app.use(fileUpload({limites:{
@@ -84,7 +81,6 @@ app.get("/", (req: Request, res: Response) => {
 app.use(bodyParser.json());
 app.use("/api", registrationRouter);
 app.use("/api", authRouter);
-app.use("/api", Facebook_auth);
 app.use("/api", Google_auth);
 app.use("/api", forty_two_str);
 app.use("/api", user_information_Router);

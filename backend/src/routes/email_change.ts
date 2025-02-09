@@ -6,14 +6,15 @@ import { authenticateToken_Middleware, generateAccessToken } from "./auth";
 import argon2 from "argon2";
 
 import { transporter } from "./registration";
+import { driver } from "../database";
 // import jwt from 'jsonwebtoken';
 const jwt = require("jsonwebtoken");
 
 const email_change = express.Router();
-const driver = neo4j.driver(
-  "neo4j://localhost:7687",
-  neo4j.auth.basic(process.env.database_username as string, process.env.database_password as string)
-);
+// const driver = neo4j.driver(
+//   "neo4j://localhost:7687",
+//   neo4j.auth.basic(process.env.database_username as string, process.env.database_password as string)
+// );
 email_change.patch(
   "/change_email",
   authenticateToken_Middleware,

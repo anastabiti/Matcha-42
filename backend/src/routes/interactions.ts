@@ -1,13 +1,11 @@
 import express, { response } from "express";
-import neo4j from "neo4j-driver";
+import neo4j, { Record } from "neo4j-driver";
 import { authenticateToken_Middleware } from "./auth";
+import { driver } from "../database";
 
 const interactions = express.Router();
 
-const driver = neo4j.driver(
-  "neo4j://localhost:7687",
-  neo4j.auth.basic(process.env.database_username as string, process.env.database_password as string)
-);
+
 
 interactions.post("/like-user", authenticateToken_Middleware, async (req: any, res: any) => {
   if (!req.user) {
@@ -203,7 +201,7 @@ interactions.get("/profile-viewers", authenticateToken_Middleware, async (req: a
             { username }
         );
 
-        const viewers = result.records.map(record => record.get('viewer'));
+        const viewers = result.records.map((record:Record) => record.get('viewer'));
         
         return res.status(200).json({
             success: true,

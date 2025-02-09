@@ -4,12 +4,9 @@ import neo4j from "neo4j-driver";
 // import { imagekitUploader } from "./../app";
 import { authenticateToken_Middleware, generateAccessToken } from "./auth";
 import { v2 as cloudinary } from 'cloudinary';
+import { driver } from "../database";
 
 const user_information_Router = express.Router();
-const driver = neo4j.driver(
-  "neo4j://localhost:7687",
-  neo4j.auth.basic(process.env.database_username as string, process.env.database_password as string)
-);
 
 export type UserJWTPayload = {
   username: string;

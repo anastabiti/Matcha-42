@@ -1,16 +1,13 @@
 import express, { response } from "express";
 // import { driver, Driver } from 'neo4j-driver';
-import neo4j, { int } from "neo4j-driver";
+import neo4j, { int, Record } from "neo4j-driver";
 import { authenticateToken_Middleware } from "./auth";
 import { getSocketIO } from "../socket";
+import { driver } from "../database";
 
 
 const match = express.Router();
 
-const driver = neo4j.driver(
-  "neo4j://localhost:7687",
-  neo4j.auth.basic(process.env.database_username as string, process.env.database_password as string)
-);
 
 
 match.get("/matches", authenticateToken_Middleware, async (req: any, res: any) => {
@@ -31,7 +28,7 @@ const session = driver.session();
           { username: req.user.username }
       );
 
-      const matches = result.records.map((record) => {
+      const matches = result.records.map((record:Record) => {
           const user = record.get("otherUser");
           return {
               id: user.identity.low,
@@ -176,7 +173,7 @@ match.post("/potential-matches", authenticateToken_Middleware, async (req: any, 
   try {
     const result = await session.run(query, params);
 
-    const profiles = result.records.map((record) => {
+    const profiles = result.records.map((record:  Record) => {
       const user = record.get("otherUser");
       const interests = record.get("interests");
       const commonTags = record.get("commonTags").low;
