@@ -146,8 +146,18 @@ export function setupSocket(server: HttpServer) {
               //   getSocketIO().to(newMessage.to).emit("notification", notification);
               // Check if recipient should receive a notification
               const recipientUser = activeChatUsers.get(message.to);
-              const shouldNotify = !recipientUser || recipientUser.activeChat !== decoded.username;
 
+              /*
+                If Bob sends a message to Alice:
+
+                If Alice is offline → Send notification
+                If Alice is chatting with Charlie → Send notification
+                If Alice is actively chatting with Bob → Don't send notification 
+            */
+                const isRecipientOffline = recipientUser === null;
+                const isRecipientChattingWithSomeoneElse = recipientUser?.activeChat !== decoded.username;
+              
+              const shouldNotify = isRecipientOffline || isRecipientChattingWithSomeoneElse;
               if (shouldNotify) {
                 // Create notification in database
                 const query = `
