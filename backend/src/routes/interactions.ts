@@ -54,6 +54,46 @@ interactions.post("/like-user", authenticateToken_Middleware, async (req: any, r
 });
 
 
+interactions.post("/unlike-user", authenticateToken_Middleware, async (req: any, res: any) => {
+    if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const user = req.user;
+    const username = user.username;
+    const { likedUsername } = req.body;
+
+    const session = driver.session();
+    try {
+        const result = await session.run(
+            `
+            MATCH (u:User {username: $username})
+            MATCH (otherUser:User {username: $likedUsername})
+            WHERE u <> otherUser
+            OPTIONAL MATCH (u)-[l:LIKES]->(otherUser)
+            OPTIONAL MATCH (u)-[m:MATCHED]-(otherUser)
+            DELETE l, m
+            RETURN {
+                unliked: true,
+                wasMatched: EXISTS((u)-[:MATCHED]-(otherUser))
+            } as result
+            `,
+            { username, likedUsername }
+        );
+
+        if (result.records.length > 0) {
+            return res.status(200).json({ success: true });
+        } else {
+            return res.status(400).json({ error: "Failed to unlike user" });
+        }
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+        await session.close();
+    }
+});
+
 
 interactions.post("/blocks/:username", authenticateToken_Middleware, async (req: any, res: any) => {
   if (!req.user) {

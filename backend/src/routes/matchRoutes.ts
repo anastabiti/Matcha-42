@@ -60,53 +60,6 @@ const session = driver.session();
 });
 
 
-match.post("/like-user", authenticateToken_Middleware, async (req: any, res: any) => {
-  if (!req.user) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-
-  const user = req.user;
-  const username = user.username;
-  const { likedUsername } = req.body;
-
-  const session = driver.session();
-  try {
-    const result = await session.run(
-      `
-      MATCH (u:User {username: $username})
-      MATCH (otherUser:User {username: $likedUsername})
-      WHERE u <> otherUser
-      MERGE (u)-[r:LIKES {createdAt: datetime()}]->(otherUser)
-      WITH u, otherUser, EXISTS((otherUser)-[:LIKES]->(u)) as isMatch
-      
-      FOREACH(x IN CASE WHEN isMatch THEN [1] ELSE [] END |
-          MERGE (u)-[m:MATCHED {createdAt: datetime()}]-(otherUser)
-      )
-      
-      RETURN {
-          liked: true, 
-          isMatch: isMatch,
-          matchedAt: CASE WHEN isMatch THEN datetime() ELSE null END
-      } as result`,
-      { username, likedUsername }
-  );
-
-    if (result.records.length > 0) {
-      return res.status(200).json({ success: true });
-    } else {
-      return res.status(400).json({ error: "Failed to like user" });
-    }
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ error: "Internal Server Error" });
-  } finally {
-    await session.close();
-  }
-});
-
-export default match;
-
-
 match.post("/potential-matches", authenticateToken_Middleware, async (req: any, res: any) => {
   if (!req.user) {
     return res.status(401).json({ error: "Unauthorized" });
@@ -360,3 +313,6 @@ match.get("/connection-status/:username", authenticateToken_Middleware, async (r
         await session.close();
     }
 });
+
+
+export default match;

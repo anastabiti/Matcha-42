@@ -106,7 +106,6 @@ const ProfilePage = (props: ProfilePageProps) => {
 
       const data = await response.json();
       if (data.success) {
-        // Update both like and match status from response
         setConnectionStatus(prev => ({
           isLiked: !prev.isLiked,
           isMatched: data.isMatched || false
