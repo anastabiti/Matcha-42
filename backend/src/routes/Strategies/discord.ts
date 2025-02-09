@@ -3,7 +3,6 @@ import { env } from "process";
 const { body, validationResult } = require("express-validator");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
 const discord_auth = express.Router();
 const crypto = import("crypto");
 import nodemailer from "nodemailer";
@@ -40,6 +39,7 @@ export const create_new_user_cipher = `CREATE (n:User {
               fame_rating:0,            
               is_logged:  true,
               age:18,
+              notifications:[],
     country: "",
     city: "",
     country_WTK: "",
@@ -237,7 +237,7 @@ discord_auth.get("/auth/discord/callback", function (req: any, res: Response) {
       });
 
       if (user.setup_done) {
-        return res.status(200).redirect(`${process.env.front_end_ip}/home`);
+        return res.status(200).redirect(`${process.env.front_end_ip}/discover`);
       } else {
         return res.status(200).redirect(`${process.env.front_end_ip}/setup`);
       }

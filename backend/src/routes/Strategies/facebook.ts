@@ -203,7 +203,7 @@ Facebook_auth.get(
 
           console.log(user, "  ------------------------------facebook");
           if (user.setup_done == true) {
-            return res.status(200).redirect(`${process.env.front_end_ip}/home`);
+            return res.status(200).redirect(`${process.env.front_end_ip}/discover`);
           } else {
             return res.status(200).redirect(`${process.env.front_end_ip}/setup`);
           }

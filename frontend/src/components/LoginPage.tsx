@@ -55,7 +55,7 @@ function LoginPage() {
       if (response.ok) {
         console.log("Login successful!");
         setSuccess("Logged in successfully. Redirecting to your HomePage...");
-        navigate("/home");
+        navigate("/discover");
         setFormData({
           username: "",
           password: "",

@@ -31,6 +31,61 @@ import { NavLink as RouterLink } from 'react-router-dom';
 //   }
 // };
 
+import React, { useEffect, useState } from "react";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+import { socket } from "./Chat"
+import Badge from "@mui/material/Badge"; // Add this import for the badge component
+import NotificationButton from './Notification';
+
+// const NotificationButton = () => {
+//   const [showNotifications, setShowNotifications] = useState(false);
+//   const [notifications, setNotifications] = useState<string[]>([]);
+
+//   useEffect(() => {
+//     // Listen for the "Liked" event from the server
+//     socket.on("Liked", (data) => {
+//       console.log("💖 You were liked!", data);
+//       // Add the received notification to the list
+//       setNotifications((prev) => [...prev, data.msg]);
+//     });
+
+//     // Cleanup listener on unmount
+//     return () => {
+//       socket.off("Liked");
+//     };
+//   }, []);
+
+//   return (
+//     <div className="relative">
+//       <Badge 
+//         badgeContent={notifications.length} 
+//         color="error"
+//         max={99} // Maximum number to show before displaying "99+"
+//       >
+//         <NotificationsIcon
+//           color="primary"
+//           onClick={() => setShowNotifications(!showNotifications)}
+//         />
+//       </Badge>
+//       {showNotifications && (
+//         <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-lg shadow-lg p-4">
+//           <p className="text-black font-bold mb-2">All unread notifications</p>
+//           {notifications.length === 0 ? (
+//             <p className="text-black">No notifications yet</p>
+//           ) : (
+//             notifications.map((notif, index) => (
+//               <p key={index} className="text-black">
+//                 {notif}
+//               </p>
+//             ))
+//           )}
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+//  NotificationButton;
 const Navigation = () => (
   <nav className="h-16 lg:h-20 px-4 lg:px-8 flex items-center justify-between bg-[#2a2435] border-b border-[#3a3445] fixed top-0 w-full z-50">
     <RouterLink to="/" className="text-[#e94057] text-2xl lg:text-3xl font-bold">
@@ -42,7 +97,7 @@ const Navigation = () => (
       <NavLink to="/matches" icon={<Heart />} text="Matches" />
       <NavLink to="/messages" icon={<MessageCircle />} text="Messages" />
       <NavLink to="/profile" icon={<User />} text="Profile" />
-      <NavLink to="/notifications" icon={<Bell />} text="" />
+      <NotificationButton></NotificationButton>
 
 
     </div>
@@ -51,7 +106,7 @@ const Navigation = () => (
       <MobileNavLink to="/discover" icon={<Search />} />
       <MobileNavLink to="/matches" icon={<Heart />} />
       <MobileNavLink to="/messages" icon={<MessageCircle />} />
-      <MobileNavLink to="/notifications" icon={<Bell />} />
+      {/* <MobileNavLink to="/notifications" icon={<Bell />} /> */}
       <MobileNavLink to="/profile" icon={<User />} />
     </div>
 

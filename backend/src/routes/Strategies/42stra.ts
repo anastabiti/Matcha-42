@@ -3,7 +3,8 @@ import { env } from "process";
 const { body, validationResult } = require("express-validator");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
+
+
 const forty_two_str = express.Router();
 const crypto = import("crypto");
 import nodemailer from "nodemailer";
@@ -39,7 +40,7 @@ export const create_new_user_cipher = `CREATE (n:User {
                pics: ["","","","",""],
               fame_rating:0,            
               is_logged:  true,
-              age:18,
+              age:18,notifications:[],
     country: "",
     city: "",
     country_WTK: "",
@@ -216,7 +217,7 @@ forty_two_str.get("/auth/intra42/callback", function (req: any, res: Response) {
       });
 
       if (user.setup_done) {
-        return res.status(200).redirect(`${process.env.front_end_ip}/home`);
+        return res.status(200).redirect(`${process.env.front_end_ip}/discover`);
       } else {
         return res.status(200).redirect(`${process.env.front_end_ip}/setup`);
       }

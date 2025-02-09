@@ -14,8 +14,11 @@ import email_change from "./routes/email_change";
 import match from "./routes/matchRoutes";
 import discord_auth from "./routes/Strategies/discord";
 import interactions from "./routes/interactions";
+import chat from "./routes/chat";
 const fileUpload = require('express-fileupload');
 
+import { v2 as cloudinary } from 'cloudinary';
+import notify from "./routes/notifications";
 
 const app: Application = express();
 // https://www.npmjs.com/package/connect-neo4j
@@ -38,57 +41,28 @@ driver.verifyConnectivity()
     console.error('Neo4j connection error:', error);
   });
 
-// app.use(
-//   session({
-//     store: new Neo4jStore({ 
-//       client: driver,
-//       ttl: 86400,
-//       debug: true,
-//     }),
-//     secret: process.env.session_secret as string,
-//     resave: true,
-//     saveUninitialized: false,
-//     cookie: {
-//       maxAge: 24 * 60 * 60 * 1000,
-//     },
-//   })
-// );
+
+// // IMagekit initialization
+
+// const ImageKit = require("imagekit");
+// // ImageKit initialization
+// export const imagekitUploader = new ImageKit({
+//   publicKey: process.env.imagekit_publicKey,
+//   privateKey: process.env.imagekit_privateKey,
+//   urlEndpoint: process.env.imagekit_urlEndpoint
+// });
 
 
 
-// IMagekit initialization
 
-const ImageKit = require("imagekit");
-// ImageKit initialization
-export const imagekitUploader = new ImageKit({
-  publicKey: process.env.imagekit_publicKey,
-  privateKey: process.env.imagekit_privateKey,
-  urlEndpoint: process.env.imagekit_urlEndpoint
+cloudinary.config({ 
+  cloud_name:process.env.cloudinary_cloud_name,
+  api_key: process.env.cloudinary_api_key,
+  api_secret: process.env.cloudinary_api_secret,
 });
 
 
 
-// async function init_gender() {
-//   const new_session = driver.session();
-
-//   if (new_session) {
-//     await new_session.run(
-//       `
-//     MERGE (m:Sex {gender: "male"})
-//     MERGE (f:Sex {gender: "female"})        `,
-    
-//     );
-//     console.log("init_gender is called ----------------------------");
-//   }
-// }
-
-// init_gender();
-// app.use(session({
-//   genid: function(req) {
-//     return genuuid() // use UUIDs for session IDs
-//   },
-//   secret: 'keyboard cat'
-// }))
 
 // fix cors issues
 const corsOptions = {
@@ -118,5 +92,7 @@ app.use("/api", email_change);
 app.use('/', match);
 app.use("/", interactions);
 app.use("/api", discord_auth);
+app.use("/api", chat);
+app.use("/api", notify);
 
 export default app;

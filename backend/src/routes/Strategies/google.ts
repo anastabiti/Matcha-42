@@ -3,7 +3,6 @@ import express, { Request, Response } from "express";
 import { env } from "process";
 const router = express.Router();
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
 const Google_auth = express.Router();
 const crypto = import("crypto");
 import { Profile, VerifyCallback } from "passport-google-oauth20";
@@ -121,25 +120,23 @@ passport.use(
                 //   password_reset_token: "",
                 // };
                 if (profile.emails?.[0].value) {
-                  const cleanUsername =  profile.displayName?.trim() || '';
+                  // /g is a flag in regular expressions that stands for "global"
+                  const cleanUsername =  profile.displayName?.replace(/ /g, "") || '';
 
                   //check if username exists
                 const check_username = await new_session.run(
                   "MATCH (u:User) WHERE u.username = $username RETURN u",
                   { username:cleanUsername}
                 );
-                console.log(cleanUsername, " profile.displayName.trim()---------------")
                 let username_ = null;
                 if (check_username.records.length > 0)
-                {
-                  console.log("username exists -==--=-=-=- Gooooooooooooooooooooogle");
-                  username_ = (await crypto).randomBytes(12).toString("hex");
-                }
-  
-  
-  
-                  console.log("creating user");
-                  const result_ = await new_session.run(
+                  {
+                    console.log("username exists -==--=-=-=- Gooooooooooooooooooooogle");
+                    username_ = (await crypto).randomBytes(12).toString("hex");
+                  }
+
+
+                const result_ = await new_session.run(
                     `CREATE (n:User {
                     username: $username,
                     email: $email,
@@ -152,7 +149,7 @@ passport.use(
                     gender: "",
                     biography: "",
                     setup_done:false,
-                      pics: ["","","","",""],
+                      pics: ["","","","",""],notifications:[],
                         fame_rating:0,            
                       age:18,
               is_logged:  true,
@@ -256,7 +253,7 @@ passport.use(
 
           // return res.status(200).json("login successful");
           if ( user.setup_done == true) {
-            return res.status(200).redirect(`${process.env.front_end_ip}/home`);
+            return res.status(200).redirect(`${process.env.front_end_ip}/discover`);
           } else {
             return res.status(200).redirect(`${process.env.front_end_ip}/setup`);
           }

@@ -8,7 +8,8 @@ const IsLogged = () => {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/user/is_logged', {
+        
+        const response = await fetch(`http://localhost:3000/api/user/is_logged`, {
           method: 'GET',
           credentials: 'include',
           headers: {

@@ -3,7 +3,9 @@ import { env } from "process";
 const { body, validationResult } = require("express-validator");
 const router = express.Router();
 import jwt from "jsonwebtoken";
-const bcrypt = require("bcrypt");
+// const bcrypt = require("bcrypt");
+import argon2 from "argon2";
+
 const authRouter = express.Router();
 const crypto = import("crypto");
 import nodemailer from "nodemailer";
@@ -91,8 +93,8 @@ export const authenticateToken_Middleware = async (req: any, res: any, next: any
       }
 
       try {
-        const decoded :any= await jwt.verify(token, process.env.JWT_TOKEN_SECRET as string);
-        console.log(decoded.username , " decoded.username ----------------=-\n\n\n\n")
+        const decoded: any = await jwt.verify(token, process.env.JWT_TOKEN_SECRET as string);
+        console.log(decoded.username, " decoded.username ----------------=-\n\n\n\n");
         const res_db = await session.run(
           `MATCH (n:User) WHERE n.username = $username AND n.is_logged = true
           RETURN n`,
@@ -142,75 +144,63 @@ export function generateAccessToken(user: User_jwt) {
 // ----------------------------------------------------------------------------------
 
 authRouter.post("/login", async (req: any, res: Response) => {
-  try {
-    const password = req.body.password;
-    console.log(password, " password");
-    console.log(req.body.username, "  username");
-    const session = driver.session();
-    //get hashedPassword
-    if (session) {
-      const user_data = await session.run(
-        "MATCH (n:User) WHERE n.username = $username AND n.verified = true RETURN n",
-        { username: req.body.username }
-      );
+  const password = req.body.password;
+  console.log(password, " password");
+  console.log(req.body.username, "  username");
+  const session = driver.session();
+  if (session) {
+    const user_data = await session.run(
+      "MATCH (n:User) WHERE n.username = $username AND n.verified = true RETURN n",
+      { username: req.body.username }
+    );
 
-      if (user_data.records.length > 0) {
-        console.log(user_data.records[0]._fields[0].properties, " user data");
-        const user = await user_data.records[0]._fields[0].properties;
-        if (user.password) console.log(user.password, "password is ");
-        await bcrypt.compare(password, user.password, async function (err: Error, result: any) {
-          if (result) {
-            console.log("passwords match");
-            console.log(req.body, "  login ------------");
-            const user_ = req.body.username;
-            if (user_) {
-              const token = await generateAccessToken(user);
-              if (!token) {
-                console.error("Failed to generate authentication token");
-                return res.status(401).json({ error: "Authentication failed" });
-              }
-              console.log(token, " [-JWT TOKEN-]");
-              //check later
-              const res_db = await session.run(
-                `MATCH (n:User) WHERE n.username = $username AND n.verified = true
-                    SET n.is_logged  = true
-                   RETURN n`,
-                { username: user_ }
-              );
+    if (user_data.records.length > 0) {
+      console.log(user_data.records[0]._fields[0].properties, " user data");
+      const user = await user_data.records[0]._fields[0].properties;
+      if (user.password) console.log(user.password, "password is ");
 
-              res.cookie("jwt_token", token, {
-                httpOnly: true,
-                sameSite: "lax",
-                maxAge: 3600000, // 1 hour in milliseconds
-              });
-
-              // req.session.user = {
-              //   username: req.body.username,
-              //   email: req.body.email,
-              // };
-
-              // console.log(req.session.user, " session user");
-              // await req.session.save();
-              if (user.setup_done == true) {
-                return res.status(200).json("login successful");
-              } else {
-                return res.status(201).json("login successful");
-              }
-              // return res.status(200).json("login successful");
-            }
-          } else {
-            console.log("passwords do not match");
-            res.status(400).json("passwords do not match");
+      if (await argon2.verify(user.password, password)) {
+        console.log("matched");
+        const user_ = req.body.username;
+        if (user_) {
+          const token = generateAccessToken(user);
+          if (!token) {
+            console.error("Failed to generate authentication token");
+            res.status(401).json({ error: "Authentication failed" });
+            return;
           }
-        });
+          console.log(token, " [-JWT TOKEN-]");
+          //check later
+          const res_db = await session.run(
+            `MATCH (n:User) WHERE n.username = $username AND n.verified = true
+                      SET n.is_logged  = true
+                     RETURN n`,
+            { username: user_ }
+          );
+
+          res.cookie("jwt_token", token, {
+            httpOnly: true,
+            sameSite: "lax",
+            maxAge: 3600000, // 1 hour in milliseconds
+          });
+
+          
+          if (user.setup_done == true) {
+            res.status(200).json("login successful");
+            return;
+          } else {
+            res.status(201).json("login successful");
+            return;
+          }
+        }
       } else {
         console.log("username does not exist");
         res.status(400).json("Username does not exist or Email not verified");
+        return 
       }
     }
-  } catch {
-    console.log("error");
-    res.status(400).send("Error in login");
+    res.status(400).json("User does not exist");
+    return
   }
 });
 
@@ -231,7 +221,6 @@ authRouter.post(
         const email = req.body.email;
         const session = driver.session();
         if (session) {
-          
           const url_token = jwt.sign({ email: email }, process.env.JWT_TOKEN_SECRET as string, {
             expiresIn: "10min",
           });
@@ -284,38 +273,35 @@ authRouter.post(
   }
 );
 
-
-
 authRouter.patch(
   "/reset_it",
   body("password").isLength({ min: 6, max: 30 }),
   async (req: any, res: any) => {
     try {
       const token = req.body.token as string;
-      const password = req.body.password
-      console.log(token ," token", password, " new password is \n\n\n")
+      const password = req.body.password;
+      console.log(token, " token", password, " new password is \n\n\n");
       if (!token) {
         return res.status(400).send("Invalid token");
       }
 
-        const jwt_ = await jwt.verify(token, process.env.JWT_TOKEN_SECRET as string) ;  
-        const new_session = driver.session()
-        if(new_session){
-          const res= new_session.run(`
+      const jwt_ = await jwt.verify(token, process.env.JWT_TOKEN_SECRET as string);
+      const new_session = driver.session();
+      if (new_session) {
+        const res = new_session.run(`
             MATCH
-            `)
-        }
-        console.log(jwt_, "--------------------jwt_-----------------\n\n\n\n") 
-        return res.status(200).json("sucess");
-      } catch (jwtError) {
-        console.error("Token verification failed:", jwtError);
-        return res.status(400).send("Expired or invalid token");
-    } 
+            `);
+      }
+      console.log(jwt_, "--------------------jwt_-----------------\n\n\n\n");
+      return res.status(200).json("sucess");
+    } catch (jwtError) {
+      console.error("Token verification failed:", jwtError);
+      return res.status(400).send("Expired or invalid token");
+    }
   }
 );
 
 // --------------------------
-
 
 authRouter.post("/logout", authenticateToken_Middleware, async (req: any, res: Response) => {
   console.log("log out -+==_==+++++_=>>.......???>>>>>>");
