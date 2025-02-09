@@ -3,6 +3,7 @@ import Button from "@mui/material/Button";
 import FacebookIcon from "@mui/icons-material/Facebook";
 // https://mui.com/material-ui/material-icons/?srsltid=AfmBOopJikFhdTyZ7jeW_GHSILmUTDSBVafswowgwSgwNmSJRP6PpTKQ&query=google&selected=Google
 import GoogleIcon from "@mui/icons-material/Google";
+import { Link } from "react-router-dom";
 
 const RegistrationForm = () => {
   const [formData, setFormData] = useState({
@@ -11,12 +12,22 @@ const RegistrationForm = () => {
     first_name: "",
     last_name: "",
     password: "",
-    age:18
+    age: ""
   });
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const handleAgeChange = (e) => {
+    const value = e.target.value;
+
+    // Convert to number and validate
+    const age = parseInt(value, 10);
+    if (!isNaN(age)) {
+      setFormData({ ...formData, age: value });
+    }
+  };
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -49,7 +60,7 @@ const RegistrationForm = () => {
           first_name: "",
           last_name: "",
           password: "",
-          age:0
+          age: 0
         });
       } else {
         console.log(data, " error");
@@ -77,7 +88,6 @@ const RegistrationForm = () => {
                 type="email"
                 minLength={7}
                 maxLength={30}
-            
                 placeholder="Email Address"
                 className="w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-400"
                 value={formData.email}
@@ -122,12 +132,7 @@ const RegistrationForm = () => {
                 min={18}
                 max={100}
                 value={formData.age}
-                onChange={(e) => {
-                  const age = parseInt(e.target.value, 10);
-                  if (!isNaN(age) && age >= 18 && age <= 100) {
-                    setFormData({ ...formData, age });
-                  }
-                }}
+                onChange={handleAgeChange}
                 required
               />
 
@@ -241,6 +246,9 @@ const RegistrationForm = () => {
                 Intra
               </Button>
             </div>
+              <Button className="w-full py-4 text-lg">
+                <Link to="/login">Login</Link>
+              </Button>
           </div>
         </div>
       </div>
