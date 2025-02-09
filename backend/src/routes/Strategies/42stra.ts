@@ -4,6 +4,7 @@ const { body, validationResult } = require("express-validator");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 
+import argon2 from "argon2";
 
 const forty_two_str = express.Router();
 const crypto = import("crypto");
@@ -129,6 +130,7 @@ passport.use(
                   `MATCH (n:User) WHERE n.username  = $username return n`,
                   { username: profile.username }
                 );
+              
                 if (check_useername_exists.records?.length > 0) {
                   //case: user registered with a username like "atabiti" , then a user with diff email logged with 42, but he has the same username "atabiti", i have to generate a new username for him.
                   console.log("[------same username found----] , ", check_useername_exists.records);
@@ -137,7 +139,7 @@ passport.use(
                   const result_ = await new_session.run(create_new_user_cipher, {
                     username: diff_username,
                     email: email_,
-                    password: (await crypto).randomBytes(25).toString("hex"),
+                    password: await argon2.hash((await crypto).randomBytes(25).toString("hex")),
                     first_name: profile?.name?.givenName || "",
                     last_name: profile?.name?.familyName || "",
                     verfication_token: "",
@@ -154,7 +156,7 @@ passport.use(
               const result_ = await new_session.run(create_new_user_cipher, {
                 username: profile.username,
                 email: email_,
-                password: (await crypto).randomBytes(25).toString("hex"),
+                password: await argon2.hash((await crypto).randomBytes(25).toString("hex")),
                 first_name: profile?.name?.givenName || "",
                 last_name: profile?.name?.familyName || "",
                 verfication_token: "",
@@ -168,6 +170,9 @@ passport.use(
             }
           }
         }
+
+        
+
       } catch (error) {
         return cb(error, false);
       }

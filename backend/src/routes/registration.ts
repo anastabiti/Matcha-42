@@ -158,8 +158,8 @@ registrationRouter.get("/verify-email", async (req: Request, res: Response) => {
       const session = driver.session();
 
       if (!session) {
-        res.status(400);
-        res.send("Error occured");
+        res.status(400).json("Error occured");
+        return;
       }
       const updates = await session.run(
         `
@@ -174,25 +174,23 @@ registrationRouter.get("/verify-email", async (req: Request, res: Response) => {
 
       if (updates.records.length > 0) {
         const updatedUser = updates.records[0];
-        console.log("User verified:", updatedUser);
-        console.log("User verified:", updatedUser);
-        res.send("Hello! Welcome to Matcha. Email verified successfully!");
+
+        res.status(200).json("Hello! Welcome to Matcha. Email verified successfully!");
         await session.close();
+        return;
       } else {
         await session.close();
-        res.status(400).send("Invalid or expired token");
+        res.status(400).json("Invalid or expired token");
+        return;
       }
     } else {
-      res.status(400);
-      res.send("Invalid token");
+      res.status(400).json("Error occured");
+      return;
     }
-  } catch (error) {
-    console.log(error, " error occured");
-    res.status(400);
-    res.send("Error occured");
+  } catch {
+    res.status(400).json("Error occured");
+    return;
   }
 });
 
 export default registrationRouter;
-//atabiti_a
-//sjjJh77^$hJ$uyh
