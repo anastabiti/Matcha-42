@@ -21,17 +21,6 @@ export type UserJWTPayload = {
 user_information_Router.post(
   "/user/information",
   authenticateToken_Middleware,
-  // body("gender")
-  //   .notEmpty()
-  //   .withMessage("Gender cannot be empty")
-  //   .isIn(["male", "female"])
-  //   .withMessage("Gender must be 'male' or 'female'"),
-  // body("age").isInt({ min: 18, max: 100 }),
-  // body("biography")
-  //   .notEmpty()
-  //   .withMessage("Biography cannot be empty")
-  //   .isLength({ min: 20, max: 200 })
-  //   .withMessage("Biography must be between 20 and 200 characters"),
   validateAge,validateBiography,validateGender,
   async (req: any, res: any) => {
     
@@ -137,38 +126,12 @@ user_information_Router.post(
   }
 );
 
-// // --------------------------------------
+// --------------------------------------
 
-//error handling ,parsing to be used in the other forms
 
 user_information_Router.post(
   "/user/settings",
   authenticateToken_Middleware,
-  // body("last_name")
-  //   .isLength({ min: 3, max: 30 })
-  //   .notEmpty()
-  //   .withMessage("last_name cannot be empty"),
-  // body("first_name")
-  //   .isLength({ min: 3, max: 30 })
-  //   .notEmpty()
-  //   .withMessage("first_name cannot be empty"),
-  // body("email")
-  //   .notEmpty()
-  //   .isLength({ min: 7, max: 100 })
-  //   .withMessage("email cannot be empty")
-  //   .isEmail(),
-  // body("gender")
-  //   .notEmpty()
-  //   .withMessage("Gender cannot be empty")
-  //   .isIn(["male", "female"])
-  //   .withMessage("Gender must be 'male' or 'female'"),
-  // body("biography")
-  //   .notEmpty()
-  //   .withMessage("Biography cannot be empty")
-  //   .isLength({ min: 20, max: 200 })
-  //   .withMessage("Biography must be between 20 and 200 characters"),
-  // body("interests").isArray().withMessage("Interests must be an array"),
-  // body("age").isInt({ min: 18, max: 100 }),
   validateName,validateEmail,validateGender,validateBiography,validateAge,validateInterests,
 
   async (req: any, res: any) => {

@@ -6,7 +6,7 @@ const authRouter = express.Router();
 
 import nodemailer from "nodemailer";
 import { driver } from "../database";
-import { validateEmail, validatePassword } from "../validators/validate";
+import { validateEmail, validatePassword, validateUsername } from "../validators/validate";
 const crypto = import("crypto");
 
 //define user model
@@ -135,7 +135,7 @@ export function generateAccessToken(user: User_jwt) {
 //  User/Password auth ---------------------------------------------------------------
 // ----------------------------------------------------------------------------------
 
-authRouter.post("/login", async (req: any, res: Response) => {
+authRouter.post("/login",validateUsername, validatePassword, async (req: any, res: Response) => {
   try {
     const password = req.body.password;
     console.log(password, " password");

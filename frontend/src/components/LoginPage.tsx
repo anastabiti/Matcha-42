@@ -86,6 +86,8 @@ function LoginPage() {
               <input
                 type="text"
                 name="username"
+                minLength={6}
+                maxLength={20}
                 placeholder="Username"
                 className="w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-400"
                 value={formData.username}
@@ -97,6 +99,8 @@ function LoginPage() {
                 <input
                   type="password"
                   name="password"
+                  minLength={8}
+                  maxLength={50}
                   placeholder="Password"
                   className="w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-400"
                   value={formData.password}

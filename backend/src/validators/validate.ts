@@ -95,8 +95,12 @@ export function validateEmail(req: Request, res: Response, next: NextFunction) {
 
   // Check the parts after the last dot
   const domainParts = domain.split(".");
+  // console.log(domainParts, " domain part -----------")
   const topLevelDomain = domainParts[domainParts.length - 1];
+  // console.log(topLevelDomain, " topLevelDomain  -----------")
 
+//   [ 'gmail', 'com' ]  domain part -----------
+// com  topLevelDomain  -
   if (topLevelDomain.length === 0) {
     res.status(400).json("Email must have characters after the dot");
     return;
@@ -123,6 +127,9 @@ export function validateUsername(req: Request, res: Response, next: NextFunction
     res.status(400).json("Username must be between 6 and 20 characters");
     return;
   }
+//The test() method is a RegExp expression method.
+//It searches a string for a pattern, and returns true or false, depending on the result.
+//Without the +, it would only match a single character
 
   if (!/^[a-zA-Z0-9]+$/.test(username)) {
     res.status(400).json("Username must contain only alphanumeric characters");
@@ -140,12 +147,17 @@ export function validateUsername(req: Request, res: Response, next: NextFunction
 export function validateName(req: Request, res: Response, next: NextFunction): void {
   const first_name = req.body.first_name;
   const last_name = req.body.last_name;
+  const nameRegex = /^[A-Za-z]+$/;
 
   if (!first_name) {
     res.status(400).json(`fist name is required`);
     return;
   }
-
+  if (!nameRegex.test(first_name)) {
+    res.status(400).json(`First name must contain only alphabetical characters without spaces`);
+    return;
+  }
+  
   if (first_name.length < 3 || first_name.length > 30) {
     res.status(400).json(`fist name must be between 3 and 30 characters`);
     return;
@@ -154,12 +166,16 @@ export function validateName(req: Request, res: Response, next: NextFunction): v
     res.status(400).json(`last name is required`);
     return;
   }
-
-  if (last_name.length < 3 || last_name.length > 30) {
-    res.status(400).json(`last name must be between 3 and 30 characters`);
+  if (!nameRegex.test(last_name)) {
+    res.status(400).json(`Last name must contain only alphabetical characters`);
     return;
   }
 
+  if (last_name.length < 3 || last_name.length > 30) {
+    res.status(400).json(`last name must be between 3 and 30 characters without spaces`);
+    return;
+  }
+  //next() is a function that tells Express.js to move on to the next middleware or route handler in the chain
   next();
 }
 
@@ -180,53 +196,49 @@ export function validateAge(req: Request, res: Response, next: NextFunction): vo
   next();
 }
 
-
-
 export function validateGender(req: Request, res: Response, next: NextFunction): void {
-    const gender = req.body.gender;
-  
-    if (!gender) {
-      res.status(400).json("Gender is required");
-      return;
-    }
-  
-    if (gender !== 'male' && gender !== 'female') {
-      res.status(400).json("Gender must be 'male' or 'female'");
-      return;
-    }
-  
-    next();
-  }
-  
+  const gender = req.body.gender;
 
-  
-  export function validateBiography(req: Request, res: Response, next: NextFunction): void {
-    const biography = req.body.biography;
-  
-    if (!biography) {
-      res.status(400).json("Biography is required");
-      return;
-    }
-  
-    if (biography.length < 20 || biography.length > 200) {
-      res.status(400).json("Biography must be between 20 and 200 characters");
-      return;
-    }
-  
-    next();
+  if (!gender) {
+    res.status(400).json("Gender is required");
+    return;
   }
-  export function validateInterests(req: Request, res: Response, next: NextFunction): void {
-    const interests = req.body.interests;
-  
-    if (!interests) {
-      res.status(400).json("Interests are required");
-      return;
-    }
-  
-    if (!Array.isArray(interests)) {
-      res.status(400).json("Interests must be an array");
-      return;
-    }
-  
-    next();
+
+  if (gender !== "male" && gender !== "female") {
+    res.status(400).json("Gender must be 'male' or 'female'");
+    return;
   }
+
+  next();
+}
+
+export function validateBiography(req: Request, res: Response, next: NextFunction): void {
+  const biography = req.body.biography;
+
+  if (!biography) {
+    res.status(400).json("Biography is required");
+    return;
+  }
+
+  if (biography.length < 20 || biography.length > 200) {
+    res.status(400).json("Biography must be between 20 and 200 characters");
+    return;
+  }
+
+  next();
+}
+export function validateInterests(req: Request, res: Response, next: NextFunction): void {
+  const interests = req.body.interests;
+
+  if (!interests) {
+    res.status(400).json("Interests are required");
+    return;
+  }
+
+  if (!Array.isArray(interests)) {
+    res.status(400).json("Interests must be an array");
+    return;
+  }
+
+  next();
+}
