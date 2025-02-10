@@ -131,10 +131,10 @@ export function validateUsername(req: Request, res: Response, next: NextFunction
 //It searches a string for a pattern, and returns true or false, depending on the result.
 //Without the +, it would only match a single character
 
-  if (!/^[a-zA-Z0-9]+$/.test(username)) {
-    res.status(400).json("Username must contain only alphanumeric characters");
-    return;
-  }
+  // if (!/^[a-zA-Z0-9]+$/.test(username)) {
+  //   res.status(400).json("Username must contain only alphanumeric characters");
+  //   return;
+  // }
 
   if (username.includes(" ") || username.includes("\t")) {
     res.status(400).json("Username cannot contain spaces or tabs");
