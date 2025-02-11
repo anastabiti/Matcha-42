@@ -105,7 +105,7 @@ registrationRouter.post(
             
             Before you get started, please verify your email address to activate your account. Click the link below to complete the process:
             
-            🔗 Verify Your Email: http://localhost:3000/api/verify-email?token=${user.verfication_token}
+            🔗 Verify Your Email: ${process.env.back_end_ip}/api/verify-email?token=${user.verfication_token}
             
             If you didn’t create an account on Matcha, you can safely ignore this email.
             
