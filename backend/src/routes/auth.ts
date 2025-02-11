@@ -184,8 +184,7 @@ authRouter.post("/login", validateUsername, validatePassword, async (req: any, r
             }
           }
         } else {
-          console.log("username does not exist");
-          res.status(400).json("Username does not exist or Email not verified");
+          res.status(400).json("Wrong Password");
           return;
         }
       }
@@ -220,7 +219,7 @@ authRouter.post("/password_reset", validateEmail, async (req: Request, res: Resp
         const mailOptions = {
           from: "anastabiti@gmail.com",
           to: email,
-          subject: "Reset Your password ,Tinder! 💖",
+          subject: "Reset Your password ,Matcha! 💖",
           text: `Hi ${email},
 
         Welcome use the link below to reset your password! 🎉        
@@ -228,7 +227,7 @@ authRouter.post("/password_reset", validateEmail, async (req: Request, res: Resp
         
         
         Best regards,  
-        The Tinder Team`,
+        The Matcha Team`,
         };
 
         transporter.sendMail(mailOptions, (error, info) => {

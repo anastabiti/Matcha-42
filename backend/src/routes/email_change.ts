@@ -103,7 +103,7 @@ email_change.patch(
                             If you didn’t request this change, please ignore this email.
 
                         Best regards,  
-                        The Tinder Team`,
+                        The Matcha Team`,
               };
 
               transporter.sendMail(mailOptions, (error, info) => {
