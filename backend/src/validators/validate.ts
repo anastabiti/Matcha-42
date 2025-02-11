@@ -48,7 +48,7 @@ export function validatePassword(req: Request, res: Response, next: NextFunction
 }
 
 export function validateEmail(req: Request, res: Response, next: NextFunction) {
-  const email = req.body.email;
+  const email = req.body.email || req.body.newEmail;
 
   // console.log(email , " email")
   // console.log(req.body , " body")

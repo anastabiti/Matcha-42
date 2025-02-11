@@ -601,6 +601,7 @@ function Profile() {
                 label="Password"
                 type="spassword"
                 value={emailForm.password}
+                 autoComplete="current-password"
                 onChange={(e) =>
                   setEmailForm((prev) => ({
                     ...prev,
