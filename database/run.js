@@ -1,5 +1,6 @@
 import { faker } from "@faker-js/faker";
 import neo4j from "neo4j-driver";
+import argon2 from "argon2";
 
 async function populateNeo4jDatabase() {
   // Configuration
@@ -24,13 +25,41 @@ async function populateNeo4jDatabase() {
 
   // Extended interests list
   const INTERESTS = [
-    "#Photography", "#Shopping", "#Karaoke", "#Yoga", "#Cooking",
-    "#Tennis", "#Art", "#Traveling", "#Music", "#Gaming",
-    "#Swimming", "#Running", "#Painting", "#Drawing", "#Sculpture",
-    "#Poetry", "#Writing", "#Theater", "#Dance", "#Museums",
-    "#Hiking", "#Reading", "#Chess", "#Cycling", "#Gardening",
-    "#Meditation", "#Languages", "#Fashion", "#Technology", "#Film",
-    "#Baking", "#Climbing", "#Surfing", "#Singing", "#History"
+    "#Photography",
+    "#Shopping",
+    "#Karaoke",
+    "#Yoga",
+    "#Cooking",
+    "#Tennis",
+    "#Art",
+    "#Traveling",
+    "#Music",
+    "#Gaming",
+    "#Swimming",
+    "#Running",
+    "#Painting",
+    "#Drawing",
+    "#Sculpture",
+    "#Poetry",
+    "#Writing",
+    "#Theater",
+    "#Dance",
+    "#Museums",
+    "#Hiking",
+    "#Reading",
+    "#Chess",
+    "#Cycling",
+    "#Gardening",
+    "#Meditation",
+    "#Languages",
+    "#Fashion",
+    "#Technology",
+    "#Film",
+    "#Baking",
+    "#Climbing",
+    "#Surfing",
+    "#Singing",
+    "#History"
   ];
 
   // Extended photo collections
@@ -63,7 +92,22 @@ async function populateNeo4jDatabase() {
       "https://images.pexels.com/photos/29690236/pexels-photo-29690236/free-photo-of-contemplative-man-in-red-light-portrait.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
 
       "https://images.pexels.com/photos/30158553/pexels-photo-30158553/free-photo-of-stylish-young-adult-in-trendy-denim-outfit.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
-
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1",
+      "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?ixlib=rb-1.2.1",
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1",
+      "https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?ixlib=rb-1.2.1",
+      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8bWFuJTIwJTIwcG90cmFpdHxlbnwwfHwwfHx8MA%3D%3D",
+      "https://images.unsplash.com/photo-1534614971-6be99a7a3ffd?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8bWFuJTIwJTIwcG90cmFpdHxlbnwwfHwwfHx8MA%3D%3D",
+      "https://images.unsplash.com/photo-1492288991661-058aa541ff43?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fG1hbiUyMCUyMHBvdHJhaXR8ZW58MHx8MHx8fDA%3D",
+      "https://images.unsplash.com/photo-1499996860823-5214fcc65f8f?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fG1hbiUyMCUyMHBvdHJhaXR8ZW58MHx8MHx8fDA%3D",
+      "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTV8fG1hbiUyMCUyMHBvdHJhaXR8ZW58MHx8MHx8fDA%3D",
+      "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTR8fG1hbiUyMCUyMHBvdHJhaXR8ZW58MHx8MHx8fDA%3D",
+      "https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mzl8fG1hbiUyMCUyMHBvdHJhaXR8ZW58MHx8MHx8fDA%3D",
+      "https://images.unsplash.com/photo-1738949539165-1afd5d8cac62?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NDZ8fG1hbiUyMCUyMHBvdHJhaXR8ZW58MHx8MHx8fDA%3D",
+      "https://images.unsplash.com/photo-1679897499180-7fc188662cf9?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NTh8fG1hbiUyMCUyMHBvdHJhaXR8ZW58MHx8MHx8fDA%3D",
+      "https://images.unsplash.com/photo-1732036730633-3bb97dadac4e?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OTB8fG1hbiUyMCUyMHBvdHJhaXR8ZW58MHx8MHx8fDA%3D",
+      "https://images.unsplash.com/photo-1647643050583-3ab2bf9e3ba3?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTA0fHxtYW4lMjAlMjBwb3RyYWl0fGVufDB8fDB8fHww",
+      "https://images.unsplash.com/photo-1596710310557-c905d3047cb8?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTQ4fHxtYW4lMjAlMjBwb3RyYWl0fGVufDB8fDB8fHww"
     ],
     female: [
       "https://images.pexels.com/photos/30549701/pexels-photo-30549701/free-photo-of-smiling-woman-in-traditional-red-costume.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
@@ -102,15 +146,37 @@ async function populateNeo4jDatabase() {
       "https://images.pexels.com/photos/16486458/pexels-photo-16486458/free-photo-of-woman-wearing-earmuffs-on-winter-day.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
 
       "https://images.pexels.com/photos/30441185/pexels-photo-30441185/free-photo-of-traditional-chinese-attire-with-scarlet-umbrella-in-jakarta.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
-      "https://images.pexels.com/photos/30253418/pexels-photo-30253418/free-photo-of-elegant-woman-in-flowing-dress-in-forest-setting.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load"
+      "https://images.pexels.com/photos/30253418/pexels-photo-30253418/free-photo-of-elegant-woman-in-flowing-dress-in-forest-setting.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1",
 
+      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-1.2.1",
+      "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?ixlib=rb-1.2.1",
+      "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?ixlib=rb-1.2.1",
+      "https://images.unsplash.com/photo-1506089676908-3592f7389d4d?ixlib=rb-1.2.1",
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-1.2.1",
+      "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?ixlib=rb-1.2.1",
+      "https://images.unsplash.com/photo-1500917293891-ef795e70e1f6?ixlib=rb-1.2.1",
+      "https://images.unsplash.com/photo-1503185912284-5271ff81b9a8?ixlib=rb-1.2.1",
+      "https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1",
+
+      "https://images.unsplash.com/photo-1603771550805-abcf98e420e7?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "https://images.unsplash.com/photo-1594270410221-e6a33cbc6fb9?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+
+      "https://images.unsplash.com/photo-1484608856193-968d2be4080e?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjN8fGdpcmwlMjBwb3RyYWl0fGVufDB8fDB8fHww",
+
+      "https://plus.unsplash.com/premium_photo-1668896122554-2a4456667f65?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mzd8fGdpcmwlMjBwb3RyYWl0fGVufDB8fDB8fHww",
+
+      "https://images.unsplash.com/photo-1619024329452-45342ede6e58?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NTF8fGdpcmwlMjBwb3RyYWl0fGVufDB8fDB8fHww"
     ]
   };
 
-  const getRandomPhoto = (gender) => faker.helpers.arrayElement(PHOTOS[gender]);
-  const generateInterests = () => faker.helpers.arrayElements(INTERESTS, { min: 5, max: 10 });
+  const getRandomPhoto = function (gender) {
+    return PHOTOS[gender][Math.floor(Math.random() * PHOTOS[gender].length)];
+  };
+  const generateInterests = () =>
+    faker.helpers.arrayElements(INTERESTS, { min: 5, max: 10 });
   const getRandomCity = () => faker.helpers.objectKey(CITIES);
-  const generateUsername = () => faker.internet.username().toLowerCase().replace(/[^a-z0-9]/g, '') + faker.number.int(999);
+  const generateUsername = () => faker.internet.username();
 
   // Neo4j connection
   const driver = neo4j.driver(
@@ -127,7 +193,7 @@ async function populateNeo4jDatabase() {
     // Generate and insert users
     console.log(`Generating ${TOTAL_USERS} users...`);
     for (let i = 0; i < TOTAL_USERS; i++) {
-      const gender = faker.helpers.arrayElement(['male', 'female']);
+      const gender = faker.helpers.arrayElement(["male", "female"]);
       const cityName = getRandomCity();
       const coords = CITIES[cityName];
       const profilePic = getRandomPhoto(gender);
@@ -137,7 +203,9 @@ async function populateNeo4jDatabase() {
       const user = {
         username: generateUsername(),
         email: faker.internet.email({ firstName, lastName }).toLowerCase(),
-        password: faker.internet.password({ length: 20, memorable: true }),
+        password: await argon2.hash(
+          faker.internet.password({ length: 20, memorable: true })
+        ),
         first_name: firstName,
         last_name: lastName,
         age: faker.number.int({ min: 18, max: 20 }),
@@ -145,8 +213,16 @@ async function populateNeo4jDatabase() {
         city: cityName,
         country: "Morocco",
         biography: faker.lorem.paragraph(faker.number.int({ min: 2, max: 4 })),
-        x: faker.number.float({ min: coords.x - 0.005, max: coords.x + 0.005, precision: 0.00001 }),
-        y: faker.number.float({ min: coords.y - 0.005, max: coords.y + 0.005, precision: 0.00001 }),
+        x: faker.number.float({
+          min: coords.x - 0.005,
+          max: coords.x + 0.005,
+          precision: 0.00001
+        }),
+        y: faker.number.float({
+          min: coords.y - 0.005,
+          max: coords.y + 0.005,
+          precision: 0.00001
+        }),
         profile_picture: profilePic,
         pics: Array(5).fill(profilePic),
         setup_done: true,
@@ -158,7 +234,8 @@ async function populateNeo4jDatabase() {
       };
 
       // Create user node
-      await session.run(`
+      await session.run(
+        `
         CREATE (u:User {
           username: $username,
           email: $email,
@@ -184,16 +261,21 @@ async function populateNeo4jDatabase() {
           last_login: $last_login,
           notifications: []
         })
-      `, user);
+      `,
+        user
+      );
 
       // Create interests relationships
       const interests = generateInterests();
       for (const interest of interests) {
-        await session.run(`
+        await session.run(
+          `
           MATCH (u:User {username: $username})
           MERGE (t:Tags {interests: $interest})
           MERGE (u)-[:has_this_interest]->(t)
-        `, { username: user.username, interest });
+        `,
+          { username: user.username, interest }
+        );
       }
 
       if ((i + 1) % 10 === 0) {
@@ -202,27 +284,38 @@ async function populateNeo4jDatabase() {
     }
 
     // Print statistics
-    const userCount = await session.run("MATCH (u:User) RETURN count(u) as count");
-    const tagCount = await session.run("MATCH (t:Tags) RETURN count(t) as count");
-    const relCount = await session.run("MATCH ()-[r:has_this_interest]->() RETURN count(r) as count");
-    const genderStats = await session.run("MATCH (u:User) RETURN u.gender as gender, count(*) as count");
-    const cityStats = await session.run("MATCH (u:User) RETURN u.city as city, count(*) as count ORDER BY count DESC");
+    const userCount = await session.run(
+      "MATCH (u:User) RETURN count(u) as count"
+    );
+    const tagCount = await session.run(
+      "MATCH (t:Tags) RETURN count(t) as count"
+    );
+    const relCount = await session.run(
+      "MATCH ()-[r:has_this_interest]->() RETURN count(r) as count"
+    );
+    const genderStats = await session.run(
+      "MATCH (u:User) RETURN u.gender as gender, count(*) as count"
+    );
+    const cityStats = await session.run(
+      "MATCH (u:User) RETURN u.city as city, count(*) as count ORDER BY count DESC"
+    );
 
     console.log("\nDatabase Statistics:");
     console.log(`Total Users: ${userCount.records[0].get("count")}`);
     console.log(`Total Unique Interests: ${tagCount.records[0].get("count")}`);
-    console.log(`Total Interest Relationships: ${relCount.records[0].get("count")}`);
-    
+    console.log(
+      `Total Interest Relationships: ${relCount.records[0].get("count")}`
+    );
+
     console.log("\nGender Distribution:");
-    genderStats.records.forEach(record => {
+    genderStats.records.forEach((record) => {
       console.log(`${record.get("gender")}: ${record.get("count")}`);
     });
 
     console.log("\nCity Distribution:");
-    cityStats.records.forEach(record => {
+    cityStats.records.forEach((record) => {
       console.log(`${record.get("city")}: ${record.get("count")}`);
     });
-
   } catch (error) {
     console.error("Error:", error);
   } finally {

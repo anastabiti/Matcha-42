@@ -29,20 +29,13 @@ const Gps = () => {
         };
         setLocation(coords);
         await saveLocation(coords);
-        fetch("http://localhost:3000/api/location/WTK", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          credentials: "include"
-        }).catch(() => {});
         setLoading(false);
       },
       (error) => {
         setError(
           "Unable to retrieve your location. Please enable location services in your browser."
         );
-        //     get thier location bla may3i9o
+        //     get thier location WTK
         fetch("http://localhost:3000/api/location/WTK", {
           method: "POST",
           headers: {

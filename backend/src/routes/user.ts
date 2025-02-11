@@ -420,6 +420,7 @@ user_information_Router.post(
   authenticateToken_Middleware,
   async function (req: Request, res: Response) {
     // try {
+    console.log("------------------- location is called ----------")
     const latitude = req.body.latitude;
     const longitude = req.body.longitude;
 
@@ -446,10 +447,11 @@ user_information_Router.post(
           `
             MATCH (n:User) WHERE n.username = $username
             SET   n.location = point({latitude: $latitude, longitude: $longitude}),
-            n.city = $cityName, n.country = $country_name
-        
+            n.city = $cityName, n.country = $country_name,
+            n.location_WTK = point({latitude: $latitude, longitude: $longitude}),
+            n.city_WTK = $cityName,
+            n.country_WTK = $country_name
             RETURN n
-            
             `,
           {
             username: user.username,

@@ -71,12 +71,6 @@ function Setup_page() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  
-  // //access location
-  // navigator.geolocation.getCurrentPosition(function(position) {
-  //   console.log("Latitude is :", position.coords.latitude);
-  //   console.log("Longitude is :", position.coords.longitude);
-  // });
 
 
   // Function to handle toggling interests
