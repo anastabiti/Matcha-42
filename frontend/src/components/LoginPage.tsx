@@ -87,7 +87,7 @@ function LoginPage() {
                 type="text"
                 name="username"
                 minLength={6}
-                maxLength={20}
+                maxLength={40}
                 placeholder="Username"
                 className="w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-400"
                 value={formData.username}

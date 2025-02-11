@@ -1,13 +1,11 @@
 import express, { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import argon2 from "argon2";
-
-const authRouter = express.Router();
-
 import nodemailer from "nodemailer";
 import { driver } from "../database";
 import { validateEmail, validatePassword, validateUsername } from "../validators/validate";
 const crypto = import("crypto");
+const authRouter = express.Router();
 
 //define user model
 export type User = {
@@ -135,7 +133,7 @@ export function generateAccessToken(user: User_jwt) {
 //  User/Password auth ---------------------------------------------------------------
 // ----------------------------------------------------------------------------------
 
-authRouter.post("/login",validateUsername, validatePassword, async (req: any, res: Response) => {
+authRouter.post("/login", validateUsername, validatePassword, async (req: any, res: Response) => {
   try {
     const password = req.body.password;
     console.log(password, " password");
@@ -210,6 +208,7 @@ authRouter.post("/password_reset", validateEmail, async (req: Request, res: Resp
       const url_token = jwt.sign({ email: email }, process.env.JWT_TOKEN_SECRET as string, {
         expiresIn: "10min",
       });
+      console.log(url_token, " url_token\n\n\n\n--------------------------------------");
       const res_ = await session.run(
         `MATCH (n:User) WHERE n.email = $email
             SET n.password_reset_token = $url_token 
@@ -254,36 +253,52 @@ authRouter.post("/password_reset", validateEmail, async (req: Request, res: Resp
   }
 });
 
-authRouter.patch("/reset_it", validatePassword, async (req: any, res: any) => {
+authRouter.patch("/reset_it", validatePassword, async (req: Request, res: Response) => {
   try {
-    const token = req.body.token as string;
-    const password = req.body.password;
-    if (!token) {
-      return res.status(400).send("Invalid token");
-    }
+  const token = req.body.token as string;
+  const password = req.body.password;
 
-    const jwt_: any = await jwt.verify(token, process.env.JWT_TOKEN_SECRET as string);
-    console.log(jwt, " --------jwt");
-    const new_session = driver.session();
-    console.log(token, " token", password, " new password is \n\n\n", jwt_.email, " email }}>>>>");
-    if (new_session) {
-      const res = await new_session.run(
-        `
+  if (!token) {
+    res.status(400).send("Invalid token");
+    return;
+  }
+
+  const jwt_: any = jwt.verify(token, process.env.JWT_TOKEN_SECRET as string);
+  console.log(jwt, " --------jwt");
+  const new_session = driver.session();
+  console.log(token, " token", password, " new password is \n\n\n", jwt_.email, " email }}>>>>");
+  if (new_session) {
+    const db_res = await new_session.run(
+      `
             MATCH (n:User {email:$email})
             SET n.password = $password,
             n.password_reset_token = $tmp_password_reset_token
             RETURN n
             `,
-        {
-          email: jwt_.email,
-          password: await argon2.hash(password),
-          tmp_password_reset_token: (await crypto).randomBytes(25).toString("hex"),
-        }
-      );
+      {
+        email: jwt_.email,
+        password: await argon2.hash(password),
+        tmp_password_reset_token: (await crypto).randomBytes(25).toString("hex"),
+      }
+    );
+    console.log(
+      db_res.records.length,
+      " db_res.records.lenght()-------=+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n\n"
+    );
+
+    if (db_res.records.length > 0) {
+      res.status(200).json("sucess");
+      return;
+    } else {
+      res.status(400).json("FAILED");
+      return;
     }
-    return res.status(200).json("sucess");
+  }
+  res.status(400).json("Invalid Token");
+  return;
   } catch (jwtError) {
-    return res.status(400).send("Expired or invalid token");
+     res.status(400).json("Expired or invalid token");
+     return 
   }
 });
 

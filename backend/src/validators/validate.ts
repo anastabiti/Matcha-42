@@ -123,8 +123,8 @@ export function validateUsername(req: Request, res: Response, next: NextFunction
     return;
   }
 
-  if (username.length < 6 || username.length > 20) {
-    res.status(400).json("Username must be between 6 and 20 characters");
+  if (username.length < 6 || username.length > 40) {
+    res.status(400).json("Username must be between 6 and 40 characters");
     return;
   }
 //The test() method is a RegExp expression method.

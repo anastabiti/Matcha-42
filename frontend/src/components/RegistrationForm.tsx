@@ -130,7 +130,7 @@ const RegistrationForm = () => {
                 maxLength={20}
                 value={formData.username}
                 onChange={(e) => {
-                  if (e.target.value.length <= 20) {
+                  if (e.target.value.length <= 40) {
                     setFormData({ ...formData, username: e.target.value });
                   }
                 }}
