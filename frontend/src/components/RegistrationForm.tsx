@@ -15,6 +15,17 @@ const RegistrationForm = () => {
     age: ""
   });
 
+  function handleDiscordLogin() {
+    window.location.href = `${import.meta.env.VITE_BACKEND_IP}/api/auth/discord`;
+  }
+
+  function handleGoogleLogin() {
+    window.location.href = `${import.meta.env.VITE_BACKEND_IP}/api/auth/google`;
+  }
+
+  function handleIntraLogin() {
+    window.location.href = `${import.meta.env.VITE_BACKEND_IP}/api/auth/intra42`;
+  }
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -199,49 +210,37 @@ const RegistrationForm = () => {
                 {isLoading ? "Creating Account..." : "Create Account"}
               </button>
             </form>
-            {/* <div className="flex items-center justify-center">
-              <GoogleButton
-                label="Sign up"
-                onClick={() => {
-                  //new link
-                  window.location.href =
-                    "${import.meta.env.VITE_BACKEND_IP}/api/auth/google";
-                }}
-              />
-            </div> */}
+          
             <div className="flex items-center justify-center grid-cols-2 gap-4 ">
-              <Button
-                variant="contained"
-                onClick={() => {
-                  //new link
-                  window.location.href =
-                    `${import.meta.env.VITE_BACKEND_IP}/api/auth/facebook`;
-                }}
-                startIcon={<FacebookIcon />}
+            <Button
+                // variant="contained"
+                onClick={handleDiscordLogin}
+                startIcon={
+                  <img
+                    src="/discord-mark-white.svg"
+                    alt="Discord"
+                    style={{ width: 20, height: 20 }}
+                  />
+                }
+                sx={{ borderRadius: 3 }}
               >
-                Facebook
+                Discord
               </Button>
 
               <Button
-                onClick={() => {
-                  //new link
-                  window.location.href =
-                    `${import.meta.env.VITE_BACKEND_IP}/api/auth/google`;
-                }}
-                variant="contained"
+                // variant="contained"
+                onClick={handleGoogleLogin}
                 startIcon={<GoogleIcon />}
+                sx={{ borderRadius: 3 }}
               >
                 Google
               </Button>
 
               <Button
-                onClick={() => {
-                  //new link
-                  window.location.href =
-                    `${import.meta.env.VITE_BACKEND_IP}/api/auth/intra42`;
-                }}
-                variant="contained"
-                startIcon={<img src="42-Final-sigle-seul.svg" width={25}></img>}
+                // variant="contained"
+                onClick={handleIntraLogin}
+                startIcon={<img src="42-Final-sigle-seul.svg" width={25} alt="42" />}
+                sx={{ borderRadius: 3 }}
               >
                 Intra
               </Button>

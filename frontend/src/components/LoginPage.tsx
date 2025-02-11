@@ -22,7 +22,7 @@ function LoginPage() {
     });
   }
 
-  function handleDiscordLogin() {
+   function handleDiscordLogin() {
     window.location.href = `${import.meta.env.VITE_BACKEND_IP}/api/auth/discord`;
   }
 
