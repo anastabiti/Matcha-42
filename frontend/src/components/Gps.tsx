@@ -36,7 +36,7 @@ const Gps = () => {
           "Unable to retrieve your location. Please enable location services in your browser."
         );
         //     get thier location WTK
-        fetch("http://localhost:3000/api/location/WTK", {
+        fetch(`${import.meta.env.VITE_BACKEND_IP}/api/location/WTK`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -46,11 +46,13 @@ const Gps = () => {
         setLoading(false);
       }
     );
-  }, []);
+  }
+  
+  , []);
 
   const saveLocation = async (coords) => {
     try {
-      const response = await fetch("http://localhost:3000/api/location", {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/location`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

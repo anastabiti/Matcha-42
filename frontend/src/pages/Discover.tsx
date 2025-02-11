@@ -39,7 +39,7 @@ const DiscoverPage = () => {
 	async function fetchProfiles() {
 		try {
 			setLoading(true);
-			const response = await fetch("http://localhost:3000/potential-matches", {
+			const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/potential-matches`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -72,7 +72,7 @@ const DiscoverPage = () => {
 		if (!profiles[currentIndex]) return;
 
 		try {
-			const response = await fetch("http://localhost:3000/like-user", {
+			const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/like-user`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",

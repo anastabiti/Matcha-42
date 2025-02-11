@@ -15,7 +15,7 @@ const ChatUserList: React.FC = () => {
     const fetchChatUsers = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:3000/api/chat/Users_chatedWith', {
+        const response = await fetch('${import.meta.env.VITE_BACKEND_IP}/api/chat/Users_chatedWith', {
           credentials: 'include'
         });
 

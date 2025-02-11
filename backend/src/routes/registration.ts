@@ -51,13 +51,12 @@ registrationRouter.post(
       const session = await driver.session();
 
       if (session && user) {
-        console.log("session created");
         // First check if email exists
-        const _check_email_ = await session.run(
-          // "MATCH (u:User {email: $email}) RETURN u",
-          "MATCH (u:User) WHERE u.email = $email RETURN u",
-          { email: user.email, username: user.username }
-        );
+        const _check_email_ = await session.run("MATCH (u:User) WHERE u.email = $email RETURN u", {
+          email: user.email,
+          username: user.username,
+        });
+
         const check_username = await session.run(
           "MATCH (u:User) WHERE u.username = $username RETURN u",
           { username: user.username }
@@ -70,47 +69,50 @@ registrationRouter.post(
           res.status(400).json("Username already exists");
           return;
         } else {
-          console.log("new User");
-          user.verfication_token = (await crypto).randomBytes(20).toString("hex");
+          // console.log("new User");
+          user.verfication_token = (await crypto).randomBytes(20).toString("hex"); //ex: 32341856423cfac6eda221a5e3b3c9861ce96da9
           console.log(user.verfication_token, "verfication_token");
           await session.run(
-            `CREATE (a:User {username: $username, email: $email, password: $password,
-             first_name: $first_name,
-              last_name: $last_name,verified:false,
-               verfication_token:$verfication_token,setup_done:$setup_done,
-               gender:"",
-                pics: ["","","","",""],
-            fame_rating:0,              is_logged:  false
-      ,
-    country: "",notifications:[],
-    city: "",
-    country_WTK: "",
-    city_WTK: "",
-    location: null,
-    location_WTK: null,
-            age:$age,
-               password_reset_token:$password_reset_token}) RETURN a`,
+            `CREATE (a:User {
+          username: $username, email: $email, password: $password,
+          first_name: $first_name,
+          last_name: $last_name, verified: false ,
+          verfication_token:$verfication_token, setup_done:$setup_done,
+          gender:"",
+          pics: ["", "", "", "", ""],
+          fame_rating:0, is_logged: false
+          ,
+          country: "", notifications:[],
+          city: "",
+          country_WTK: "",
+          city_WTK: "",
+          location: null ,
+          location_WTK: null ,
+          age:$age,
+          password_reset_token:$password_reset_token
+            })
+    RETURN a`,
             user
           );
 
           const mailOptions = {
             from: "anastabiti@gmail.com",
             to: user.email,
-            subject: "Verify Your Email for Tinder! 💖",
+            subject: "Verify Your Email  💖",
             text: `Hi ${user.username},
             
-            Welcome to Tinder, where sparks fly and hearts connect! 🎉
+            Welcome to Matcha, where sparks fly and hearts connect! 🎉
             
             Before you get started, please verify your email address to activate your account. Click the link below to complete the process:
             
             🔗 Verify Your Email: http://localhost:3000/api/verify-email?token=${user.verfication_token}
             
-            If you didn’t create an account on Tinder, you can safely ignore this email.
+            If you didn’t create an account on Matcha, you can safely ignore this email.
             
             Let the love adventure begin! ❤️
             
             Best regards,  
-            The Tinder Team`,
+            The Matcha Team`,
           };
 
           transporter.sendMail(mailOptions, (error, info) => {

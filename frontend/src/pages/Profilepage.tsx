@@ -49,7 +49,7 @@ const ProfilePage = (props: ProfilePageProps) => {
 
     const recordView = async () => {
       try {
-        await fetch('http://localhost:3000/view-profile', {
+        await fetch('${import.meta.env.VITE_BACKEND_IP}/view-profile', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -81,10 +81,10 @@ const ProfilePage = (props: ProfilePageProps) => {
   const fetchProfile = async () => {
     try {
       const [profileResponse, connectionResponse] = await Promise.all([
-        fetch(`http://localhost:3000/profile/${username}`, {
+        fetch(`${import.meta.env.VITE_BACKEND_IP}/profile/${username}`, {
           credentials: 'include',
         }),
-        fetch(`http://localhost:3000/connection-status/${username}`, {
+        fetch(`${import.meta.env.VITE_BACKEND_IP}/connection-status/${username}`, {
           credentials: 'include',
         })
       ]);
@@ -116,7 +116,7 @@ const ProfilePage = (props: ProfilePageProps) => {
 
     try {
       const endpoint = connectionStatus.isLiked ? 'unlike-user' : 'like-user';
-      const response = await fetch(`http://localhost:3000/${endpoint}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/${endpoint}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

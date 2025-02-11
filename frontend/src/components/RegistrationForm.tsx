@@ -37,7 +37,7 @@ const RegistrationForm = () => {
     setSuccess("");
 
     try {
-      const response = await fetch("http://localhost:3000/api/registration", {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/registration`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -205,7 +205,7 @@ const RegistrationForm = () => {
                 onClick={() => {
                   //new link
                   window.location.href =
-                    "http://localhost:3000/api/auth/google";
+                    "${import.meta.env.VITE_BACKEND_IP}/api/auth/google";
                 }}
               />
             </div> */}
@@ -215,7 +215,7 @@ const RegistrationForm = () => {
                 onClick={() => {
                   //new link
                   window.location.href =
-                    "http://localhost:3000/api/auth/facebook";
+                    `${import.meta.env.VITE_BACKEND_IP}/api/auth/facebook`;
                 }}
                 startIcon={<FacebookIcon />}
               >
@@ -226,7 +226,7 @@ const RegistrationForm = () => {
                 onClick={() => {
                   //new link
                   window.location.href =
-                    "http://localhost:3000/api/auth/google";
+                    `${import.meta.env.VITE_BACKEND_IP}/api/auth/google`;
                 }}
                 variant="contained"
                 startIcon={<GoogleIcon />}
@@ -238,7 +238,7 @@ const RegistrationForm = () => {
                 onClick={() => {
                   //new link
                   window.location.href =
-                    "http://localhost:3000/api/auth/intra42";
+                    `${import.meta.env.VITE_BACKEND_IP}/api/auth/intra42`;
                 }}
                 variant="contained"
                 startIcon={<img src="42-Final-sigle-seul.svg" width={25}></img>}

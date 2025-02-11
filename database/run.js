@@ -7,7 +7,7 @@ async function populateNeo4jDatabase() {
   const NEO4J_URI = "neo4j://localhost:7687";
   const NEO4J_USER = "neo4j";
   const NEO4J_PASSWORD = "kjod876fytf";
-  const TOTAL_USERS = 500;
+  const TOTAL_USERS = 150;
 
   // Cities data with coordinates
   const CITIES = {
@@ -227,10 +227,8 @@ async function populateNeo4jDatabase() {
         pics: Array(5).fill(profilePic),
         setup_done: true,
         verified: true,
-        is_logged: faker.datatype.boolean({ probability: 0.3 }), // 30% chance of being logged in
-        fame_rating: faker.number.int({ min: 0, max: 100 }),
-        created_at: faker.date.past({ years: 1 }).toISOString(),
-        last_login: faker.date.recent({ days: 30 }).toISOString()
+        is_logged: false,
+        fame_rating: faker.number.int({ min: 0, max: 800 }),
       };
 
       // Create user node
@@ -257,8 +255,6 @@ async function populateNeo4jDatabase() {
           verified: $verified,
           is_logged: $is_logged,
           fame_rating: $fame_rating,
-          created_at: $created_at,
-          last_login: $last_login,
           notifications: []
         })
       `,

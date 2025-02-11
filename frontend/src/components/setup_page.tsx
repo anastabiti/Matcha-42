@@ -236,7 +236,7 @@ function Setup_page() {
 
     try {
       const response = await fetch(
-        "http://localhost:3000/api/user/information",
+        `${import.meta.env.VITE_BACKEND_IP}/api/user/information`,
         {
           method: "POST",
           credentials: "include",
@@ -267,7 +267,7 @@ function Setup_page() {
             }
           }
           // new_data.append("image_hna", images_FILES);
-          await fetch("http://localhost:3000/api/user/upload", {
+          await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/user/upload`, {
             method: "POST",
             credentials: "include",
             body: new_data

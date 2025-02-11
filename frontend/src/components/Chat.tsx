@@ -13,7 +13,7 @@ interface Message {
   date: string;
 }
 
-export const socket = io("http://localhost:3000", {
+export const socket = io(`${import.meta.env.VITE_BACKEND_IP}`, {
   withCredentials: true
 });
 
@@ -27,7 +27,7 @@ const Chat = () => {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const response = await fetch(`http://localhost:3000/api/chat/get_messages/${username}`, {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/chat/get_messages/${username}`, {
           credentials: 'include'
         });
         

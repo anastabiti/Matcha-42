@@ -9,7 +9,7 @@ const IsLogged = () => {
     const checkAuthStatus = async () => {
       try {
         
-        const response = await fetch(`http://localhost:3000/api/user/is_logged`, {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/user/is_logged`, {
           method: 'GET',
           credentials: 'include',
           headers: {

@@ -17,7 +17,7 @@
 //     setSuccess("");
 
 //     try {
-//       const response = await fetch("http://localhost:3000/api/password_reset", {
+//       const response = await fetch("${import.meta.env.VITE_BACKEND_IP}/api/password_reset", {
 //         method: "POST",
 //         headers: {
 //           "Content-Type": "application/json",
@@ -123,7 +123,7 @@ const ResetPassword = () => {
     if (isResetPage) {
       try {
         const token = searchParams.get("token");
-        const response = await fetch("http://localhost:3000/api/reset_it", {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/reset_it`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
@@ -156,7 +156,7 @@ const ResetPassword = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:3000/api/password_reset", {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/password_reset`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

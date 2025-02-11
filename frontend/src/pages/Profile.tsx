@@ -103,7 +103,7 @@ function Profile() {
   useEffect(function () {
     async function fetchUserInfo() {
       try {
-        const response = await fetch("http://localhost:3000/api/user/info", {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/user/info`, {
           credentials: "include"
         });
         if (response.ok) {
@@ -166,7 +166,7 @@ function Profile() {
     setEmailChangeSuccess("");
 
     try {
-      const response = await fetch("http://localhost:3000/api/change_email", {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/change_email`, {
         method: "PATCH",
         credentials: "include",
         headers: {
@@ -302,7 +302,7 @@ function Profile() {
     setSuccess("");
 
     try {
-      const response = await fetch("http://localhost:3000/api/user/settings", {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/user/settings`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -328,7 +328,7 @@ function Profile() {
             }
           });
 
-          const resu_ = await fetch("http://localhost:3000/api/user/upload", {
+          const resu_ = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/user/upload`, {
             method: "POST",
             credentials: "include",
             body: new_data

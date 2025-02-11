@@ -24,7 +24,7 @@ const Matches = () => {
 
   const fetchMatches = async () => {
     try {
-      const response = await fetch("http://localhost:3000/matches", {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/matches`, {
         credentials: 'include',
       });
       const data = await response.json();

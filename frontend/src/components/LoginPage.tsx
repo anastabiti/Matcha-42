@@ -23,15 +23,15 @@ function LoginPage() {
   }
 
   function handleDiscordLogin() {
-    window.location.href = "http://localhost:3000/api/auth/discord";
+    window.location.href = `${import.meta.env.VITE_BACKEND_IP}/api/auth/discord`;
   }
 
   function handleGoogleLogin() {
-    window.location.href = "http://localhost:3000/api/auth/google";
+    window.location.href = `${import.meta.env.VITE_BACKEND_IP}/api/auth/google`;
   }
 
   function handleIntraLogin() {
-    window.location.href = "http://localhost:3000/api/auth/intra42";
+    window.location.href = `${import.meta.env.VITE_BACKEND_IP}/api/auth/intra42`;
   }
 
   async function handleSubmit(e) {
@@ -41,7 +41,7 @@ function LoginPage() {
     setSuccess("");
 
     try {
-      const response = await fetch("http://localhost:3000/api/login", {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -92,6 +92,7 @@ function LoginPage() {
                 className="w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-400"
                 value={formData.username}
                 onChange={handleInputChange}
+                autoComplete="username" //to fix this [DOM] Input elements should have autocomplete attributes (suggested: "username"): (More info: https://goo.gl/9p2vKq) <input type=​"text" name=​"username" minlength=​"6" maxlength=​"20" placeholder=​"Username" class=​"w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-400" required value>​
                 required
               />
 
@@ -105,6 +106,7 @@ function LoginPage() {
                   className="w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-400"
                   value={formData.password}
                   onChange={handleInputChange}
+                  autoComplete="new-password" //fix [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) <input type=​"password" name=​"password" minlength=​"8" maxlength=​"50" placeholder=​"Password" class=​"w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-400" required value>​
                   required
                 />
               </div>

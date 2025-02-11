@@ -19,7 +19,7 @@ const Home_page = () => {
 
 
     try {
-      const response = await fetch("http://localhost:3000/api/logout", {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/logout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
