@@ -5,16 +5,18 @@ import RadioGroup from "@mui/material/RadioGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import FormControl from "@mui/material/FormControl";
 import FormLabel from "@mui/material/FormLabel";
-import MonochromePhotosIcon from "@mui/icons-material/MonochromePhotos";
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { TextField } from "@mui/material";
 import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 import { useNavigate } from "react-router-dom";
-interface FormData {
+
+type FormData= {
+
+
   gender: string;
   biography: string;
   interests: string[];
-  age:Number;
+  age: Number;
+  pics: string[];
 }
 
 import {
@@ -60,7 +62,8 @@ function Setup_page() {
     gender: "",
     biography: "",
     interests: [],
-    age: 18
+    age: 18,
+    pics:[]
   });
 
   const navigate = useNavigate();
@@ -257,16 +260,15 @@ function Setup_page() {
             " -------------------....>>>.....images_FILES"
           );
 
-          // Use a for loop to maintain indexing and handle null values
-          for (let index = 0; index < images_FILES.length; index++) {
-            const file = images_FILES[index];
+          images_FILES.forEach(function (file, index) {
+            const key = index.toString(); // Convert index to string
             if (file) {
-              new_data.append(index, file); // Append valid files
+              new_data.append(key, file);
             } else {
-              new_data.append(index, "NULL"); // Append "NULL" for null entries
+              new_data.append(key, "NULL");
             }
-          }
-          // new_data.append("image_hna", images_FILES);
+          });
+          
           await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/user/upload`, {
             method: "POST",
             credentials: "include",
@@ -276,12 +278,19 @@ function Setup_page() {
         setSuccess("Your information has been submitted successfully.");
         // Reset form
         setFormData({
-          gender: "",
-          // sexual_preferences: "",
-          biography: "",
-          interests: [],
-          age:18
+          gender: data.gender || "",
+          biography: data["biography:"] || "",
+          interests: data.tags || [],
+          pics: data.pics || [],
+          age: data.age
         });
+        // setFormData({
+        //   gender: "",
+        //   // sexual_preferences: "",
+        //   biography: "",
+        //   interests: [],
+        //   age:18
+        // });
 
         navigate("/discover");
       } else {
@@ -340,15 +349,26 @@ function Setup_page() {
                 inputProps={{ min: 18, max: 100 }}
                 value={formData.age ?? ""}
                 onChange={(e) => {
-                  let age = e.target.value ? parseInt(e.target.value, 10) : "";
-                  if ((age >= 18 && age <= 100)) {
-                    setFormData({ ...formData, age });
+                  const { value } = e.target;
+                  //  input is cleared
+                  if (value === "") {
+                    setFormData({ ...formData, age: 18 });
+                    return;
+                  }
+                  // Convert the input string to a number
+                  const parsedAge = parseInt(value, 10);
+                  // Check if parsedAge is a valid number and within the accepted range
+                  if (
+                    !isNaN(parsedAge) &&
+                    parsedAge >= 18 &&
+                    parsedAge <= 100
+                  ) {
+                    setFormData({ ...formData, age: parsedAge });
                   }
                 }}
                 required
                 className="bg-white rounded"
               />
-
               <TextField
                 fullWidth
                 label="Biography"

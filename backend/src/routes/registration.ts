@@ -88,7 +88,7 @@ registrationRouter.post(
           city_WTK: "",
           location: null ,
           location_WTK: null ,
-          age:$age,
+          age:toInteger($age),
           password_reset_token:$password_reset_token
             })
     RETURN a`,

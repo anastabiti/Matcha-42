@@ -9,9 +9,14 @@ import {
   CardContent
 } from "@mui/material";
 
+type Coordinates = {
+  latitude: number;
+  longitude: number;
+};
+
 const Gps = () => {
-  const [location, setLocation] = useState(null);
-  const [error, setError] = useState(null);
+  const [location, setLocation] = useState<Coordinates | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,46 +25,56 @@ const Gps = () => {
       setLoading(false);
       return;
     }
-
+    //https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/getCurrentPosition
+  /*
+    getCurrentPosition(success)
+    getCurrentPosition(success, error)
+    getCurrentPosition(success, error, options)
+ */
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const coords = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude
-        };
-        setLocation(coords);
-        await saveLocation(coords);
-        setLoading(false);
+      async function (position) {
+        try {
+          let coords = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          };
+          setLocation(coords);
+          await saveLocation(coords);
+        } catch (err) {
+          setError("Failed to save location to server");
+        } finally {
+          setLoading(false);
+        }
       },
-      (error) => {
+      function (_error) {
         setError(
           "Unable to retrieve your location. Please enable location services in your browser."
         );
-        //     get thier location WTK
         fetch(`${import.meta.env.VITE_BACKEND_IP}/api/location/WTK`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
           },
           credentials: "include"
-        }).catch(() => {});
+        }).catch(function () {});
         setLoading(false);
       }
     );
-  }
-  
-  , []);
+  }, []);
 
-  const saveLocation = async (coords) => {
+  const saveLocation = async (coords: Coordinates) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/location`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        credentials: "include",
-        body: JSON.stringify(coords)
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_IP}/api/location`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          credentials: "include",
+          body: JSON.stringify(coords)
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to save location");

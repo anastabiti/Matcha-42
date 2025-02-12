@@ -12,16 +12,19 @@ import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 import { useNavigate } from "react-router-dom";
 import Gps from "../components/Gps";
 
-interface FormData {
+ type FormData= {
   last_name: string;
   first_name: string;
   email: string;
   gender: string;
   biography: string;
   interests: string[];
+  age: Number;
+  pics: string[];
 }
 
-interface UserInfo {
+
+ type UserInfo ={
   username: string;
   profile_picture: string;
   last_name: string;
@@ -35,6 +38,7 @@ interface UserInfo {
   pics: string[];
   gender: string;
   tags: string[];
+  age: Number;
 }
 
 type FormFields =
@@ -76,7 +80,8 @@ function Profile() {
     gender: "",
     biography: "",
     interests: [],
-    age: 18
+    age: 18,
+    pics:[]
   });
   const [showGps, setShowGps] = useState(false);
 
@@ -103,9 +108,12 @@ function Profile() {
   useEffect(function () {
     async function fetchUserInfo() {
       try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/user/info`, {
-          credentials: "include"
-        });
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_IP}/api/user/info`,
+          {
+            credentials: "include"
+          }
+        );
         if (response.ok) {
           const data: UserInfo = await response.json();
           console.log(data.pics, "        pics ----");
@@ -166,14 +174,17 @@ function Profile() {
     setEmailChangeSuccess("");
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/change_email`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(emailForm)
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_IP}/api/change_email`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(emailForm)
+        }
+      );
 
       const data = await response.json();
 
@@ -302,14 +313,17 @@ function Profile() {
     setSuccess("");
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/user/settings`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(formData)
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_IP}/api/user/settings`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(formData)
+        }
+      );
 
       const data = await response.json();
 
@@ -320,19 +334,31 @@ function Profile() {
           })
         ) {
           const new_data = new FormData();
+          // images_FILES.forEach(function (file, index) {
+          //   if (file) {
+          //     new_data.append(index, file);
+          //   } else {
+          //     new_data.append(index, "NULL");
+          //   }
+          // });
           images_FILES.forEach(function (file, index) {
+            const key = index.toString(); // Convert index to string
             if (file) {
-              new_data.append(index, file);
+              new_data.append(key, file);
             } else {
-              new_data.append(index, "NULL");
+              new_data.append(key, "NULL");
             }
           });
+          
 
-          const resu_ = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/user/upload`, {
-            method: "POST",
-            credentials: "include",
-            body: new_data
-          });
+          const resu_ = await fetch(
+            `${import.meta.env.VITE_BACKEND_IP}/api/user/upload`,
+            {
+              method: "POST",
+              credentials: "include",
+              body: new_data
+            }
+          );
           if (!resu_.ok) {
             const resData = await resu_.json();
             setError(resData.message || "Update failed. Please try again.");
@@ -444,9 +470,21 @@ function Profile() {
                 inputProps={{ min: 18, max: 100 }}
                 value={formData.age ?? ""}
                 onChange={(e) => {
-                  let age = e.target.value ? parseInt(e.target.value, 10) : "";
-                  if (age >= 18 && age <= 100) {
-                    setFormData({ ...formData, age });
+                  const { value } = e.target;
+                  //  input is cleared
+                  if (value === "") {
+                    setFormData({ ...formData, age: 18 });
+                    return;
+                  }
+                  // Convert the input string to a number
+                  const parsedAge = parseInt(value, 10);
+                  // Check if parsedAge is a valid number and within the accepted range
+                  if (
+                    !isNaN(parsedAge) &&
+                    parsedAge >= 18 &&
+                    parsedAge <= 100
+                  ) {
+                    setFormData({ ...formData, age: parsedAge });
                   }
                 }}
                 required
@@ -601,7 +639,7 @@ function Profile() {
                 label="Password"
                 type="spassword"
                 value={emailForm.password}
-                 autoComplete="current-password"
+                autoComplete="current-password"
                 onChange={(e) =>
                   setEmailForm((prev) => ({
                     ...prev,

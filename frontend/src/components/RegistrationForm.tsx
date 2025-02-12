@@ -1,6 +1,5 @@
 import { useState } from "react";
 import Button from "@mui/material/Button";
-import FacebookIcon from "@mui/icons-material/Facebook";
 // https://mui.com/material-ui/material-icons/?srsltid=AfmBOopJikFhdTyZ7jeW_GHSILmUTDSBVafswowgwSgwNmSJRP6PpTKQ&query=google&selected=Google
 import GoogleIcon from "@mui/icons-material/Google";
 import { Link } from "react-router-dom";
@@ -12,7 +11,7 @@ const RegistrationForm = () => {
     first_name: "",
     last_name: "",
     password: "",
-    age: ""
+    age: 0
   });
 
   function handleDiscordLogin() {
@@ -30,7 +29,7 @@ const RegistrationForm = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const handleAgeChange = (e) => {
+  const handleAgeChange = (e:any) => {
     const value = e.target.value;
 
     // Convert to number and validate

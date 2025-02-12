@@ -14,7 +14,7 @@ function LoginPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  function handleInputChange(event) {
+  function handleInputChange(event:any) {
     const { name, value } = event.target;
     setFormData({
       ...formData,
@@ -34,7 +34,7 @@ function LoginPage() {
     window.location.href = `${import.meta.env.VITE_BACKEND_IP}/api/auth/intra42`;
   }
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e:any) {
     e.preventDefault();
     setIsLoading(true);
     setError("");
