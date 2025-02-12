@@ -318,6 +318,82 @@ interactions.delete("/blocks/:username", authenticateToken_Middleware, async (re
 	}
   });
 
-  
+  interactions.get("/visit-history", authenticateToken_Middleware, async (req: any, res: any) => {
+    if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const username = req.user.username;
+    const session = driver.session();
+
+    try {
+        const result = await session.run(
+            `
+            MATCH (user:User {username: $username})-[v:VIEWED]->(viewed:User)
+            RETURN {
+                username: viewed.username,
+                first_name: viewed.first_name,
+                last_name: viewed.last_name,
+                profile_picture: viewed.profile_picture,
+                lastViewedAt: v.lastViewedAt
+            } as history
+            ORDER BY v.lastViewedAt DESC
+            `,
+            { username }
+        );
+
+        const history = result.records.map((record:Record) => record.get('history'));
+        
+        return res.status(200).json({
+            success: true,
+            history: history
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+        await session.close();
+    }
+});
+
+
+
+interactions.get("/profile-likes", authenticateToken_Middleware, async (req: any, res: any) => {
+  if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  const username = req.user.username;
+  const session = driver.session();
+
+  try {
+      const result = await session.run(
+          `
+          MATCH (liker:User)-[l:LIKES]->(user:User {username: $username})
+          RETURN {
+              username: liker.username,
+              first_name: liker.first_name,
+              last_name: liker.last_name,
+              profile_picture: liker.profile_picture,
+              lastViewedAt: l.createdAt
+          } as likes
+          ORDER BY l.createdAt DESC
+          `,
+          { username }
+      );
+
+      const likes = result.records.map((record:Record) => record.get('likes'));
+      
+      return res.status(200).json({
+          success: true,
+          likes: likes
+      });
+  } catch (error) {
+      console.log(error);
+      return res.status(500).json({ error: "Internal Server Error" });
+  } finally {
+      await session.close();
+  }
+});
 
 export default interactions;
