@@ -12,6 +12,7 @@ import { driver } from "../../database";
 const neo4j = require("neo4j-driver");
 
 import argon2 from "argon2";
+import { catchAuthErrors } from "./42stra";
 
 const passport = require("passport");
 
@@ -192,57 +193,33 @@ passport.use(
   )
 );
 
+// ---------------------------------------------------
 discord_auth.get("/auth/discord", passport.authenticate("discord"));
 
-discord_auth.get("/auth/discord/callback", function (req: any, res: Response) {
-  passport.authenticate(
-    "discord",
-    { session: false },
-    async function (err: any, user: User, info: any) {
-      try {
-        if (err) {
-          console.error("Error during authentication:");
-          return res.status(401).json({ "Wrong credentials": "Error during authentication" });
-        }
+// ---------------------------------------------------
 
-        if (!user) {
-          console.error("No user found:", info);
-          return res.status(401).json("No user found");
-        }
-
-        //   " done--------------------------------------------------------\
-        //   --------------------------------"
-        // );
-
-        // req.session.user = {
-        //   username: user.username,
-        //   email: user.email,
-        //   setup_done: user.setup_done,
-        // };
-        // await req.session.save();
-
-        const token = generateAccessToken(user);
-        if (!token) {
-          console.error("Failed to generate authentication token");
-          return res.status(401).json({ error: "Authentication failed" });
-        }
-
-        res.cookie("jwt_token", token, {
-          httpOnly: true,
-          sameSite: "lax",
-          maxAge: 3600000, // 1 hour in milliseconds
-        });
-
-        if (user.setup_done) {
-          return res.status(200).redirect(`${process.env.front_end_ip}/discover`);
-        } else {
-          return res.status(200).redirect(`${process.env.front_end_ip}/setup`);
-        }
-      } catch (tokenError) {
-        console.error("Error generating token:", tokenError);
-        return res.status(400).json("Error generating token");
+discord_auth.get(
+  "/auth/discord/callback",
+  passport.authenticate("discord", { session: false }),
+  catchAuthErrors,
+  async function (req: any, res: any, next: any) {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.redirect(`${process.env.front_end_ip}/login?error=no_user`);
       }
+
+      const token = generateAccessToken(user);
+      res.cookie("jwt_token", token, {
+        httpOnly: true,
+        maxAge: 3600000, // 1 hour in milliseconds
+      });
+
+      res.redirect(`${process.env.front_end_ip}${user.setup_done ? "/discover" : "/setup"}`);
+    } catch (error) {
+      return res.redirect(`${process.env.front_end_ip}/login?error=error`);
     }
-  )(req, res);
-});
+  }
+);
+
 export default discord_auth;

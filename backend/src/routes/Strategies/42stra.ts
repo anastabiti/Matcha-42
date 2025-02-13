@@ -1,20 +1,12 @@
 import express, { Request, Response } from "express";
-import { env } from "process";
-const router = express.Router();
-const jwt = require("jsonwebtoken");
-
 import argon2 from "argon2";
-
-const forty_two_str = express.Router();
-const crypto = import("crypto");
-import nodemailer from "nodemailer";
-import { auth } from "neo4j-driver-core";
+import { Router as FortyTwoRouter } from "express";
+import * as crypto from "crypto";
 import { Profile, VerifyCallback } from "passport-google-oauth20";
 import { generateAccessToken, User } from "../auth";
 import { driver } from "../../database";
-const neo4j = require("neo4j-driver");
-
-const passport = require("passport");
+import passport from "passport";
+const forty_two_str = express.Router();
 
 // ----------------------------------------------------------------------------------
 //  intra42 STRATEGY ---------------------------------------------------------------
@@ -38,14 +30,14 @@ export const create_new_user_cipher = `CREATE (n:User {
               fame_rating:0,            
               is_logged:  true,
               age:18,notifications:[],
-    country: "",
-    city: "",
-    country_WTK: "",
-    city_WTK: "",
-    location: null,
-    location_WTK: null
+              country: "",
+              city: "",
+              country_WTK: "",
+              city_WTK: "",
+              location: null,
+              location_WTK: null
             })
-            RETURN {
+              RETURN {
               username: n.username,
               email: n.email,
               first_name: n.first_name,
@@ -73,17 +65,18 @@ passport.use(
       cb: VerifyCallback
     ) {
       try {
-        //   id: '90435',
-        // username: 'atabiti',
-        // displayName: 'Anas Tabiti',
-        // name: { familyName: 'Tabiti', givenName: 'Anas' },
-        // profileUrl: 'https://api.intra.42.fr/v2/users/atabiti',
-        // emails: [ { value: 'atabiti@student.1337.ma' } ],
+        //   id: '....',
+        // username: 'login',
+        // displayName: 'Anas ....',
+        // name: { familyName: '.....', givenName: 'Anas' },
+        // profileUrl: 'https://api.intra.42.fr/v2/users/login',
+        // emails: [ { value: 'login@student.1337.ma' } ],
         // phoneNumbers: [ { value: 'hidden' } ],
         // photos: [ { value: undefined } ],
         // provider: '42',
-        console.log(profile.id, "  42 profile");
+
         const new_session = await driver.session();
+
         if (new_session) {
           const email_ = profile.emails?.[0]?.value || profile._json?.email;
 
@@ -119,17 +112,12 @@ passport.use(
 
               return cb(null, user_x);
             } else {
-              console.log(
-                " create a new User 42 auth--------------- \n\n\n\n",
-                profile.username,
-                " ]\n\n\n"
-              );
               if (profile.username) {
                 const check_useername_exists = await new_session.run(
                   `MATCH (n:User) WHERE n.username  = $username return n`,
                   { username: profile.username }
                 );
-              
+
                 if (check_useername_exists.records?.length > 0) {
                   //case: user registered with a username like "atabiti" , then a user with diff email logged with 42, but he has the same username "atabiti", i have to generate a new username for him.
                   console.log("[------same username found----] , ", check_useername_exists.records);
@@ -169,9 +157,6 @@ passport.use(
             }
           }
         }
-
-        
-
       } catch (error) {
         return cb(error, false);
       }
@@ -179,55 +164,86 @@ passport.use(
   )
 );
 
+/*--------------------------------------------------------------------------------------------------------------------------*/
+
 forty_two_str.get("/auth/intra42", passport.authenticate("42"));
 
-forty_two_str.get("/auth/intra42/callback", function (req: any, res: Response) {
-  passport.authenticate("42", { session: false }, async function (err: any, user: User, info: any) {
+/*--------------------------------------------------------------------------------------------------------------------------*/
+
+// forty_two_str.get("/auth/intra42/callback", async function (req: any, res: Response)
+//  {
+//   passport.authenticate("42", { session: false }, async function (err: any, user: User, info: any) {
+//     try {
+//       if (err) {
+//         console.error("Error during authentication:");
+//         return res.status(401).json({ "Wrong credentials": "Error during authentication" });
+//       }
+
+//       if (!user) {
+//         console.error("No user found:", info);
+//         return res.status(401).json("No user found");
+//       }
+
+//       const token = generateAccessToken(user);
+//       if (!token) {
+//         console.error("Failed to generate authentication token");
+//         return res.status(401).json({ error: "Authentication failed" });
+//       }
+
+//       res.cookie("jwt_token", token, {
+//         httpOnly: true,
+//         sameSite: "lax",
+//         maxAge: 3600000, // 1 hour in milliseconds
+//       });
+
+//       if (user.setup_done) {
+//         return res.status(200).redirect(`${process.env.front_end_ip}/discover`);
+//       } else {
+//         return res.status(200).redirect(`${process.env.front_end_ip}/setup`);
+//       }
+//     } catch (tokenError) {
+//       console.error("Error generating token:", tokenError);
+//       return res.status(400).json("Error generating token");
+//     }
+//   })(req, res);
+// });
+
+export const catchAuthErrors = (err: any, req: any, res: any, next: any) => {
+  console.log(err.status, " ----err.status----");
+  if (err.status === 500 || err instanceof Error) {
+    return res.redirect(`${process.env.front_end_ip}/login?error=server_error`);
+  }
+  // next(err);
+};
+
+forty_two_str.get(
+  "/auth/intra42/callback",
+  passport.authenticate("42", { session: false }),
+  catchAuthErrors,
+  async function (req: any, res: any, next: any) {
     try {
-      if (err) {
-        console.error("Error during authentication:");
-        return res.status(401).json({ "Wrong credentials": "Error during authentication" });
-      }
-
+      const user = req.user;
       if (!user) {
-        console.error("No user found:", info);
-        return res.status(401).json("No user found");
+        return res.redirect(`${process.env.front_end_ip}/login?error=no_user`);
       }
-
-      //   " done--------------------------------------------------------\
-      //   --------------------------------"
-      // );
-
-      // req.session.user = {
-      //   username: user.username,
-      //   email: user.email,
-      //   setup_done: user.setup_done,
-      // };
-      // await req.session.save();
 
       const token = generateAccessToken(user);
-      if (!token) {
-        console.error("Failed to generate authentication token");
-        return res.status(401).json({ error: "Authentication failed" });
-      }
-
       res.cookie("jwt_token", token, {
         httpOnly: true,
-        sameSite: "lax",
+        /*What Does the HttpOnly Cookie Flag Do?
+    The HttpOnly cookie flag is often added to cookies that may contain sensitive information about the user.
+    Essentially, this type of flag tells the server to not reveal cookie information contained in embedded scripts. 
+    HttpOnly also tells the server that the information contained in the flagged cookies should not be transferred beyond the server. 
+    This flag is especially important in protecting secure information that could be compromised during a cross-site request forgery (CSRF) attack or 
+    if there is a flaw in the code that causes cross-site scripting (XSS). Both of these instances could lead user data to be leaked to hackers */
         maxAge: 3600000, // 1 hour in milliseconds
       });
 
-      if (user.setup_done) {
-        return res.status(200).redirect(`${process.env.front_end_ip}/discover`);
-      } else {
-        return res.status(200).redirect(`${process.env.front_end_ip}/setup`);
-      }
-    } catch (tokenError) {
-      console.error("Error generating token:", tokenError);
-      return res.status(400).json("Error generating token");
+      res.redirect(`${process.env.front_end_ip}${user.setup_done ? "/discover" : "/setup"}`);
+    } catch (error) {
+      return res.redirect(`${process.env.front_end_ip}/login?error=error`);
     }
-  })(req, res);
-});
+  }
+);
+
 export default forty_two_str;
-// atabiti_a
-//sjnj^*7t87t877dsKK
