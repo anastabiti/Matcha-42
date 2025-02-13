@@ -200,6 +200,7 @@ function Setup_page() {
       imageUploadDivs.push(
         <div key={i} className="flex justify-center">
           <label className="w-32 h-32 flex items-center  justify-center border-2 border-dashed border-gray-300 rounded-full cursor-pointer hover:border-blue-500">
+            {i === 0 && "Profile pic "}
             {images_url[i] ? (
               <img
                 src={images_url[i]}
