@@ -231,8 +231,8 @@ function Setup_page() {
   async function handleSubmit(event: React.FormEvent): Promise<void> {
     if(images_FILES[0] === null)
     {
-        setIsLoading(true);
-      console.log("No image\n\n\n")
+      event.preventDefault();
+
       setError("Please add at least one image index 0!");
     }
     else
@@ -241,8 +241,7 @@ function Setup_page() {
     
     // console.log("there is an image\n")
     // return
-    event.preventDefault();
-    setIsLoading(true);
+    event.preventDefault(); //Clicking on a "Submit" button, prevent it from submitting a form
     setError("");
     setSuccess("");
 
