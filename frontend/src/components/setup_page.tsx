@@ -9,15 +9,13 @@ import { TextField } from "@mui/material";
 import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 import { useNavigate } from "react-router-dom";
 
-type FormData= {
-
-
+type FormData = {
   gender: string;
   biography: string;
   interests: string[];
   age: Number;
   pics: string[];
-}
+};
 
 import {
   PhotoCamera,
@@ -63,7 +61,7 @@ function Setup_page() {
     biography: "",
     interests: [],
     age: 18,
-    pics:[]
+    pics: []
   });
 
   const navigate = useNavigate();
@@ -74,7 +72,6 @@ function Setup_page() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
 
   // Function to handle toggling interests
   function toggleInterest(interest: string) {
@@ -239,7 +236,7 @@ function Setup_page() {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_IP}/api/user/information`,
+        `${import.meta.env.VITE_BACKEND_IP}/api/user/setup_information`,
         {
           method: "POST",
           credentials: "include",
@@ -252,29 +249,31 @@ function Setup_page() {
 
       const data = await response.json();
 
-      if (response.ok) {
-        if (images_FILES) {
-          const new_data = new FormData();
-          console.log(
-            images_FILES,
-            " -------------------....>>>.....images_FILES"
-          );
+      if (images_FILES) {
+        const new_data = new FormData();
+        console.log(
+          images_FILES,
+          " -------------------....>>>.....images_FILES"
+        );
 
-          images_FILES.forEach(function (file, index) {
-            const key = index.toString(); // Convert index to string
-            if (file) {
-              new_data.append(key, file);
-            } else {
-              new_data.append(key, "NULL");
-            }
-          });
-          
-          await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/user/upload`, {
-            method: "POST",
-            credentials: "include",
-            body: new_data
-          });
-        }
+        images_FILES.forEach(function (file, index) {
+          const key = index.toString(); // Convert index to string
+          if (file) {
+            new_data.append(key, file);
+          } else {
+            new_data.append(key, "NULL");
+          }
+        });
+
+         await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/user/upload`, {
+          method: "POST",
+          credentials: "include",
+          body: new_data
+        });
+
+       
+      }
+      if (response.ok) {
         setSuccess("Your information has been submitted successfully.");
         // Reset form
         setFormData({
@@ -454,6 +453,8 @@ function Setup_page() {
                     <input
                       type="text"
                       placeholder="New Interest"
+                      minLength={5}
+                      maxLength={30}
                       className="flex-1 px-4 py-2 rounded-full text-sm font-medium transition-colors bg-gray-800 text-gray-300"
                       value={new_interest}
                       onChange={handleNewInterestChange}

@@ -19,9 +19,9 @@ export type UserJWTPayload = {
 };
 
 user_information_Router.post(
-  "/user/information",
+  "/user/setup_information",
   authenticateToken_Middleware,
-  validateAge,validateBiography,validateGender,
+  validateAge,validateBiography,validateGender,validateInterests,
   async (req: any, res: any) => {
     
     
@@ -244,7 +244,8 @@ user_information_Router.post(
 
       const session = driver.session();
       const keys: string[] = Object.keys(files);
-
+      // if(keys.length <= 0)
+      // return res.status(200).json("No files");
       // Get existing pics array
       const result = await session.run(
         `MATCH (u:User {username: $username}) 
