@@ -35,9 +35,11 @@ user_information_Router.post(
     console.log(_user, " ==================+++++++++++++++++++++101010");
     if (_user.username) {
       console.log(_user.setup_done, " user.setup_done");
-      if (_user.setup_done == true) {
-        return res.status(400).json("Already done");
-      }
+
+      //return this later. -------
+      // if (_user.setup_done == true) {
+      //   return res.status(400).json("Already done");
+      // }
       const session = driver.session();
       if (session) {
         if (await req.body.interests) {

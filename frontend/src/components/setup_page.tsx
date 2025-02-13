@@ -229,6 +229,18 @@ function Setup_page() {
 
   // Function to handle form submission
   async function handleSubmit(event: React.FormEvent): Promise<void> {
+    if(images_FILES[0] === null)
+    {
+        setIsLoading(true);
+      console.log("No image\n\n\n")
+      setError("Please add at least one image index 0!");
+    }
+    else
+    {
+
+    
+    // console.log("there is an image\n")
+    // return
     event.preventDefault();
     setIsLoading(true);
     setError("");
@@ -304,9 +316,10 @@ function Setup_page() {
         setError("Unable to connect to server. Please try again later.");
       }
     }
-
+    
     setIsLoading(false);
   }
+}
 
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-12">
@@ -317,7 +330,7 @@ function Setup_page() {
               Setup Your Account
             </h2>
 
-            <form onSubmit={handleSubmit} className="">
+            <form  className="">
               <FormControl>
                 <FormLabel id="gender">Gender</FormLabel>
                 <RadioGroup
@@ -516,9 +529,9 @@ function Setup_page() {
               )}
 
               <button
-                type="submit"
+              onClick={handleSubmit}
                 className="w-full bg-pink-600 hover:bg-pink-700 text-white rounded-xl py-3 font-semibold"
-                disabled={isLoading}
+                // disabled={isLoading}
               >
                 {isLoading ? "Submitting..." : "Submit your information"}
               </button>
