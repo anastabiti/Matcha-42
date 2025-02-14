@@ -476,6 +476,7 @@ function Profile() {
                   }
                 }}
                 className="bg-white rounded"
+                required
               />
 
               <TextField
@@ -492,6 +493,7 @@ function Profile() {
                   }
                 }}
                 className="bg-white rounded"
+                required
               />
 
               <FormControl className="w-full">
@@ -578,6 +580,7 @@ function Profile() {
                     handleFormChange("biography", e.target.value);
                   }
                 }}
+                required
                 // helperText={`${formData.biography?.length || 0}/200 characters`}
                 className="bg-white rounded"
               />
