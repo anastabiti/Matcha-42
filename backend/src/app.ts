@@ -21,14 +21,10 @@ import notify from "./routes/notifications";
 import { driver } from "./database/index";
 
 const app: Application = express();
-// https://www.npmjs.com/package/connect-neo4j
-const neo4j = require("neo4j-driver");
 
-// const Neo4jStore = require("connect-neo4j")(session);
 
-app.use(fileUpload({limites:{
-  fileSize: 10000000 //byte, // Around 10MB
-}})); // Use the express-fileupload middleware
+
+app.use(fileUpload()); // Use the express-fileupload middleware
 
 driver.verifyConnectivity()
   .then(() => {

@@ -301,7 +301,7 @@ function Setup_page() {
         age: data.age
       });
 
-      navigate("/discover");
+      navigate("/");
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "An unexpected error occurred";
@@ -312,7 +312,7 @@ function Setup_page() {
   }
 
   return (
-    <div className=" bg-gray-900 flex items-center justify-center mt-28">
+    <div className="flex items-center justify-center mt-28">
       <div className="w-full max-w-[95%] sm:max-w-md">
         <div className="bg-[#A3195B] rounded-2xl p-4 sm:p-6">
           <div className="space-y-4 sm:space-y-6">
@@ -321,8 +321,7 @@ function Setup_page() {
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-              <FormControl>
-                <FormLabel id="gender">Gender</FormLabel>
+                <div id="gender">Gender</div>
                 <RadioGroup
                   aria-labelledby="gender"
                   value={formData.gender}
@@ -342,7 +341,6 @@ function Setup_page() {
                     label="Male"
                   />
                 </RadioGroup>
-              </FormControl>
 
               <TextField
                 fullWidth

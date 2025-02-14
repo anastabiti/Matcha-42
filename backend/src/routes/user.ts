@@ -231,7 +231,7 @@ user_information_Router.post(
 );
 
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/jpg", "image/png"];
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 5000000 // 5MB
 
 user_information_Router.post(
   "/user/upload",
@@ -239,11 +239,11 @@ user_information_Router.post(
   async function (req: any, res: any) {
     const _user = req.user;
     try {
+      console.log(req.files[0].size,  " req.file")
       const files = await req.files;
       if (!files) {
         return res.status(200).json("No files");
       }
-
       const session = driver.session();
       const keys: string[] = Object.keys(files);
       // if(keys.length <= 0)
@@ -258,6 +258,12 @@ user_information_Router.post(
       console.log();
       for (let i = 0; i < keys.length; i++) {
         const file = files[keys[i]];
+        console.log(file)
+        if(file.size > MAX_FILE_SIZE || file.size <= 0)
+        {
+          return res.status(400).json("Too large image size !!!.");
+
+        }
         console.log(
           "[",
           files[keys[i]],
