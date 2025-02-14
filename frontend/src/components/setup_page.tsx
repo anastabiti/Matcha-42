@@ -39,8 +39,8 @@ type ImageError = {
   message: string;
 };
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const SUPPORTED_FORMATS = ["image/jpeg", "image/jpg", "image/png"];
+export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+export const SUPPORTED_FORMATS = ["image/jpeg", "image/jpg", "image/png"];
 const MAX_IMAGES = 5;
 
 function Setup_page() {

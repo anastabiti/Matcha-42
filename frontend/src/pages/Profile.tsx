@@ -11,6 +11,7 @@ import { TextField } from "@mui/material";
 import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 import { useNavigate } from "react-router-dom";
 import Gps from "../components/Gps";
+import { MAX_FILE_SIZE, SUPPORTED_FORMATS } from "../components/setup_page";
 
  type FormData= {
   last_name: string;
@@ -64,7 +65,11 @@ function Profile() {
     "#Swimming",
     "#Running"
   ];
-
+  type ImageError = {
+    index: number;
+    message: string;
+  };
+  
   interface EmailChangeForm {
     newEmail: string;
     password: string;
@@ -103,6 +108,7 @@ function Profile() {
   const [emailChangeError, setEmailChangeError] = useState("");
   const [emailChangeSuccess, setEmailChangeSuccess] = useState("");
   const [isEmailChangeLoading, setIsEmailChangeLoading] = useState(false);
+  const [imageErrors, setImageErrors] = useState<ImageError[]>([]);
 
   // Fetch user data on component mount
   useEffect(function () {
@@ -246,72 +252,137 @@ function Profile() {
       };
     });
   }
+  const validateImage = (file: File): string | null => {
+    if (!SUPPORTED_FORMATS.includes(file.type)) {
+      return "Only JPG and PNG images are supported";
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      return "File size must be less than 5MB";
+    }
+    return null;
+  };
 
-  function handle_image_change(
+
+  const handle_image_change = async (
     event: React.ChangeEvent<HTMLInputElement>,
     index: number
-  ) {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  ) => {
+    const files = event.target.files;
+    if (!files || !files[0]) return;
 
+    const file = files[0];
+    const validationError = validateImage(file);
+
+    if (validationError) {
+      setImageErrors((prev) => [
+        ...prev.filter((e) => e.index !== index),
+        { index, message: validationError }
+      ]);
+      return;
+    }
+
+    // Clear any existing errors for this index
+    setImageErrors((prev) => prev.filter((e) => e.index !== index));
+
+    // Create URL and update state
     const image_url = URL.createObjectURL(file);
-    setimages_url(function (prev) {
+    setimages_url((prev) => {
       const updated = [...prev];
+      if (updated[index]) URL.revokeObjectURL(updated[index]!);
       updated[index] = image_url;
       return updated;
     });
 
-    setImages_file(function (prev) {
+    setImages_file((prev) => {
       const updated = [...prev];
       updated[index] = file;
       return updated;
     });
-  }
+  };
+
+  // function handle_image_change(
+  //   event: React.ChangeEvent<HTMLInputElement>,
+  //   index: number
+  // ) {
+  //   const file = event.target.files?.[0];
+  //   if (!file) return;
+
+  //   const image_url = URL.createObjectURL(file);
+  //   setimages_url(function (prev) {
+  //     const updated = [...prev];
+  //     updated[index] = image_url;
+  //     return updated;
+  //   });
+
+  //   setImages_file(function (prev) {
+  //     const updated = [...prev];
+  //     updated[index] = file;
+  //     return updated;
+  //   });
+  // }
 
   function generateImageUploadDivs() {
     return (
-      <div className="grid grid-cols-2 gap-4">
-        {Array(5)
-          .fill(null)
-          .map(function (_, i) {
-            return (
-              <div key={i} className="flex justify-center">
-                <label className="w-32 h-32 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-full cursor-pointer hover:border-blue-500">
-                  {images_url[i] ? (
-                    <img
-                      src={images_url[i] || ""}
-                      alt={`User image ${i + 1}`}
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  ) : (
-                    <AddPhotoAlternateIcon
-                      fontSize="large"
-                      className="text-gray-500"
-                    />
-                  )}
-                  <input
-                    id={`image_file_${i}`}
-                    type="file"
-                    accept="image/*"
-                    onChange={function (e) {
-                      handle_image_change(e, i);
-                    }}
-                    className="hidden"
-                  />
-                </label>
+      <div className="grid grid-cols-2 lg:grid-cols-3 sm:grid-cols-2 gap-4">
+        {Array.from({ length: 5 }, (_, i) => (
+          <div key={i} className="flex justify-center">
+            <label className="w-32 h-32 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-full cursor-pointer hover:border-blue-500">
+              {i === 0 && <div className="absolute text-white">Profile</div>}
+              {images_url[i] ? (
+                <img
+                  src={images_url[i]!}
+                  className="w-full h-full rounded-full object-cover"
+                  alt={`Upload ${i + 1}`}
+                />
+              ) : (
+                <AddPhotoAlternateIcon
+                  fontSize="large"
+                  className="text-gray-500"
+                />
+              )}
+              <input
+                id={`image_file_${i}`}
+                type="file"
+                accept="image/jpeg,image/png"
+                onChange={(e) => handle_image_change(e, i)}
+                className="hidden"
+              />
+            </label>
+            {imageErrors.find((error) => error.index === i) && (
+              <div className="absolute mt-32 text-yellow-300 text-xs">
+                {imageErrors.find((error) => error.index === i)?.message}
               </div>
-            );
-          })}
+            )}
+          </div>
+        ))}
       </div>
     );
   }
+
 
   async function handleSubmit(event: React.FormEvent): Promise<void> {
     event.preventDefault();
     setIsLoading(true);
     setError("");
     setSuccess("");
+    if (!formData.pics[0]) {
+      setError("Please add a profile picture!");
+      setIsLoading(false);
+      return;
+    }
 
+    if(!formData.gender)
+      {
+      setError("Please add  you gender!");
+      setIsLoading(false);
+      return;
+    }
+    if(!formData.interests.length)
+      {
+      setError("Please add  your interests!");
+      setIsLoading(false);
+      return;
+    }
     try {
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_IP}/api/user/settings`,
