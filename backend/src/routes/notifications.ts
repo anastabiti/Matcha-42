@@ -9,10 +9,8 @@ notify.get(
   "/notifications",
   authenticateToken_Middleware,
   async function (req: Request, res: Response) {
-    console.log("here ------");
     const session = driver.session();
     const user: any = req.user;
-    console.log(user, " user is hada0");
     try {
       const query = `
           MATCH (user:User {username: $username})-[:YOU_HAVE_A_NOTIFICATION]->(n:Notification)
@@ -32,10 +30,8 @@ notify.get(
       });
 
       const notifications = result.records.map((record: Record) => record.get("notification"));
-      console.log(notifications, " ----------");
       res.status(200).json(notifications);
     } catch (error) {
-      console.error("Error fetching notifications:", error);
       res.status(400).json({ error: "Failed to fetch notifications" });
     } finally {
       await session.close();
@@ -47,12 +43,10 @@ notify.patch(
   "/notifications/:notificationId/read",
   authenticateToken_Middleware,
   async function (req: Request, res: Response) {
-    console.log("here ------");
     const session = driver.session();
     const user: any = req.user;
     const notf_ID = req.params;
 
-    console.log("logged user is ", user.username  , " want too delete this notif " , notf_ID);
 
 
     try {
@@ -67,7 +61,6 @@ notify.patch(
             notificationId: notf_ID.notificationId,
           }
         );
-        console.log(result.records);
         res.status(200).json("DONE");
       }
       return;
@@ -81,7 +74,6 @@ notify.patch(
   "/notifications/read-all",
   authenticateToken_Middleware,
   async function (req: Request, res: Response) {
-    console.log("here ------");
     const session = driver.session();
     const user: any = req.user;
 
@@ -98,7 +90,6 @@ notify.patch(
             username: user.username,
           }
         );
-        console.log(result.records);
         res.status(200).json("DONE");
       }
       return;

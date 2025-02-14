@@ -240,8 +240,7 @@ export function validateBiography(req: Request, res: Response, next: NextFunctio
 export function validateInterests(req: Request, res: Response, next: NextFunction): void {
   try {
     const interests = req.body.interests;
-    console.log(interests);
-    console.log(interests.length, "----");
+
     if (!interests) {
       res.status(400).json("Interests are required");
       return;
@@ -258,7 +257,6 @@ export function validateInterests(req: Request, res: Response, next: NextFunctio
 
     next();
   } catch {
-    console.log("errror hna ");
     res.status(400).json("Invalid Interests");
     return;
   }

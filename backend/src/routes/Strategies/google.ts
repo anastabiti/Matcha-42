@@ -31,14 +31,14 @@ passport.use(
       profile: Profile,
       cb: VerifyCallback
     ) {
-      console.log("----------------------------------------------");
+      // console.log("----------------------------------------------");
       try {
-        console.log(profile, " profile");
-        console.log(accessToken, " accessToken");
-        console.log(refreshToken, " refreshToken");
+        // console.log(profile, " profile");
+        // console.log(accessToken, " accessToken");
+        // console.log(refreshToken, " refreshToken");
         const new_session = await driver.session();
         if (new_session) {
-          console.log(profile?.emails?.[0].value || "email not found");
+          // console.log(profile?.emails?.[0].value || "email not found");
           if (profile?.emails?.[0].value) {
             const resu_ = await new_session.run(
               // `MATCH (n:User) WHERE n.email = $email RETURN {n.username, n.email, n.first_name, n.last_name, n.verified} as n`,
@@ -58,17 +58,17 @@ passport.use(
             );
             if (resu_.records?.length > 0) {
               //check if user is not
-              console.log(resu_.records[0].get("user").verified, " -------------------------->");
+              // console.log(resu_.records[0].get("user").verified, " -------------------------->");
               //check if user is not verified
               if (resu_.records[0].get("user").verified === false) {
-                console.log("email not verified");
+                // console.log("email not verified");
                 await new_session.close();
                 return cb(null, false);
               }
 
-              console.log("user exists", resu_.records[0].get("user"));
+              // console.log("user exists", resu_.records[0].get("user"));
               const user_x = resu_.records[0]?.get("user");
-              console.log(user_x, " user_x");
+              // console.log(user_x, " user_x");
               await new_session.close();
               return cb(null, user_x);
             } else {
@@ -125,7 +125,7 @@ passport.use(
                 );
                 let username_ = null;
                 if (check_username.records.length > 0) {
-                  console.log("username exists -==--=-=-=- Gooooooooooooooooooooogle");
+                  // console.log("username exists -==--=-=-=- Gooooooooooooooooooooogle");
                   username_ = (await crypto).randomBytes(12).toString("hex");
                 }
 
@@ -182,7 +182,7 @@ passport.use(
           }
         }
       } catch (error) {
-        console.log("error ", error);
+        // console.log("error ", error);
         return cb(error, false);
       }
     }

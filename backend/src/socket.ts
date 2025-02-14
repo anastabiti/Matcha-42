@@ -22,7 +22,7 @@ export function setupSocket(server: HttpServer) {
   });
 
   io.on("connection", async (socket: Socket) => {
-    console.log(`⚡ Client connected: ${socket.id}`);
+    
 
     const cookie_jwt = socket.handshake.headers.cookie?.split(";") || [];
     let jwt_token = null;
@@ -39,9 +39,8 @@ export function setupSocket(server: HttpServer) {
         // socket.join(decoded.username);
         const username = decoded.username;
 
-        // const roomName = `${username}_${socket.id}`;
 
-        console.log(`✅ User ${username} joined room: ${username}`);
+        
         socket.join(username);
         socket.on("leaveRoom", async ({ username }) => {
           const session_db = driver.session();
@@ -49,12 +48,7 @@ export function setupSocket(server: HttpServer) {
             socket.leave(username);
           } catch {}
         });
-        // io.in(decoded.username)
-        //   .fetchSockets()
-        //   .then((sockets) => {
-        //     const socketIds = sockets.map((s) => s.id);
-        //     console.log(`Sockets in room ${decoded.username}:`, socketIds);
-        //   });
+    
 
         socket.on("disconnect", () => {
           console.log(`❌ User ${decoded.username} disconnected`);

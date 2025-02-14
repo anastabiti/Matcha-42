@@ -49,7 +49,7 @@ const ProfilePage = (props: ProfilePageProps) => {
 
     const recordView = async () => {
       try {
-        await fetch('${import.meta.env.VITE_BACKEND_IP}/view-profile', {
+        await fetch(`${import.meta.env.VITE_BACKEND_IP}/view-profile`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'

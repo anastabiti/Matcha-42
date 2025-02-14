@@ -120,7 +120,7 @@ passport.use(
 
                 if (check_useername_exists.records?.length > 0) {
                   //case: user registered with a username like "atabiti" , then a user with diff email logged with 42, but he has the same username "atabiti", i have to generate a new username for him.
-                  console.log("[------same username found----] , ", check_useername_exists.records);
+                  // console.log("[------same username found----] , ", check_useername_exists.records);
                   const diff_username =
                     profile.username + "_" + (await crypto).randomBytes(10).toString("hex");
                   const result_ = await new_session.run(create_new_user_cipher, {
@@ -209,7 +209,7 @@ forty_two_str.get("/auth/intra42", passport.authenticate("42"));
 // });
 
 export const catchAuthErrors = (err: any, req: any, res: any, next: any) => {
-  console.log(err.status, " ----err.status----");
+  // console.log(err.status, " ----err.status----");
   if (err.status === 500 || err instanceof Error) {
     return res.redirect(`${process.env.front_end_ip}/login?error=server_error`);
   }

@@ -71,7 +71,6 @@ registrationRouter.post(
         } else {
           // console.log("new User");
           user.verfication_token = (await crypto).randomBytes(20).toString("hex"); //ex: 32341856423cfac6eda221a5e3b3c9861ce96da9
-          console.log(user.verfication_token, "verfication_token");
           await session.run(
             `CREATE (a:User {
           username: $username, email: $email, password: $password,
@@ -155,7 +154,6 @@ registrationRouter.post(
 registrationRouter.get("/verify-email", async (req: Request, res: Response) => {
   try {
     const token = req.query.token;
-    console.log(token, " token");
     if (token) {
       const session = driver.session();
 

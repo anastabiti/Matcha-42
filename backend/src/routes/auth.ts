@@ -21,7 +21,7 @@ export type User = {
   verfication_token: string;
 };
 
-interface User_jwt {
+type User_jwt = {
   username: string;
   email: string;
   setup_done: boolean;
@@ -40,7 +40,7 @@ const transporter = nodemailer.createTransport({
 export function authenticateToken(req: any) {
   try {
     if (!req) return null;
-    console.log(req.headers["cookie"], " ---> 1\n");
+    // console.log(req.headers["cookie"], " ---> 1\n");
 
     let token = null;
     const cookies = req.headers.cookie?.split(";") || [];
@@ -50,7 +50,7 @@ export function authenticateToken(req: any) {
         break;
       }
     }
-    console.log(token, " ---- token");
+    // console.log(token, " ---- token");
     if (token != null) {
       const res = jwt.verify(token, process.env.JWT_TOKEN_SECRET as string);
       if (res) return res;
@@ -63,8 +63,8 @@ export function authenticateToken(req: any) {
 // -----------------------------------------------
 export const authenticateToken_Middleware = async (req: any, res: any, next: any) => {
   try {
-    // console.log(req.headers["cookie"], " ---> req.headers\n");
-    // console.log("inside middelware---------------------------")
+    console.log(req.headers["cookie"], " ---> req.headers\n");
+    console.log("inside middelware---------------------------")
     const session = driver.session();
     if (session) {
       let token = null;
@@ -76,7 +76,7 @@ export const authenticateToken_Middleware = async (req: any, res: any, next: any
         }
       }
 
-      // console.log(token, " ---- token");
+      console.log(token, " ---- token");
 
       if (!token) {
         return res.status(401).json("No token provided");
@@ -84,7 +84,7 @@ export const authenticateToken_Middleware = async (req: any, res: any, next: any
 
       try {
         const decoded: any = await jwt.verify(token, process.env.JWT_TOKEN_SECRET as string);
-        console.log(decoded.username, " decoded.username ----------------=-\n\n\n\n");
+        // console.log(decoded.username, " decoded.username ----------------=-\n\n\n\n");
         const res_db = await session.run(
           `MATCH (n:User) WHERE n.username = $username AND n.is_logged = true
           RETURN n`,
@@ -121,7 +121,7 @@ export function generateAccessToken(user: User_jwt) {
         expiresIn: "1h",
       }
     );
-    console.log("Generated token:", token);
+    // console.log("Generated token:", token);
     return token;
   } catch (error) {
     console.error("Error generating JWT:", error);
@@ -136,7 +136,7 @@ export function generateAccessToken(user: User_jwt) {
 authRouter.post("/login", validateUsername, validatePassword, async (req: any, res: Response) => {
   try {
     const password = req.body.password;
-    console.log(password, " password");
+    // console.log(password, " password");
     console.log(req.body.username, "  username");
     const session = driver.session();
     if (session) {
@@ -149,9 +149,9 @@ authRouter.post("/login", validateUsername, validatePassword, async (req: any, r
         // console.log(user_data.records[0]._fields[0].properties, " user data");
         const user = await user_data.records[0]._fields[0].properties;
         // if (user.password) console.log(user.password, "password is ");
-        console.log(user.password, " User passwordn\n\n\n\n");
+        // console.log(user.password, " User passwordn\n\n\n\n");
         if (await argon2.verify(user.password, password)) {
-          console.log("matched");
+          // console.log("matched");
           const user_ = req.body.username;
           if (user_) {
             const token = generateAccessToken(user);
@@ -160,7 +160,7 @@ authRouter.post("/login", validateUsername, validatePassword, async (req: any, r
               res.status(401).json({ error: "Authentication failed" });
               return;
             }
-            console.log(token, " [-JWT TOKEN-]");
+            // console.log(token, " [-JWT TOKEN-]");
             //check later
             const res_db = await session.run(
               `MATCH (n:User) WHERE n.username = $username AND n.verified = true
@@ -207,7 +207,7 @@ authRouter.post("/password_reset", validateEmail, async (req: Request, res: Resp
       const url_token = jwt.sign({ email: email }, process.env.JWT_TOKEN_SECRET as string, {
         expiresIn: "10min",
       });
-      console.log(url_token, " url_token\n\n\n\n--------------------------------------");
+      
       const res_ = await session.run(
         `MATCH (n:User) WHERE n.email = $email
             SET n.password_reset_token = $url_token 
@@ -263,9 +263,7 @@ authRouter.patch("/reset_it", validatePassword, async (req: Request, res: Respon
   }
 
   const jwt_: any = jwt.verify(token, process.env.JWT_TOKEN_SECRET as string);
-  console.log(jwt, " --------jwt");
   const new_session = driver.session();
-  console.log(token, " token", password, " new password is \n\n\n", jwt_.email, " email }}>>>>");
   if (new_session) {
     const db_res = await new_session.run(
       `
@@ -280,10 +278,7 @@ authRouter.patch("/reset_it", validatePassword, async (req: Request, res: Respon
         tmp_password_reset_token: (await crypto).randomBytes(25).toString("hex"),
       }
     );
-    console.log(
-      db_res.records.length,
-      " db_res.records.lenght()-------=+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n\n"
-    );
+
 
     if (db_res.records.length > 0) {
       res.status(200).json("sucess");
@@ -304,7 +299,6 @@ authRouter.patch("/reset_it", validatePassword, async (req: Request, res: Respon
 // --------------------------
 
 authRouter.post("/logout", authenticateToken_Middleware, async (req: any, res: Response) => {
-  console.log("log out -+==_==+++++_=>>.......???>>>>>>");
   try {
     const session = driver.session();
     if (session) {

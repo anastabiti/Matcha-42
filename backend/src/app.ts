@@ -35,15 +35,6 @@ driver.verifyConnectivity()
   });
 
 
-// // IMagekit initialization
-
-// const ImageKit = require("imagekit");
-// // ImageKit initialization
-// export const imagekitUploader = new ImageKit({
-//   publicKey: process.env.imagekit_publicKey,
-//   privateKey: process.env.imagekit_privateKey,
-//   urlEndpoint: process.env.imagekit_urlEndpoint
-// });
 
 
 
