@@ -239,7 +239,7 @@ user_information_Router.post(
   async function (req: any, res: any) {
     const _user = req.user;
     try {
-      console.log(req.files[0].size,  " req.file")
+      
       const files = await req.files;
       if (!files) {
         return res.status(200).json("No files");

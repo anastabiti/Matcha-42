@@ -59,6 +59,8 @@ function Setup_page() {
     "#Running"
   ];
 
+  
+
   const [availableInterests, setAvailableInterests] =
     useState(defaultInterests);
   const [new_interest, setNewInterest] = useState("");
@@ -293,15 +295,9 @@ function Setup_page() {
       }
 
       setSuccess("Your information has been submitted successfully.");
-      setFormData({
-        gender: data.gender || "",
-        biography: data["biography:"] || "",
-        interests: data.tags || [],
-        pics: data.pics || [],
-        age: data.age
-      });
+   
 
-      navigate("/");
+      navigate("/discover");
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "An unexpected error occurred";
@@ -380,7 +376,7 @@ function Setup_page() {
                 value={formData.biography}
                 onChange={(e) => {
                   if (e.target.value.length <= 200) {
-                    handleFormChange("biography", e.target.value);
+                    handleFormChange("biography", e.target.value || "");
                   }
                 }}
                 className="bg-white rounded"
@@ -457,7 +453,7 @@ function Setup_page() {
                       minLength={5}
                       maxLength={30}
                       className="flex-1 px-4 py-2 rounded-full text-sm font-medium bg-gray-800 text-gray-300"
-                      value={new_interest}
+                      value={new_interest || ""}
                       onChange={handleNewInterestChange}
                     />
                     <Button
