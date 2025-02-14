@@ -7,7 +7,7 @@ async function populateNeo4jDatabase() {
   const NEO4J_URI = "neo4j://localhost:7687";
   const NEO4J_USER = "neo4j";
   const NEO4J_PASSWORD = "kjod876fytf";
-  const TOTAL_USERS = 150;
+  const TOTAL_USERS = 500;
 
   // Cities data with coordinates
   const CITIES = {
