@@ -28,13 +28,10 @@ user_information_Router.post(
 
     let _user = req.user;
     if (!_user) {
-      console.log("User authentication failed");
       return res.status(401).json("UNAUTHORIZED");
     }
 
-    console.log(_user, " ==================+++++++++++++++++++++101010");
     if (_user.username) {
-      console.log(_user.setup_done, " user.setup_done");
 
       //return this later. -------
       if (_user.setup_done == true) {
@@ -55,15 +52,9 @@ user_information_Router.post(
             );
           }
         }
-        console.log(_user.username, " _user.username--=-=-==--=");
         if (await req.body.biography) {
           // "MATCH (n:User) WHERE n.username = $username AND n.verified = true RETURN n.password",
-          console.log(
-            typeof {
-              _username: _user.username,
-              biography: req.body.biography,
-            }
-          );
+      
 
           await session.run(
             `MATCH (n:User) WHERE n.username = $username
@@ -100,27 +91,23 @@ user_information_Router.post(
         //       );
         //     }
       }
-      console.log("llllllllllllllllllllllllllll");
       await session.close();
       // req.session.user.setup_done = true;
       // await req.session.save();
 
       _user.setup_done = true;
-      console.log("22222222222222222222222");
 
       const token = await generateAccessToken(_user);
       if (!token) {
         console.error("Failed to generate authentication token");
         return res.status(401).json({ error: "Authentication failed" });
       }
-      console.log("4444444444444444444444444");
 
       res.cookie("jwt_token", token, {
         httpOnly: true,
         sameSite: "lax",
         maxAge: 3600000, // 1 hour in milliseconds
       });
-      console.log("5555555555555555555555");
 
       return res.status(200).json("User information route");
     }
@@ -139,17 +126,14 @@ user_information_Router.post(
   async (req: any, res: any) => {
    
     const logged_user = req.user;
-    console.log(logged_user.email, " >>>>>>>>>>>>-----------email is here-<<<<<<<<<<<");
     if (!logged_user) return res.status(401).json("UNAUTH");
 
     const user_copy = { ...req.body };
     const new_session = driver.session();
-    console.log(logged_user, " logged_user\n\n\n\n\n");
     try {
       if (new_session) {
         const gender = req.body.gender;
         const email = req.body.email;
-        console.log("NEW EMAIL IS : ", email, "\n\n\n");
         // Update basic user information
         const update_db = await new_session.run(
           `  
@@ -255,10 +239,8 @@ user_information_Router.post(
         { username: _user.username }
       );
       let existingPics = result.records[0]?.get("pics") || [];
-      console.log();
       for (let i = 0; i < keys.length; i++) {
         const file = files[keys[i]];
-        console.log(file)
         if(file.size > MAX_FILE_SIZE || file.size <= 0)
         {
           return res.status(400).json("Too large image size !!!.");
@@ -310,7 +292,6 @@ user_information_Router.post(
       session.close();
       return res.status(200).json("Images uploaded successfully.");
     } catch (error) {
-      console.error("Image upload failed:", error);
       return res.status(400).json("Image upload failed.");
     }
   }
@@ -346,7 +327,6 @@ user_information_Router.get(
             { username: user.username }
           );
           if (res_of_query.records.length > 0 && res_interest.records.length > 0) {
-            console.log("here");
             const tags_interest = res_interest.records;
             let i = 0;
             let arr_ = [];
