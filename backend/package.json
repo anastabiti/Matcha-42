@@ -52,6 +52,7 @@
     "@types/node": "^22.10.10",
     "@types/nodemailer": "^6.4.17",
     "@types/passport": "^1.0.17",
+    "@types/passport-42": "^1.1.1",
     "@typescript-eslint/eslint-plugin": "^8.23.0",
     "@typescript-eslint/parser": "^8.23.0",
     "nodemon": "^3.1.9",

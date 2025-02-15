@@ -144,7 +144,7 @@ passport.use(
                     setup_done:false,
                       pics: ["","","","",""],notifications:[],
                         fame_rating:0,            
-                      age:18,
+                      age:toFloat(18),
               is_logged:  true,
     country: "",
     city: "",

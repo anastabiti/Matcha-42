@@ -29,7 +29,8 @@ export const create_new_user_cipher = `CREATE (n:User {
                pics: ["","","","",""],
               fame_rating:0,            
               is_logged:  true,
-              age:18,notifications:[],
+              age:toFloat(18)
+              ,notifications:[],
               country: "",
               city: "",
               country_WTK: "",
@@ -170,43 +171,6 @@ forty_two_str.get("/auth/intra42", passport.authenticate("42"));
 
 /*--------------------------------------------------------------------------------------------------------------------------*/
 
-// forty_two_str.get("/auth/intra42/callback", async function (req: any, res: Response)
-//  {
-//   passport.authenticate("42", { session: false }, async function (err: any, user: User, info: any) {
-//     try {
-//       if (err) {
-//         console.error("Error during authentication:");
-//         return res.status(401).json({ "Wrong credentials": "Error during authentication" });
-//       }
-
-//       if (!user) {
-//         console.error("No user found:", info);
-//         return res.status(401).json("No user found");
-//       }
-
-//       const token = generateAccessToken(user);
-//       if (!token) {
-//         console.error("Failed to generate authentication token");
-//         return res.status(401).json({ error: "Authentication failed" });
-//       }
-
-//       res.cookie("jwt_token", token, {
-//         httpOnly: true,
-//         sameSite: "lax",
-//         maxAge: 3600000, // 1 hour in milliseconds
-//       });
-
-//       if (user.setup_done) {
-//         return res.status(200).redirect(`${process.env.front_end_ip}/discover`);
-//       } else {
-//         return res.status(200).redirect(`${process.env.front_end_ip}/setup`);
-//       }
-//     } catch (tokenError) {
-//       console.error("Error generating token:", tokenError);
-//       return res.status(400).json("Error generating token");
-//     }
-//   })(req, res);
-// });
 
 export const catchAuthErrors = (err: any, req: any, res: any, next: any) => {
   // console.log(err.status, " ----err.status----");

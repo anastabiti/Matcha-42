@@ -52,7 +52,7 @@ function LoginPage() {
 
       const data = await response.json();
 
-      if (response.ok) {
+      if (response.status === 200) {
         console.log("Login successful!");
         setSuccess("Logged in successfully. Redirecting to your HomePage...");
         navigate("/discover");
