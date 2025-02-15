@@ -248,7 +248,7 @@ match.get("/profile/:username", authenticateToken_Middleware, async (req: any, r
       if(req.user.username !== username)
         {
 
-          const notificationArray = `${username} viewed your profile!`;
+          const notificationArray = `${req.user.username} viewed your profile!`;
           const result_ = await session.run(`
          MATCH (user:User {username: $username})
          CREATE (n:Notification {

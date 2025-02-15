@@ -88,6 +88,7 @@ function Profile() {
     age: 18,
     pics:[]
   });
+  const [username__ , setusername] = useState('')
   const [showGps, setShowGps] = useState(false);
 
   const navigate = useNavigate();
@@ -122,7 +123,8 @@ function Profile() {
         );
         if (response.ok) {
           const data: UserInfo = await response.json();
-          console.log(data.pics, "        pics ----");
+
+          setusername(data.username)
           setFormData({
             last_name: data.last_name || "",
             first_name: data["first_name:"] || "",
@@ -460,6 +462,7 @@ function Profile() {
             <h2 className="text-2xl font-semibold text-white mb-8">
               Edit your profile
             </h2>
+              Welcome {username__}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <TextField
