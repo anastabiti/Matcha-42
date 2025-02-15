@@ -63,8 +63,6 @@ export function authenticateToken(req: any) {
 // -----------------------------------------------
 export const authenticateToken_Middleware = async (req: any, res: any, next: any) => {
   try {
-    console.log(req.headers["cookie"], " ---> req.headers\n");
-    console.log("inside middelware---------------------------")
     const session = driver.session();
     if (session) {
       let token = null;
@@ -76,7 +74,7 @@ export const authenticateToken_Middleware = async (req: any, res: any, next: any
         }
       }
 
-      console.log(token, " ---- token");
+      // console.log(token, " ---- token");
 
       if (!token) {
         return res.status(401).json("No token provided");
@@ -105,7 +103,6 @@ export const authenticateToken_Middleware = async (req: any, res: any, next: any
 // --------------------------------------------------
 export function generateAccessToken(user: User_jwt) {
   if (!user || !user.username) {
-    console.error("Invalid user data for token generation");
     return null;
   }
 
@@ -124,7 +121,6 @@ export function generateAccessToken(user: User_jwt) {
     // console.log("Generated token:", token);
     return token;
   } catch (error) {
-    console.error("Error generating JWT:", error);
     return null;
   }
 }
@@ -137,7 +133,6 @@ authRouter.post("/login", validateUsername, validatePassword, async (req: any, r
   try {
     const password = req.body.password;
     // console.log(password, " password");
-    console.log(req.body.username, "  username");
     const session = driver.session();
     if (session) {
       const user_data = await session.run(
@@ -156,7 +151,7 @@ authRouter.post("/login", validateUsername, validatePassword, async (req: any, r
           if (user_) {
             const token = generateAccessToken(user);
             if (!token) {
-              console.error("Failed to generate authentication token");
+              // console.error("Failed to generate authentication token");
               res.status(401).json({ error: "Authentication failed" });
               return;
             }
@@ -302,7 +297,6 @@ authRouter.post("/logout", authenticateToken_Middleware, async (req: any, res: R
   try {
     const session = driver.session();
     if (session) {
-      console.log(req.user);
       const res_db = await session.run(
         `MATCH (n:User) WHERE n.username = $username AND n.verified = true
        SET n.is_logged  = false
