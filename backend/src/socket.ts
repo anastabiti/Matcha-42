@@ -56,8 +56,14 @@ export function setupSocket(server: HttpServer) {
 
         // Track when users open a chat
         socket.on("openChat", (chatWithUser: string) => {
-          console.log( username_logged ,  " what to chat with " ,chatWithUser ,  " 😆😆😆😆😆😆😆😆")
-          console.log( activeChatUsers ,  " BEFORE 🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪")
+          // console.log( username_logged ,  " what to chat with " ,chatWithUser ,  " 😆😆😆😆😆😆😆😆")
+          // console.log( activeChatUsers ,  " BEFORE 🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪")
+
+          // Map(2) {
+          //   'atabiti' => { username: 'atabiti', activeChat: 'atabiti_99db24c15d475f7732e1' },
+          //   'atabiti_99db24c15d475f7732e1' => { username: 'atabiti_99db24c15d475f7732e1', activeChat: 'atabiti' }
+          // } 
+          //ensures that the activeChatUsers map contains an entry for the username_logged before attempting to set its activeChat property
           if (!activeChatUsers.has(username_logged)) {
             activeChatUsers.set(username_logged, { username: username_logged });
           }
@@ -65,7 +71,7 @@ export function setupSocket(server: HttpServer) {
           if (user) {
             user.activeChat = chatWithUser;
           }
-          console.log( activeChatUsers ,  " After 😵‍💫 ")
+          // console.log( activeChatUsers ,  " After 😵‍💫 ")
         });
 
         // Track when users close/leave a chat
@@ -143,7 +149,7 @@ export function setupSocket(server: HttpServer) {
               //   getSocketIO().to(newMessage.to).emit("notification", notification);
               // Check if recipient should receive a notification
               const recipientUser = activeChatUsers.get(message.to);
-              console.log(recipientUser ,  " recp iser")
+              // console.log(recipientUser ,  " recp iser")
               /*
                 If Bob sends a message to Alice:
 
@@ -193,7 +199,9 @@ export function setupSocket(server: HttpServer) {
           }
         });
       } catch (error) {
-        console.error("JWT verification failed:", error);
+        // console.error("JWT verification failed:", error);
+        socket.emit("messageError", { message: "User is not logged" });
+
       }
     }
   });
