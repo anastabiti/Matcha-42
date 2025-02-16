@@ -144,7 +144,9 @@ authRouter.post("/login", validateUsername, validatePassword, async (req: any, r
 
             res.cookie("jwt_token", token, {
               httpOnly: true,
-              sameSite: "lax",
+              sameSite: "strict",
+              /*Strict not allows the cookie to be sent on a cross-site request or iframe. Lax allows GET only. None allows all the requests, but secure is required.
+              */
               maxAge: 3600000, // 1 hour in milliseconds
             });
 

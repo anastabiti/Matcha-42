@@ -105,7 +105,7 @@ user_information_Router.post(
 
       res.cookie("jwt_token", token, {
         httpOnly: true,
-        sameSite: "lax",
+        sameSite: "strict",
         maxAge: 3600000, // 1 hour in milliseconds
       });
 
