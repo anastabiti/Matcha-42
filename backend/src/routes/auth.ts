@@ -52,7 +52,7 @@ export const authenticateToken_Middleware = async (req: any, res: any, next: any
         }
       }
 
-      // console.log(token, " ---- token");
+      
 
       if (!token) {
         return res.status(401).json("No token provided");
@@ -60,7 +60,7 @@ export const authenticateToken_Middleware = async (req: any, res: any, next: any
 
       try {
         const decoded: any = await jwt.verify(token, process.env.JWT_TOKEN_SECRET as string);
-        // console.log(decoded.username, " decoded.username ----------------=-\n\n\n\n");
+        
         const res_db = await session.run(
           `MATCH (n:User) WHERE n.username = $username AND n.is_logged = true
           RETURN n`,
@@ -96,7 +96,7 @@ export function generateAccessToken(user: User_jwt) {
         expiresIn: "1h",
       }
     );
-    // console.log("Generated token:", token);
+    
     return token;
   } catch (error) {
     return null;
@@ -110,7 +110,7 @@ export function generateAccessToken(user: User_jwt) {
 authRouter.post("/login", validateUsername, validatePassword, async (req: any, res: Response) => {
   try {
     const password = req.body.password;
-    // console.log(password, " password");
+    
     const session = driver.session();
     if (session) {
       const user_data = await session.run(
@@ -119,21 +119,20 @@ authRouter.post("/login", validateUsername, validatePassword, async (req: any, r
       );
 
       if (user_data.records.length > 0) {
-        // console.log(user_data.records[0]._fields[0].properties, " user data");
+        
         const user = await user_data.records[0]._fields[0].properties;
-        // if (user.password) console.log(user.password, "password is ");
-        // console.log(user.password, " User passwordn\n\n\n\n");
+        // if (user.password)
+        
         if (await argon2.verify(user.password, password)) {
-          // console.log("matched");
+          
           const user_ = req.body.username;
           if (user_) {
             const token = generateAccessToken(user);
             if (!token) {
-              // console.error("Failed to generate authentication token");
               res.status(401).json({ error: "Authentication failed" });
               return;
             }
-            // console.log(token, " [-JWT TOKEN-]");
+            
             //check later
             const res_db = await session.run(
               `MATCH (n:User) WHERE n.username = $username AND n.verified = true
@@ -238,7 +237,6 @@ authRouter.patch("/reset_it", validatePassword, async (req: Request, res: Respon
     res.status(400).send("Invalid token");
     return;
   }
-  console.log(token , "--------------------- tokene---")
   const jwt_: any = jwt.verify(token, process.env.JWT_TOKEN_SECRET as string);
   const new_session = driver.session();
   if (new_session) {
