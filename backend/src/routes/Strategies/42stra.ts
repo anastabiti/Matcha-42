@@ -50,7 +50,7 @@ export const create_new_user_cipher = `CREATE (n:User {
               AS user`;
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const FortyTwoStrategy = require("passport-42").Strategy;
+const FortyTwoStrategy = require("passport-42").Strategy; // imports the Strategy constructor from the passport-42 package.
 passport.use(
   new FortyTwoStrategy(
     {

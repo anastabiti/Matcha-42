@@ -37,29 +37,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export function authenticateToken(req: any) {
-  try {
-    if (!req) return null;
-    // console.log(req.headers["cookie"], " ---> 1\n");
 
-    let token = null;
-    const cookies = req.headers.cookie?.split(";") || [];
-    for (let cookie of cookies) {
-      if (cookie.trim().startsWith("jwt_token=")) {
-        token = cookie.split("=")[1];
-        break;
-      }
-    }
-    // console.log(token, " ---- token");
-    if (token != null) {
-      const res = jwt.verify(token, process.env.JWT_TOKEN_SECRET as string);
-      if (res) return res;
-      else return null;
-    } else return null;
-  } catch {
-    return null;
-  }
-}
 // -----------------------------------------------
 export const authenticateToken_Middleware = async (req: any, res: any, next: any) => {
   try {
@@ -235,9 +213,11 @@ authRouter.post("/password_reset", validateEmail, async (req: Request, res: Resp
         res
           .status(200)
           .json("password reset successful, check your email for further instructions");
+          await session.close();
         return;
       } else {
         res.status(400).json("email does not exist");
+        await session.close();
         return;
       }
     }
@@ -249,26 +229,27 @@ authRouter.post("/password_reset", validateEmail, async (req: Request, res: Resp
 
 authRouter.patch("/reset_it", validatePassword, async (req: Request, res: Response) => {
   try {
-  const token = req.body.token as string;
+  const token = req.body.token;
   const password = req.body.password;
 
   if (!token) {
     res.status(400).send("Invalid token");
     return;
   }
-
+  console.log(token , "--------------------- tokene---")
   const jwt_: any = jwt.verify(token, process.env.JWT_TOKEN_SECRET as string);
   const new_session = driver.session();
   if (new_session) {
     const db_res = await new_session.run(
       `
-            MATCH (n:User {email:$email})
+            MATCH (n:User) WHERE n.email = $email AND n.password_reset_token = $token
             SET n.password = $password,
             n.password_reset_token = $tmp_password_reset_token
             RETURN n
             `,
       {
         email: jwt_.email,
+        token:token,
         password: await argon2.hash(password),
         tmp_password_reset_token: (await crypto).randomBytes(25).toString("hex"),
       }
@@ -277,9 +258,11 @@ authRouter.patch("/reset_it", validatePassword, async (req: Request, res: Respon
 
     if (db_res.records.length > 0) {
       res.status(200).json("sucess");
+      await new_session.close()
       return;
     } else {
-      res.status(400).json("FAILED");
+      res.status(400).json("Already Expired");
+      await new_session.close();
       return;
     }
   }
