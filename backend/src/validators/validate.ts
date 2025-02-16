@@ -237,6 +237,8 @@ export function validateBiography(req: Request, res: Response, next: NextFunctio
     return;
   }
 }
+
+
 export function validateInterests(req: Request, res: Response, next: NextFunction): void {
   try {
     const interests = req.body.interests;
@@ -245,15 +247,23 @@ export function validateInterests(req: Request, res: Response, next: NextFunctio
       res.status(400).json("Interests are required");
       return;
     }
-
-    if (interests.length > 30 || interests.length <= 0) {
-      res.status(400).json("Interests min 1 max 30");
+    if (interests.length > 20 || interests.length < 1) {
+      res.status(400).json("User can have only from 1 to 20 Interests");
       return;
     }
     if (!Array.isArray(interests)) {
       res.status(400).json("Interests must be an array");
       return;
     }
+
+    
+    for (const element of interests) {      
+      if (element.length > 20 || element.length < 3) {
+        res.status(400).json("Interest length must be between 2 and 20");
+        return;
+      }
+    }
+
 
     next();
   } catch {

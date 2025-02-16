@@ -450,8 +450,8 @@ function Setup_page() {
                     <input
                       type="text"
                       placeholder="New Interest"
-                      minLength={5}
-                      maxLength={30}
+                      minLength={2}
+                      maxLength={20}
                       className="flex-1 px-4 py-2 rounded-full text-sm font-medium bg-gray-800 text-gray-300"
                       value={new_interest || ""}
                       onChange={handleNewInterestChange}

@@ -81,7 +81,7 @@ const NotificationButton = () => {
     };
   }, []);
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = notifications.filter(n => !n.isRead).length; //counts how many unread notifications there are in the notifications array.
 
   return (
     <div className="relative">

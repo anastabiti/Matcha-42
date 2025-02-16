@@ -227,9 +227,8 @@ function Profile() {
 
     if (!new_interest.trim()) return;
 
-    const formattedInterest = new_interest.trim().startsWith("#")
-      ? new_interest.trim()
-      : "#" + new_interest.trim();
+    const trimmed = new_interest.trim();
+    const formattedInterest = trimmed.startsWith("#") ? trimmed : "#" + trimmed;
 
     if (!availableInterests.includes(formattedInterest)) {
       setAvailableInterests(function (prev) {
@@ -624,6 +623,8 @@ function Profile() {
                     type="text"
                     placeholder="Add New Interest"
                     value={new_interest}
+                    minLength={2}
+                    maxLength={20}
                     onChange={handleNewInterestChange}
                     className="flex-1 px-4 py-2 rounded-full text-sm bg-gray-800 text-white"
                   />
