@@ -187,8 +187,8 @@ user_information_Router.post(
           for (const interest of user_copy.interests) {
             await new_session.run(
               `MATCH (u:User {username: $username})
-               MERGE (t:Tags {interests: $interest})
-               MERGE (u)-[:has_this_interest]->(t)`,
+               CREATE (t:Tags {interests: $interest})
+               CREATE (u)-[:has_this_interest]->(t)`,
               {
                 username: logged_user.username,
                 interest: interest,
