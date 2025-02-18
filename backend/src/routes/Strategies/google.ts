@@ -9,6 +9,7 @@ import { generateAccessToken, User } from "../auth";
 import { driver } from "../../database";
 const neo4j = require("neo4j-driver");
 import argon2 from "argon2";
+import { catchAuthErrors } from "./42stra";
 
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const passport = require("passport");
@@ -30,14 +31,14 @@ passport.use(
       profile: Profile,
       cb: VerifyCallback
     ) {
-      console.log("----------------------------------------------");
+      // console.log("----------------------------------------------");
       try {
-        console.log(profile, " profile");
-        console.log(accessToken, " accessToken");
-        console.log(refreshToken, " refreshToken");
+        // console.log(profile, " profile");
+        // console.log(accessToken, " accessToken");
+        // console.log(refreshToken, " refreshToken");
         const new_session = await driver.session();
         if (new_session) {
-          console.log(profile?.emails?.[0].value || "email not found");
+          // console.log(profile?.emails?.[0].value || "email not found");
           if (profile?.emails?.[0].value) {
             const resu_ = await new_session.run(
               // `MATCH (n:User) WHERE n.email = $email RETURN {n.username, n.email, n.first_name, n.last_name, n.verified} as n`,
@@ -57,17 +58,17 @@ passport.use(
             );
             if (resu_.records?.length > 0) {
               //check if user is not
-              console.log(resu_.records[0].get("user").verified, " -------------------------->");
+              // console.log(resu_.records[0].get("user").verified, " -------------------------->");
               //check if user is not verified
               if (resu_.records[0].get("user").verified === false) {
-                console.log("email not verified");
+                // console.log("email not verified");
                 await new_session.close();
                 return cb(null, false);
               }
 
-              console.log("user exists", resu_.records[0].get("user"));
+              // console.log("user exists", resu_.records[0].get("user"));
               const user_x = resu_.records[0]?.get("user");
-              console.log(user_x, " user_x");
+              // console.log(user_x, " user_x");
               await new_session.close();
               return cb(null, user_x);
             } else {
@@ -124,7 +125,7 @@ passport.use(
                 );
                 let username_ = null;
                 if (check_username.records.length > 0) {
-                  console.log("username exists -==--=-=-=- Gooooooooooooooooooooogle");
+                  // console.log("username exists -==--=-=-=- Gooooooooooooooooooooogle");
                   username_ = (await crypto).randomBytes(12).toString("hex");
                 }
 
@@ -143,7 +144,7 @@ passport.use(
                     setup_done:false,
                       pics: ["","","","",""],notifications:[],
                         fame_rating:0,            
-                      age:18,
+                      age:toFloat(18),
               is_logged:  true,
     country: "",
     city: "",
@@ -181,7 +182,7 @@ passport.use(
           }
         }
       } catch (error) {
-        console.log("error ", error);
+        // console.log("error ", error);
         return cb(error, false);
       }
     }
@@ -191,67 +192,46 @@ passport.use(
 // ----------------------------------------------------------------------------------
 
 // https://developers.google.com/identity/openid-connect/openid-connect
-//omni auth
 Google_auth.get(
   "/auth/google",
-  passport.authenticate("google", {
-    scope: ["profile", "email"],
+  passport.authenticate("google", { scope: ["profile", "email"] }),
+  async function (req: Request, res: Response) {}
+);
 
-    // session: false,
-  }),
-  async function (req: Request, res: Response) {
-    // console.log("auth/google");
+// ----------------------------------------------------------------------------------
+
+Google_auth.get(
+  "/auth/google/callback",
+  passport.authenticate("google", { session: false }),
+  catchAuthErrors,
+  async function (req: any, res: any, next: any) {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.redirect(`${process.env.front_end_ip}/login?error=no_user`);
+      }
+
+      const token = generateAccessToken(user);
+      res.cookie("jwt_token", token, {
+        httpOnly: true,
+        sameSite:"strict",
+
+        /*
+        Strict not allows the cookie to be sent on a cross-site request or iframe. Lax allows GET only. None allows all the requests, but secure is required.
+        What Does the HttpOnly Cookie Flag Do?
+    The HttpOnly cookie flag is often added to cookies that may contain sensitive information about the user.
+    Essentially, this type of flag tells the server to not reveal cookie information contained in embedded scripts. 
+    HttpOnly also tells the server that the information contained in the flagged cookies should not be transferred beyond the server. 
+    This flag is especially important in protecting secure information that could be compromised during a cross-site request forgery (CSRF) attack or 
+    if there is a flaw in the code that causes cross-site scripting (XSS). Both of these instances could lead user data to be leaked to hackers */
+        maxAge: 3600000, // 1 hour in milliseconds
+      });
+
+      res.redirect(`${process.env.front_end_ip}${user.setup_done ? "/discover" : "/setup"}`);
+    } catch (error) {
+      return res.redirect(`${process.env.front_end_ip}/login?error=error`);
+    }
   }
 );
 
-Google_auth.get("/auth/google/callback", function (req: any, res: Response) {
-  passport.authenticate(
-    "google",
-    { session: false },
-    async function (err: any, user: User, info: any) {
-      if (err) {
-        console.error("Error during authentication:", err);
-        return res.status(401).json({ "Wrong credentials": "Error during authentication" });
-      }
-
-      if (!user) {
-        console.error("No user found:", info);
-        return res.status(401).json("No user found");
-      }
-
-      try {
-        //   req.session.user = {
-        //     username: user.username,
-        //     email: user.email,
-        //     setup_done: user.setup_done,
-        //   };
-        //   console.log(req.session.user, " session user");
-        //  await req.session.save();
-
-        const token = await generateAccessToken(user);
-        if (!token) {
-          console.error("Failed to generate authentication token");
-          return res.status(401).json({ error: "Authentication failed" });
-        }
-        console.log(token, " [-JWT TOKEN-]");
-
-        res.cookie("jwt_token", token, {
-          httpOnly: true,
-          sameSite: "lax",
-          maxAge: 3600000, // 1 hour in milliseconds
-        });
-
-        // return res.status(200).json("login successful");
-        if (user.setup_done == true) {
-          return res.status(200).redirect(`${process.env.front_end_ip}/discover`);
-        } else {
-          return res.status(200).redirect(`${process.env.front_end_ip}/setup`);
-        }
-      } catch (tokenError) {
-        console.error("Error generating token:", tokenError);
-        return res.status(400).json("Error generating token");
-      }
-    }
-  )(req, res);
-});
 export default Google_auth;

@@ -11,17 +11,21 @@ import { TextField } from "@mui/material";
 import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 import { useNavigate } from "react-router-dom";
 import Gps from "../components/Gps";
+import { MAX_FILE_SIZE, SUPPORTED_FORMATS } from "../components/setup_page";
 
-interface FormData {
+ type FormData= {
   last_name: string;
   first_name: string;
   email: string;
   gender: string;
   biography: string;
   interests: string[];
+  age: Number;
+  pics: string[];
 }
 
-interface UserInfo {
+
+ type UserInfo ={
   username: string;
   profile_picture: string;
   last_name: string;
@@ -35,6 +39,7 @@ interface UserInfo {
   pics: string[];
   gender: string;
   tags: string[];
+  age: Number;
 }
 
 type FormFields =
@@ -60,7 +65,11 @@ function Profile() {
     "#Swimming",
     "#Running"
   ];
-
+  type ImageError = {
+    index: number;
+    message: string;
+  };
+  
   interface EmailChangeForm {
     newEmail: string;
     password: string;
@@ -76,8 +85,10 @@ function Profile() {
     gender: "",
     biography: "",
     interests: [],
-    age: 18
+    age: 18,
+    pics:[]
   });
+  const [username__ , setusername] = useState('')
   const [showGps, setShowGps] = useState(false);
 
   const navigate = useNavigate();
@@ -98,17 +109,22 @@ function Profile() {
   const [emailChangeError, setEmailChangeError] = useState("");
   const [emailChangeSuccess, setEmailChangeSuccess] = useState("");
   const [isEmailChangeLoading, setIsEmailChangeLoading] = useState(false);
+  const [imageErrors, setImageErrors] = useState<ImageError[]>([]);
 
   // Fetch user data on component mount
   useEffect(function () {
     async function fetchUserInfo() {
       try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/user/info`, {
-          credentials: "include"
-        });
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_IP}/api/user/info`,
+          {
+            credentials: "include"
+          }
+        );
         if (response.ok) {
           const data: UserInfo = await response.json();
-          console.log(data.pics, "        pics ----");
+
+          setusername(data.username)
           setFormData({
             last_name: data.last_name || "",
             first_name: data["first_name:"] || "",
@@ -166,14 +182,17 @@ function Profile() {
     setEmailChangeSuccess("");
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/change_email`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(emailForm)
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_IP}/api/change_email`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(emailForm)
+        }
+      );
 
       const data = await response.json();
 
@@ -208,9 +227,8 @@ function Profile() {
 
     if (!new_interest.trim()) return;
 
-    const formattedInterest = new_interest.trim().startsWith("#")
-      ? new_interest.trim()
-      : "#" + new_interest.trim();
+    const trimmed = new_interest.trim();
+    const formattedInterest = trimmed.startsWith("#") ? trimmed : "#" + trimmed;
 
     if (!availableInterests.includes(formattedInterest)) {
       setAvailableInterests(function (prev) {
@@ -235,81 +253,149 @@ function Profile() {
       };
     });
   }
+  const validateImage = (file: File): string | null => {
+    if (!SUPPORTED_FORMATS.includes(file.type)) {
+      return "Only JPG and PNG images are supported";
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      return "File size must be less than 5MB";
+    }
+    return null;
+  };
 
-  function handle_image_change(
+
+  const handle_image_change = async (
     event: React.ChangeEvent<HTMLInputElement>,
     index: number
-  ) {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  ) => {
+    const files = event.target.files;
+    if (!files || !files[0]) return;
 
+    const file = files[0];
+    const validationError = validateImage(file);
+
+    if (validationError) {
+      setImageErrors((prev) => [
+        ...prev.filter((e) => e.index !== index),
+        { index, message: validationError }
+      ]);
+      return;
+    }
+
+    // Clear any existing errors for this index
+    setImageErrors((prev) => prev.filter((e) => e.index !== index));
+
+    // Create URL and update state
     const image_url = URL.createObjectURL(file);
-    setimages_url(function (prev) {
+    setimages_url((prev) => {
       const updated = [...prev];
+      if (updated[index]) URL.revokeObjectURL(updated[index]!);
       updated[index] = image_url;
       return updated;
     });
 
-    setImages_file(function (prev) {
+    setImages_file((prev) => {
       const updated = [...prev];
       updated[index] = file;
       return updated;
     });
-  }
+  };
+
+  // function handle_image_change(
+  //   event: React.ChangeEvent<HTMLInputElement>,
+  //   index: number
+  // ) {
+  //   const file = event.target.files?.[0];
+  //   if (!file) return;
+
+  //   const image_url = URL.createObjectURL(file);
+  //   setimages_url(function (prev) {
+  //     const updated = [...prev];
+  //     updated[index] = image_url;
+  //     return updated;
+  //   });
+
+  //   setImages_file(function (prev) {
+  //     const updated = [...prev];
+  //     updated[index] = file;
+  //     return updated;
+  //   });
+  // }
 
   function generateImageUploadDivs() {
     return (
-      <div className="grid grid-cols-2 gap-4">
-        {Array(5)
-          .fill(null)
-          .map(function (_, i) {
-            return (
-              <div key={i} className="flex justify-center">
-                <label className="w-32 h-32 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-full cursor-pointer hover:border-blue-500">
-                  {images_url[i] ? (
-                    <img
-                      src={images_url[i] || ""}
-                      alt={`User image ${i + 1}`}
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  ) : (
-                    <AddPhotoAlternateIcon
-                      fontSize="large"
-                      className="text-gray-500"
-                    />
-                  )}
-                  <input
-                    id={`image_file_${i}`}
-                    type="file"
-                    accept="image/*"
-                    onChange={function (e) {
-                      handle_image_change(e, i);
-                    }}
-                    className="hidden"
-                  />
-                </label>
+      <div className="grid grid-cols-2 lg:grid-cols-3 sm:grid-cols-2 gap-4">
+        {Array.from({ length: 5 }, (_, i) => (
+          <div key={i} className="flex justify-center">
+            <label className="w-32 h-32 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-full cursor-pointer hover:border-blue-500">
+              {i === 0 && <div className="absolute text-white">Profile</div>}
+              {images_url[i] ? (
+                <img
+                  src={images_url[i]!}
+                  className="w-full h-full rounded-full object-cover"
+                  alt={`Upload ${i + 1}`}
+                />
+              ) : (
+                <AddPhotoAlternateIcon
+                  fontSize="large"
+                  className="text-gray-500"
+                />
+              )}
+              <input
+                id={`image_file_${i}`}
+                type="file"
+                accept="image/jpeg,image/png"
+                onChange={(e) => handle_image_change(e, i)}
+                className="hidden"
+              />
+            </label>
+            {imageErrors.find((error) => error.index === i) && (
+              <div className="absolute mt-32 text-yellow-300 text-xs">
+                {imageErrors.find((error) => error.index === i)?.message}
               </div>
-            );
-          })}
+            )}
+          </div>
+        ))}
       </div>
     );
   }
+
 
   async function handleSubmit(event: React.FormEvent): Promise<void> {
     event.preventDefault();
     setIsLoading(true);
     setError("");
     setSuccess("");
+    if (!formData.pics[0]) {
+      setError("Please add a profile picture!");
+      setIsLoading(false);
+      return;
+    }
 
+    if(!formData.gender)
+      {
+      setError("Please add  you gender!");
+      setIsLoading(false);
+      return;
+    }
+    if(!formData.interests.length)
+      {
+      setError("Please add  your interests!");
+      setIsLoading(false);
+      return;
+    }
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/user/settings`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(formData)
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_IP}/api/user/settings`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(formData)
+        }
+      );
 
       const data = await response.json();
 
@@ -320,19 +406,31 @@ function Profile() {
           })
         ) {
           const new_data = new FormData();
+          // images_FILES.forEach(function (file, index) {
+          //   if (file) {
+          //     new_data.append(index, file);
+          //   } else {
+          //     new_data.append(index, "NULL");
+          //   }
+          // });
           images_FILES.forEach(function (file, index) {
+            const key = index.toString(); // Convert index to string
             if (file) {
-              new_data.append(index, file);
+              new_data.append(key, file);
             } else {
-              new_data.append(index, "NULL");
+              new_data.append(key, "NULL");
             }
           });
+          
 
-          const resu_ = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/user/upload`, {
-            method: "POST",
-            credentials: "include",
-            body: new_data
-          });
+          const resu_ = await fetch(
+            `${import.meta.env.VITE_BACKEND_IP}/api/user/upload`,
+            {
+              method: "POST",
+              credentials: "include",
+              body: new_data
+            }
+          );
           if (!resu_.ok) {
             const resData = await resu_.json();
             setError(resData.message || "Update failed. Please try again.");
@@ -356,13 +454,14 @@ function Profile() {
   }
 
   return (
-    <div className="p-12 bg-gray-900 flex items-center justify-center">
-      <div className="w-full max-w-md">
+    <div className="p-12 bg-gray-900 flex items-center justify-center mt-11">
+      <div className="w-full max-w-lg">
         <div className="bg-[#E94075] rounded-2xl p-9">
           <div className="space-y-6">
             <h2 className="text-2xl font-semibold text-white mb-8">
               Edit your profile
             </h2>
+              Welcome {username__}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <TextField
@@ -379,6 +478,7 @@ function Profile() {
                   }
                 }}
                 className="bg-white rounded"
+                required
               />
 
               <TextField
@@ -395,6 +495,7 @@ function Profile() {
                   }
                 }}
                 className="bg-white rounded"
+                required
               />
 
               <FormControl className="w-full">
@@ -444,9 +545,21 @@ function Profile() {
                 inputProps={{ min: 18, max: 100 }}
                 value={formData.age ?? ""}
                 onChange={(e) => {
-                  let age = e.target.value ? parseInt(e.target.value, 10) : "";
-                  if (age >= 18 && age <= 100) {
-                    setFormData({ ...formData, age });
+                  const { value } = e.target;
+                  //  input is cleared
+                  if (value === "") {
+                    setFormData({ ...formData, age: 18 });
+                    return;
+                  }
+                  // Convert the input string to a number
+                  const parsedAge = parseInt(value, 10);
+                  // Check if parsedAge is a valid number and within the accepted range
+                  if (
+                    !isNaN(parsedAge) &&
+                    parsedAge >= 18 &&
+                    parsedAge <= 100
+                  ) {
+                    setFormData({ ...formData, age: parsedAge });
                   }
                 }}
                 required
@@ -469,6 +582,7 @@ function Profile() {
                     handleFormChange("biography", e.target.value);
                   }
                 }}
+                required
                 // helperText={`${formData.biography?.length || 0}/200 characters`}
                 className="bg-white rounded"
               />
@@ -509,6 +623,8 @@ function Profile() {
                     type="text"
                     placeholder="Add New Interest"
                     value={new_interest}
+                    minLength={2}
+                    maxLength={20}
                     onChange={handleNewInterestChange}
                     className="flex-1 px-4 py-2 rounded-full text-sm bg-gray-800 text-white"
                   />
@@ -601,7 +717,7 @@ function Profile() {
                 label="Password"
                 type="spassword"
                 value={emailForm.password}
-                 autoComplete="current-password"
+                autoComplete="current-password"
                 onChange={(e) =>
                   setEmailForm((prev) => ({
                     ...prev,

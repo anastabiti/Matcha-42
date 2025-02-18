@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 import { Send } from "lucide-react";
-import { ToastContainer, toast } from 'react-toastify';
-import sortBy from 'lodash/sortBy';
+import { ToastContainer, toast } from "react-toastify";
+import sortBy from "lodash/sortBy";
 
 interface Message {
   content: string;
@@ -21,30 +21,34 @@ const Chat = () => {
   const { username } = useParams();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
-  const messagesEndRef = useRef(null);
 
   // Fetch old messages
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/chat/get_messages/${username}`, {
-          credentials: 'include'
-        });
-        
+        const response = await fetch(
+          `${
+            import.meta.env.VITE_BACKEND_IP
+          }/api/chat/get_messages/${username}`,
+          {
+            credentials: "include"
+          }
+        );
+
         if (!response.ok) {
-          throw new Error('Failed to fetch messages');
+          throw new Error("Failed to fetch messages");
         }
-        
+
         const oldMessages: Message[] = await response.json();
-        const sorted_messages = await sortBy(oldMessages, ['createdAt']);
-        if(sorted_messages.length > 0) {
+        const sorted_messages = await sortBy(oldMessages, ["createdAt"]);
+        if (sorted_messages.length > 0) {
           setMessages(sorted_messages);
         }
       } catch (error) {
         toast.error("Failed to load previous messages", {
           position: "top-right",
           autoClose: 3000,
-          theme: "dark",
+          theme: "dark"
         });
       }
     };
@@ -64,7 +68,7 @@ const Chat = () => {
         closeOnClick: false,
         pauseOnHover: true,
         draggable: true,
-        theme: "dark",
+        theme: "dark"
       });
     });
 
@@ -81,11 +85,7 @@ const Chat = () => {
     };
   }, [username]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const sendMessage = (e) => {
+  const sendMessage = (e:any) => {
     e.preventDefault();
     if (inputMessage.trim()) {
       socket.emit("sendMessage", {
@@ -96,29 +96,54 @@ const Chat = () => {
     }
   };
 
+  useEffect(() => {
+    const chatContainer = document.getElementById("chat-messages");
+    if (chatContainer) {
+      /*
+      scrollHeight: The total height of the scrollable content, including content not visible
+    scrollTop: The number of pixels that the content has been scrolled up
+    Setting scrollTop equal to scrollHeight moves the scroll position to the bottom
+*/
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+  }, [messages]); // run whenever messages change
+
   return (
     <div className="flex flex-col h-screen sm:h-[80vh] bg-[#242033] rounded-2xl overflow-hidden p-8 mt-32 sm:p-4 md:p-16 ">
       <ToastContainer />
-      
+
       {/* Chat header */}
       <div className="p-14 sm:p-4 bg-[#2a2639] border-b border-[#342f45]">
-        <h2 className="text-lg sm:text-xl font-semibold truncate">Chat with {username}</h2>
+        <h2 className="text-lg sm:text-xl font-semibold truncate">
+          Chat with {username}
+        </h2>
       </div>
 
-      {/* Messages container */}
-      <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-4">
+      <div
+        id="chat-messages"
+        className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-4"
+        style={{
+          //https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-behavior
+          scrollBehavior: "smooth"
+        }}
+      >
         {messages.map((msg, index) => (
           <div
             key={index}
             className={`p-2 sm:p-3 rounded-lg max-w-[90%] sm:max-w-[80%] ${
-              msg.sender === username ? "bg-[#E80356] ml-auto" : "bg-[#A3195B] mr-auto"
+              msg.sender === username
+                ? "bg-[#E80356] ml-auto"
+                : "bg-[#A3195B] mr-auto"
             }`}
+            style={{ scrollSnapAlign: "end" }}
           >
             <p className="text-xs sm:text-sm text-white">{msg.sender}</p>
-            <p className="break-words whitespace-normal text-orange-300 text-sm sm:text-base">{msg.content}</p>
+            <p className="break-words whitespace-normal text-orange-300 text-sm sm:text-base">
+              {msg.content}
+            </p>
           </div>
         ))}
-        <div ref={messagesEndRef} />
+        {/* <div ref={messagesEndRef} /> */}
       </div>
 
       {/* Message input */}

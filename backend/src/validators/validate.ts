@@ -1,5 +1,24 @@
 import { Request, Response, NextFunction, RequestHandler } from "express";
 
+
+
+
+
+/*
+https://expressjs.com/en/guide/writing-middleware.html#:~:text=The%20next%20function%20is%20a,request%20and%20the%20response%20objects. 
+
+  Middleware functions are functions that have access to the request object (req), the response object (res), 
+  and the next function in the application’s request-response cycle. The next function is a function in the Express router which, 
+  when invoked, executes the middleware succeeding the current middleware.
+
+  Middleware functions can perform the following tasks:
+
+  Execute any code.
+  Make changes to the request and the response objects.
+  End the request-response cycle.
+  Call the next middleware in the stack.
+
+*/
 export function validatePassword(req: Request, res: Response, next: NextFunction) {
   const password = req.body.password;
 
@@ -99,8 +118,8 @@ export function validateEmail(req: Request, res: Response, next: NextFunction) {
   const topLevelDomain = domainParts[domainParts.length - 1];
   // console.log(topLevelDomain, " topLevelDomain  -----------")
 
-//   [ 'gmail', 'com' ]  domain part -----------
-// com  topLevelDomain  -
+  //   [ 'gmail', 'com' ]  domain part -----------
+  // com  topLevelDomain  -
   if (topLevelDomain.length === 0) {
     res.status(400).json("Email must have characters after the dot");
     return;
@@ -127,9 +146,9 @@ export function validateUsername(req: Request, res: Response, next: NextFunction
     res.status(400).json("Username must be between 6 and 40 characters");
     return;
   }
-//The test() method is a RegExp expression method.
-//It searches a string for a pattern, and returns true or false, depending on the result.
-//Without the +, it would only match a single character
+  //The test() method is a RegExp expression method.
+  //It searches a string for a pattern, and returns true or false, depending on the result.
+  //Without the +, it would only match a single character
 
   // if (!/^[a-zA-Z0-9]+$/.test(username)) {
   //   res.status(400).json("Username must contain only alphanumeric characters");
@@ -157,7 +176,7 @@ export function validateName(req: Request, res: Response, next: NextFunction): v
     res.status(400).json(`First name must contain only alphabetical characters without spaces`);
     return;
   }
-  
+
   if (first_name.length < 3 || first_name.length > 30) {
     res.status(400).json(`fist name must be between 3 and 30 characters`);
     return;
@@ -197,48 +216,104 @@ export function validateAge(req: Request, res: Response, next: NextFunction): vo
 }
 
 export function validateGender(req: Request, res: Response, next: NextFunction): void {
-  const gender = req.body.gender;
+  try {
+    const gender = req.body.gender;
 
-  if (!gender) {
-    res.status(400).json("Gender is required");
+    if (!gender) {
+      res.status(400).json("Gender is required");
+      return;
+    }
+
+    if (gender !== "male" && gender !== "female") {
+      res.status(400).json("Gender must be 'male' or 'female'");
+      return;
+    }
+
+    next();
+  } catch {
+    res.status(400).json("invalid Gender");
     return;
   }
-
-  if (gender !== "male" && gender !== "female") {
-    res.status(400).json("Gender must be 'male' or 'female'");
-    return;
-  }
-
-  next();
 }
 
 export function validateBiography(req: Request, res: Response, next: NextFunction): void {
-  const biography = req.body.biography;
+  try {
+    const biography = req.body.biography;
 
-  if (!biography) {
-    res.status(400).json("Biography is required");
+    if (!biography) {
+      res.status(400).json("Biography is required");
+      return;
+    }
+
+    // Trim whitespace and check if the biography is actually empty
+    const trimmedBiography = biography.trim();
+    if (trimmedBiography.length === 0) {
+      res.status(400).json("Biography cannot be empty or contain only whitespace");
+      return;
+    }
+
+    if (trimmedBiography.length < 20 || trimmedBiography.length > 200) {
+      res.status(400).json("Biography must be between 20 and 200 characters");
+      return;
+    }
+
+    // Update the req.body with the trimmed biography
+    req.body.biography = trimmedBiography;
+
+    next();
+  } catch (error) {
+    res.status(400).json("Invalid biography");
     return;
   }
-
-  if (biography.length < 20 || biography.length > 200) {
-    res.status(400).json("Biography must be between 20 and 200 characters");
-    return;
-  }
-
-  next();
 }
+// export function validateBiography(req: Request, res: Response, next: NextFunction): void {
+//   try {
+//     const biography = req.body.biography;
+
+//     if (!biography) {
+//       res.status(400).json("Biography is required");
+//       return;
+//     }
+
+//     if (biography.length < 20 || biography.length > 200) {
+//       res.status(400).json("Biography must be between 20 and 200 characters");
+//       return;
+//     }
+
+//     next();
+//   } catch {
+//     res.status(400).json("Invalid biography");
+//     return;
+//   }
+// }
+
 export function validateInterests(req: Request, res: Response, next: NextFunction): void {
-  const interests = req.body.interests;
+  try {
+    const interests = req.body.interests;
 
-  if (!interests) {
-    res.status(400).json("Interests are required");
+    if (!interests) {
+      res.status(400).json("Interests are required");
+      return;
+    }
+    if (!Array.isArray(interests)) {
+      res.status(400).json("Interests must be an array");
+      return;
+    }
+    if (interests.length > 20 || interests.length < 1) {
+      res.status(400).json("User can have only from 1 to 20 Interests");
+      return;
+    }
+
+    for (const element of interests) {
+      if (element.length > 20 || element.length < 3) {
+        res.status(400).json("Interest length must be between 2 and 20");
+        return;
+      }
+    }
+
+    next();
+  } catch {
+    res.status(400).json("Invalid Interests");
     return;
   }
-
-  if (!Array.isArray(interests)) {
-    res.status(400).json("Interests must be an array");
-    return;
-  }
-
-  next();
 }

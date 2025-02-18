@@ -42,7 +42,7 @@ chat.get(
           { username1: user.username, username2: messages_with_username }
         );
 
-        console.log("\n\n", all_messages.records, " records\n\n");
+        // console.log("\n\n", all_messages.records, " records\n\n");
         if (all_messages.records.length > 0) {
           const messages = all_messages.records.map((record: Record) => ({
             content: record.get("content"),
@@ -76,7 +76,7 @@ chat.get(
   authenticateToken_Middleware,
   async function (req: Request, res: Response) {
     const logged_user: any = req.user;
-    console.log(logged_user, " logged user is ");
+    // console.log(logged_user, " logged user is ");
     const new_session = driver.session();
     if (new_session) {
       // MATCH (sender:User {username: $me})-[:SENT]->(m:Message)-[:RECEIVED_BY]-(receivers:User)
@@ -100,7 +100,7 @@ RETURN DISTINCT other.username AS username, other.pics[0] AS profilePic
         username: record.get('username'),
         profilePic: record.get('profilePic')
       }));;
-      console.log(all_users, "Users that the current user has chatted with");
+      // console.log(all_users, "Users that the current user has chatted with");
       res.status(200).json(all_users);
       return;
     }

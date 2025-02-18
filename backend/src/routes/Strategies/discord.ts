@@ -12,6 +12,7 @@ import { driver } from "../../database";
 const neo4j = require("neo4j-driver");
 
 import argon2 from "argon2";
+import { catchAuthErrors } from "./42stra";
 
 const passport = require("passport");
 
@@ -36,7 +37,7 @@ export const create_new_user_cipher = `CREATE (n:User {
                pics: ["","","","",""],
               fame_rating:0,            
               is_logged:  true,
-              age:18,
+              age:toFloat(18),
               notifications:[],
     country: "",
     city: "",
@@ -98,7 +99,7 @@ passport.use(
         //     accessToken: '',
         //     fetchedAt: 2025-02-04T18:08:15.618Z
         //   }
-        console.log(profile.email, "  profile--------");
+        // console.log(profile.email, "  profile--------");
         const new_session = await driver.session();
         if (new_session) {
           const email_ = profile.email;
@@ -134,11 +135,11 @@ passport.use(
 
               return cb(null, user_x);
             } else {
-              console.log(
-                " create a new User discord auth--------------- \n\n\n\n",
-                profile.username,
-                " ]\n\n\n"
-              );
+              // console.log(
+              //   " create a new User discord auth--------------- \n\n\n\n",
+              //   profile.username,
+              //   " ]\n\n\n"
+              // );
               if (profile.username) {
                 const check_useername_exists = await new_session.run(
                   `MATCH (n:User) WHERE n.username  = $username return n`,
@@ -146,7 +147,7 @@ passport.use(
                 );
                 if (check_useername_exists.records?.length > 0) {
                   //case: user registered with a username like "atabiti" , then a user with diff email logged with 42, but he has the same username "atabiti", i have to generate a new username for him.
-                  console.log("[------same username found----] , ", check_useername_exists.records);
+                  // console.log("[------same username found----] , ", check_useername_exists.records);
                   const diff_username =
                     profile.username + "_" + (await crypto).randomBytes(10).toString("hex");
                   const result_ = await new_session.run(create_new_user_cipher, {
@@ -165,7 +166,6 @@ passport.use(
                   return cb(null, new_user);
                 }
               }
-
 
               //case create a new fresh account
               const result_ = await new_session.run(create_new_user_cipher, {
@@ -192,57 +192,42 @@ passport.use(
   )
 );
 
+// ---------------------------------------------------
 discord_auth.get("/auth/discord", passport.authenticate("discord"));
 
-discord_auth.get("/auth/discord/callback", function (req: any, res: Response) {
-  passport.authenticate(
-    "discord",
-    { session: false },
-    async function (err: any, user: User, info: any) {
-      try {
-        if (err) {
-          console.error("Error during authentication:");
-          return res.status(401).json({ "Wrong credentials": "Error during authentication" });
-        }
+// ---------------------------------------------------
 
-        if (!user) {
-          console.error("No user found:", info);
-          return res.status(401).json("No user found");
-        }
-
-        //   " done--------------------------------------------------------\
-        //   --------------------------------"
-        // );
-
-        // req.session.user = {
-        //   username: user.username,
-        //   email: user.email,
-        //   setup_done: user.setup_done,
-        // };
-        // await req.session.save();
-
-        const token = generateAccessToken(user);
-        if (!token) {
-          console.error("Failed to generate authentication token");
-          return res.status(401).json({ error: "Authentication failed" });
-        }
-
-        res.cookie("jwt_token", token, {
-          httpOnly: true,
-          sameSite: "lax",
-          maxAge: 3600000, // 1 hour in milliseconds
-        });
-
-        if (user.setup_done) {
-          return res.status(200).redirect(`${process.env.front_end_ip}/discover`);
-        } else {
-          return res.status(200).redirect(`${process.env.front_end_ip}/setup`);
-        }
-      } catch (tokenError) {
-        console.error("Error generating token:", tokenError);
-        return res.status(400).json("Error generating token");
+discord_auth.get(
+  "/auth/discord/callback",
+  passport.authenticate("discord", { session: false }),
+  catchAuthErrors,
+  async function (req: any, res: any, next: any) {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.redirect(`${process.env.front_end_ip}/login?error=no_user`);
       }
+
+      const token = generateAccessToken(user);
+      res.cookie("jwt_token", token, {
+        httpOnly: true,
+        sameSite:"strict",
+
+        /*Strict not allows the cookie to be sent on a cross-site request or iframe. Lax allows GET only. None allows all the requests, but secure is required.
+        What Does the HttpOnly Cookie Flag Do?
+    The HttpOnly cookie flag is often added to cookies that may contain sensitive information about the user.
+    Essentially, this type of flag tells the server to not reveal cookie information contained in embedded scripts. 
+    HttpOnly also tells the server that the information contained in the flagged cookies should not be transferred beyond the server. 
+    This flag is especially important in protecting secure information that could be compromised during a cross-site request forgery (CSRF) attack or 
+    if there is a flaw in the code that causes cross-site scripting (XSS). Both of these instances could lead user data to be leaked to hackers */
+        maxAge: 3600000, // 1 hour in milliseconds
+      });
+
+      res.redirect(`${process.env.front_end_ip}${user.setup_done ? "/discover" : "/setup"}`);
+    } catch (error) {
+      return res.redirect(`${process.env.front_end_ip}/login?error=error`);
     }
-  )(req, res);
-});
+  }
+);
+
 export default discord_auth;

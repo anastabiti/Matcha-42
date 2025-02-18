@@ -14,16 +14,18 @@ function LoginPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  function handleInputChange(event) {
+  function handleInputChange(event: any) {
     const { name, value } = event.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   }
 
-   function handleDiscordLogin() {
-    window.location.href = `${import.meta.env.VITE_BACKEND_IP}/api/auth/discord`;
+  function handleDiscordLogin() {
+    window.location.href = `${
+      import.meta.env.VITE_BACKEND_IP
+    }/api/auth/discord`;
   }
 
   function handleGoogleLogin() {
@@ -31,28 +33,33 @@ function LoginPage() {
   }
 
   function handleIntraLogin() {
-    window.location.href = `${import.meta.env.VITE_BACKEND_IP}/api/auth/intra42`;
+    window.location.href = `${
+      import.meta.env.VITE_BACKEND_IP
+    }/api/auth/intra42`;
   }
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: any) {
     e.preventDefault();
     setIsLoading(true);
     setError("");
     setSuccess("");
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_IP}/api/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+          credentials: "include",
+        }
+      );
 
       const data = await response.json();
 
-      if (response.ok) {
+      if (response.status === 200) {
         console.log("Login successful!");
         setSuccess("Logged in successfully. Redirecting to your HomePage...");
         navigate("/discover");
@@ -75,10 +82,13 @@ function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+    <div className="h-screen bg-gray-900 flex items-center justify-center">
       <div className="w-full max-w-md">
+        {/* Sets maximum width to 28rem (448px)
+              Prevents the element from growing wider than this size
+      md is part of Tailwind's default sizing scale */}
         <div className="bg-gray-900 rounded-2xl p-6">
-          <div className="space-y-6">
+          <div className="space-y-4">
             <h2 className="text-2xl font-semibold text-white mb-8">
               Login to Your Account
             </h2>
@@ -112,7 +122,9 @@ function LoginPage() {
               </div>
 
               {error && <div className="text-red-500 text-sm">{error}</div>}
-              {success && <div className="text-green-500 text-sm">{success}</div>}
+              {success && (
+                <div className="text-green-500 text-sm">{success}</div>
+              )}
 
               <Button
                 type="submit"
@@ -154,7 +166,9 @@ function LoginPage() {
               <Button
                 // variant="contained"
                 onClick={handleIntraLogin}
-                startIcon={<img src="42-Final-sigle-seul.svg" width={25} alt="42" />}
+                startIcon={
+                  <img src="42-Final-sigle-seul.svg" width={25} alt="42" />
+                }
                 sx={{ borderRadius: 3 }}
               >
                 Intra
@@ -172,7 +186,7 @@ function LoginPage() {
               >
                 Reset Password
               </Button>
-              
+
               <Button
                 component={Link}
                 to="/register"

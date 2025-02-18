@@ -22,7 +22,7 @@ export function setupSocket(server: HttpServer) {
   });
 
   io.on("connection", async (socket: Socket) => {
-    console.log(`⚡ Client connected: ${socket.id}`);
+    
 
     const cookie_jwt = socket.handshake.headers.cookie?.split(";") || [];
     let jwt_token = null;
@@ -36,44 +36,47 @@ export function setupSocket(server: HttpServer) {
     if (jwt_token) {
       try {
         const decoded: any = jwt.verify(jwt_token, process.env.JWT_TOKEN_SECRET as string);
-        // socket.join(decoded.username);
-        const username = decoded.username;
+        // socket.join(username_logged);
+        const username_logged = decoded.username;
 
-        // const roomName = `${username}_${socket.id}`;
 
-        console.log(`✅ User ${username} joined room: ${username}`);
-        socket.join(username);
+        
+        socket.join(username_logged);
         socket.on("leaveRoom", async ({ username }) => {
           const session_db = driver.session();
           try {
             socket.leave(username);
           } catch {}
         });
-        // io.in(decoded.username)
-        //   .fetchSockets()
-        //   .then((sockets) => {
-        //     const socketIds = sockets.map((s) => s.id);
-        //     console.log(`Sockets in room ${decoded.username}:`, socketIds);
-        //   });
+    
 
         socket.on("disconnect", () => {
-          console.log(`❌ User ${decoded.username} disconnected`);
+          console.log(`❌ User ${username_logged} disconnected`);
         });
 
         // Track when users open a chat
         socket.on("openChat", (chatWithUser: string) => {
-          if (!activeChatUsers.has(decoded.username)) {
-            activeChatUsers.set(decoded.username, { username: decoded.username });
+          // console.log( username_logged ,  " what to chat with " ,chatWithUser ,  " 😆😆😆😆😆😆😆😆")
+          // console.log( activeChatUsers ,  " BEFORE 🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪")
+
+          // Map(2) {
+          //   'atabiti' => { username: 'atabiti', activeChat: 'atabiti_99db24c15d475f7732e1' },
+          //   'atabiti_99db24c15d475f7732e1' => { username: 'atabiti_99db24c15d475f7732e1', activeChat: 'atabiti' }
+          // } 
+          //ensures that the activeChatUsers map contains an entry for the username_logged before attempting to set its activeChat property
+          if (!activeChatUsers.has(username_logged)) {
+            activeChatUsers.set(username_logged, { username: username_logged });
           }
-          const user = activeChatUsers.get(decoded.username);
+          const user = activeChatUsers.get(username_logged);
           if (user) {
             user.activeChat = chatWithUser;
           }
+          // console.log( activeChatUsers ,  " After 😵‍💫 ")
         });
 
         // Track when users close/leave a chat
         socket.on("closeChat", () => {
-          const user = activeChatUsers.get(decoded.username);
+          const user = activeChatUsers.get(username_logged);
           if (user) {
             user.activeChat = undefined;
           }
@@ -91,13 +94,13 @@ export function setupSocket(server: HttpServer) {
               content: message.message,
               id: new Date().toISOString(),
               to: message.to,
-              sender: decoded.username,
+              sender: username_logged,
               createdAt: Date.now(),
             };
 
             const check_matching = await session_db.run(
               `MATCH (u:User {username:$user1})-[:MATCHED]-(o:User {username:$user2}) RETURN u, o`,
-              { user1: decoded.username, user2: newMessage.to }
+              { user1: username_logged, user2: newMessage.to }
             );
 
             if (check_matching.records.length > 0) {
@@ -116,7 +119,7 @@ export function setupSocket(server: HttpServer) {
               );
 
               socket.to(message.to).emit("newMessage", newMessage);
-              io.to(decoded.username).emit("newMessage", newMessage);
+              io.to(username_logged).emit("newMessage", newMessage);
 
               //notification
 
@@ -134,7 +137,7 @@ export function setupSocket(server: HttpServer) {
               //                 RETURN n
               //               `;
 
-              //   const notificationArray = `${decoded.username} messaged you!`;
+              //   const notificationArray = `${username_logged} messaged you!`;
               //   const result = await session_db.run(query, {
               //     fromUsername: username,
               //     username: newMessage.to,
@@ -146,7 +149,7 @@ export function setupSocket(server: HttpServer) {
               //   getSocketIO().to(newMessage.to).emit("notification", notification);
               // Check if recipient should receive a notification
               const recipientUser = activeChatUsers.get(message.to);
-
+              // console.log(recipientUser ,  " recp iser")
               /*
                 If Bob sends a message to Alice:
 
@@ -155,7 +158,7 @@ export function setupSocket(server: HttpServer) {
                 If Alice is actively chatting with Bob → Don't send notification 
             */
                 const isRecipientOffline = recipientUser === null;
-                const isRecipientChattingWithSomeoneElse = recipientUser?.activeChat !== decoded.username;
+                const isRecipientChattingWithSomeoneElse = recipientUser?.activeChat !== username_logged;
               
               const shouldNotify = isRecipientOffline || isRecipientChattingWithSomeoneElse;
               if (shouldNotify) {
@@ -174,9 +177,9 @@ export function setupSocket(server: HttpServer) {
                      RETURN n
                  `;
 
-                const notificationContent = `${decoded.username} messaged you!`;
+                const notificationContent = `${username_logged} messaged you!`;
                 const result = await session_db.run(query, {
-                  fromUsername: decoded.username,
+                  fromUsername: username_logged,
                   username: message.to,
                   type: "Message",
                   content: notificationContent,
@@ -196,7 +199,9 @@ export function setupSocket(server: HttpServer) {
           }
         });
       } catch (error) {
-        console.error("JWT verification failed:", error);
+        // console.error("JWT verification failed:", error);
+        socket.emit("messageError", { message: "User is not logged" });
+
       }
     }
   });

@@ -118,6 +118,8 @@ const ResetPassword = () => {
                   <input
                     type="password"
                     placeholder="New Password"
+                    minLength={8}
+                    maxLength={50}
                     className="w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-400"
                     value={formData.password}
                     autoComplete="new-password" 

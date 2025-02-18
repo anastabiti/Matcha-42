@@ -1,33 +1,35 @@
 import { faker } from "@faker-js/faker";
 import neo4j from "neo4j-driver";
 import argon2 from "argon2";
+// faker.setLocale('en');
+
+
 
 async function populateNeo4jDatabase() {
   // Configuration
   const NEO4J_URI = "neo4j://localhost:7687";
   const NEO4J_USER = "neo4j";
   const NEO4J_PASSWORD = "kjod876fytf";
-  const TOTAL_USERS = 150;
+  const TOTAL_USERS = 500;
 
   // Cities data with coordinates
   const CITIES = {
     Khouribga: { x: -6.9081, y: 32.877 },
-    Fes: { x: -5.0033, y: 34.0333 },
-    Casablanca: { x: -7.5898, y: 33.5731 },
-    Tangier: { x: -5.8129, y: 35.7595 },
-    Settat: { x: -7.6166, y: 32.9833 },
-    Rabat: { x: -6.8498, y: 34.0209 },
-    Marrakesh: { x: -7.9811, y: 31.6295 },
-    Agadir: { x: -9.5982, y: 30.4278 },
-    Meknes: { x: -5.5474, y: 33.8935 },
-    Oujda: { x: -1.9086, y: 34.6867 }
+    // Fes: { x: -5.0033, y: 34.0333 },
+    // Casablanca: { x: -7.5898, y: 33.5731 },
+    // Tangier: { x: -5.8129, y: 35.7595 },
+    // Settat: { x: -7.6166, y: 32.9833 },
+    // Rabat: { x: -6.8498, y: 34.0209 },
+    // Marrakesh: { x: -7.9811, y: 31.6295 },
+    // Agadir: { x: -9.5982, y: 30.4278 },
+    // Meknes: { x: -5.5474, y: 33.8935 },
+    // Oujda: { x: -1.9086, y: 34.6867 }
   };
 
   // Extended interests list
   const INTERESTS = [
     "#Photography",
     "#Shopping",
-    "#Karaoke",
     "#Yoga",
     "#Cooking",
     "#Tennis",
@@ -38,34 +40,17 @@ async function populateNeo4jDatabase() {
     "#Swimming",
     "#Running",
     "#Painting",
-    "#Drawing",
-    "#Sculpture",
     "#Poetry",
     "#Writing",
-    "#Theater",
-    "#Dance",
     "#Museums",
     "#Hiking",
     "#Reading",
     "#Chess",
-    "#Cycling",
-    "#Gardening",
-    "#Meditation",
-    "#Languages",
-    "#Fashion",
-    "#Technology",
-    "#Film",
-    "#Baking",
-    "#Climbing",
-    "#Surfing",
-    "#Singing",
-    "#History"
   ];
 
   // Extended photo collections
   const PHOTOS = {
     male: [
-      "https://res.cloudinary.com/dx7tysdmi/image/upload/v1739194190/dtchc1tjaq9odrgdolvk.jpg",
       "https://images.pexels.com/photos/30472381/pexels-photo-30472381/free-photo-of-elegant-male-fashion-portrait-with-moody-lighting.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
       "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
       "https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
@@ -107,10 +92,29 @@ async function populateNeo4jDatabase() {
       "https://images.unsplash.com/photo-1679897499180-7fc188662cf9?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NTh8fG1hbiUyMCUyMHBvdHJhaXR8ZW58MHx8MHx8fDA%3D",
       "https://images.unsplash.com/photo-1732036730633-3bb97dadac4e?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OTB8fG1hbiUyMCUyMHBvdHJhaXR8ZW58MHx8MHx8fDA%3D",
       "https://images.unsplash.com/photo-1647643050583-3ab2bf9e3ba3?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTA0fHxtYW4lMjAlMjBwb3RyYWl0fGVufDB8fDB8fHww",
-      "https://images.unsplash.com/photo-1596710310557-c905d3047cb8?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTQ4fHxtYW4lMjAlMjBwb3RyYWl0fGVufDB8fDB8fHww"
+      "https://images.unsplash.com/photo-1596710310557-c905d3047cb8?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTQ4fHxtYW4lMjAlMjBwb3RyYWl0fGVufDB8fDB8fHww",
+      "https://images.pexels.com/photos/19781182/pexels-photo-19781182/free-photo-of-portrait-of-an-african-man-wearing-dungarees.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
+      "https://images.pexels.com/photos/30378546/pexels-photo-30378546/free-photo-of-green-electric-guitar-hanging-on-a-wall.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
+      "https://images.pexels.com/photos/30389456/pexels-photo-30389456/free-photo-of-cozy-ginger-cat-sitting-by-sunlit-window.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
+      "https://images.pexels.com/photos/7171858/pexels-photo-7171858.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
+      "https://images.pexels.com/photos/1591382/pexels-photo-1591382.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+      "https://images.pexels.com/photos/30720848/pexels-photo-30720848/free-photo-of-stylish-man-tossing-playing-cards-in-studio.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "https://images.pexels.com/photos/30706176/pexels-photo-30706176/free-photo-of-dramatic-male-portrait-with-smoke-and-light.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "https://images.pexels.com/photos/30714005/pexels-photo-30714005/free-photo-of-young-man-with-dramatic-shadow-outdoors.jpeg?auto=compress&cs=tinysrgb&w=600",
+
+      "https://images.pexels.com/photos/30720844/pexels-photo-30720844/free-photo-of-stylish-african-american-in-vibrant-orange-fashion.jpeg?auto=compress&cs=tinysrgb&w=600",
+
+      'https://images.pexels.com/photos/30698113/pexels-photo-30698113/free-photo-of-fashionable-young-man-posing-on-yellow-background.jpeg?auto=compress&cs=tinysrgb&w=600',
+      "https://images.pexels.com/photos/5427360/pexels-photo-5427360.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+      "https://images.pexels.com/photos/30695061/pexels-photo-30695061/free-photo-of-romantic-night-portrait-with-a-rose-in-mexico-city.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "https://images.pexels.com/photos/30694882/pexels-photo-30694882/free-photo-of-elderly-man-in-green-sweater-standing-by-ladder.jpeg?auto=compress&cs=tinysrgb&w=600",
+
     ],
     female: [
       "https://images.pexels.com/photos/30549701/pexels-photo-30549701/free-photo-of-smiling-woman-in-traditional-red-costume.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+      "https://images.pexels.com/photos/30745516/pexels-photo-30745516/free-photo-of-portrait-of-woman-in-soft-lighting-indoors.jpeg?auto=compress&cs=tinysrgb&w=600",
+
+
       "https://images.pexels.com/photos/762020/pexels-photo-762020.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
       "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
       "https://images.pexels.com/photos/3808041/pexels-photo-3808041.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
@@ -124,11 +128,9 @@ async function populateNeo4jDatabase() {
       "https://images.pexels.com/photos/30572883/pexels-photo-30572883/free-photo-of-tranquil-portrait-by-a-lake-in-ankara.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
       "https://images.pexels.com/photos/30531850/pexels-photo-30531850/free-photo-of-woman-in-traditional-dress-holding-flowers.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
       "https://images.pexels.com/photos/30644194/pexels-photo-30644194/free-photo-of-woman-in-front-of-iconic-hagia-sophia-in-istanbul.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-      "https://images.pexels.com/photos/29069494/pexels-photo-29069494/free-photo-of-elegant-young-woman-in-sparkling-red-gown-indoors.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
       "https://images.pexels.com/photos/14356738/pexels-photo-14356738.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
       "https://images.pexels.com/photos/17593640/pexels-photo-17593640/free-photo-of-soup-with-egg.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
       "https://images.pexels.com/photos/30555720/pexels-photo-30555720/free-photo-of-dramatic-portrait-of-woman-in-red-lighting.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-
       "https://images.pexels.com/photos/27305813/pexels-photo-27305813/free-photo-of-a-woman-taking-a-photo-with-her-camera.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
       "https://www.pexels.com/photo/relaxed-woman-lying-on-white-bed-indoors-30561139/",
       "https://images.pexels.com/photos/30356749/pexels-photo-30356749/free-photo-of-woman-in-hat-gazing-at-seaside-horizon.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
@@ -141,14 +143,11 @@ async function populateNeo4jDatabase() {
       "https://images.pexels.com/photos/30461878/pexels-photo-30461878/free-photo-of-elegant-afro-inspired-portrait-with-vintage-fashion.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
       "https://images.pexels.com/photos/7327767/pexels-photo-7327767.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
       "https://images.pexels.com/photos/30338194/pexels-photo-30338194/free-photo-of-elegant-black-and-white-fashion-portrait.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
-
       "https://images.pexels.com/photos/30309982/pexels-photo-30309982/free-photo-of-woman-holding-camera-at-sunset-beach.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
       "https://images.pexels.com/photos/16486458/pexels-photo-16486458/free-photo-of-woman-wearing-earmuffs-on-winter-day.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
-
       "https://images.pexels.com/photos/30441185/pexels-photo-30441185/free-photo-of-traditional-chinese-attire-with-scarlet-umbrella-in-jakarta.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
       "https://images.pexels.com/photos/30253418/pexels-photo-30253418/free-photo-of-elegant-woman-in-flowing-dress-in-forest-setting.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1",
-
       "https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-1.2.1",
       "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?ixlib=rb-1.2.1",
       "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?ixlib=rb-1.2.1",
@@ -158,19 +157,34 @@ async function populateNeo4jDatabase() {
       "https://images.unsplash.com/photo-1500917293891-ef795e70e1f6?ixlib=rb-1.2.1",
       "https://images.unsplash.com/photo-1503185912284-5271ff81b9a8?ixlib=rb-1.2.1",
       "https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1",
-
       "https://images.unsplash.com/photo-1603771550805-abcf98e420e7?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
       "https://images.unsplash.com/photo-1594270410221-e6a33cbc6fb9?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-
       "https://images.unsplash.com/photo-1484608856193-968d2be4080e?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjN8fGdpcmwlMjBwb3RyYWl0fGVufDB8fDB8fHww",
-
       "https://plus.unsplash.com/premium_photo-1668896122554-2a4456667f65?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mzd8fGdpcmwlMjBwb3RyYWl0fGVufDB8fDB8fHww",
+      "https://images.unsplash.com/photo-1619024329452-45342ede6e58?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NTF8fGdpcmwlMjBwb3RyYWl0fGVufDB8fDB8fHww",
+      "https://images.pexels.com/photos/30148955/pexels-photo-30148955/free-photo-of-thoughtful-woman-posing-by-window-outdoors.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
+      "https://images.pexels.com/photos/30401556/pexels-photo-30401556/free-photo-of-pensive-woman-in-black-blazer-by-waterfront.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
+      "https://images.pexels.com/photos/30697255/pexels-photo-30697255/free-photo-of-stylish-woman-in-pink-cowgirl-outfit-with-flowers.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
+      "https://images.pexels.com/photos/30441417/pexels-photo-30441417/free-photo-of-elegant-woman-with-orange-umbrella-by-cherry-blossom-tree.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
+      "https://images.pexels.com/photos/30594080/pexels-photo-30594080/free-photo-of-playful-cat-relaxing-on-sunlit-rocks-outdoors.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
+      "https://images.pexels.com/photos/30349922/pexels-photo-30349922/free-photo-of-woman-in-white-dress-near-cliffside-lighthouse.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
+      "https://images.pexels.com/photos/28512335/pexels-photo-28512335/free-photo-of-elegant-coffee-cup-with-eucalyptus-on-red-fabric.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
+      "https://images.pexels.com/photos/12150341/pexels-photo-12150341.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
+      "https://images.pexels.com/photos/18390118/pexels-photo-18390118/free-photo-of-sitting-woman-against-orange-background.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
+      "https://images.pexels.com/photos/30652897/pexels-photo-30652897/free-photo-of-woman-holding-yellow-chrysanthemum-in-soft-light.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
+      "https://images.pexels.com/photos/30635845/pexels-photo-30635845/free-photo-of-elegant-hand-holding-a-single-pink-tulip-flower.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
+      "https://images.pexels.com/photos/30539631/pexels-photo-30539631/free-photo-of-monochrome-portrait-of-woman-with-camera.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
+      "https://images.pexels.com/photos/30492154/pexels-photo-30492154/free-photo-of-silhouette-drawing-heart-on-foggy-window.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
+      "https://images.pexels.com/photos/30389456/pexels-photo-30389456/free-photo-of-cozy-ginger-cat-sitting-by-sunlit-window.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
+      "https://images.pexels.com/photos/30747230/pexels-photo-30747230/free-photo-of-elegant-portrait-of-a-thoughtful-woman.jpeg?auto=compress&cs=tinysrgb&w=600",
 
-      "https://images.unsplash.com/photo-1619024329452-45342ede6e58?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NTF8fGdpcmwlMjBwb3RyYWl0fGVufDB8fDB8fHww"
+
+
     ]
   };
 
   const getRandomPhoto = function (gender) {
+    // console.log(PHOTOS[gender].length , " PHOTOS[gender].length 0>>.")
     return PHOTOS[gender][Math.floor(Math.random() * PHOTOS[gender].length)];
   };
   const generateInterests = () =>
@@ -212,7 +226,7 @@ async function populateNeo4jDatabase() {
         gender: gender,
         city: cityName,
         country: "Morocco",
-        biography: faker.lorem.paragraph(faker.number.int({ min: 2, max: 4 })),
+        biography: faker.lorem.paragraph(5),
         x: faker.number.float({
           min: coords.x - 0.005,
           max: coords.x + 0.005,
@@ -240,7 +254,7 @@ async function populateNeo4jDatabase() {
           password: $password,
           first_name: $first_name,
           last_name: $last_name,
-          age: $age,
+          age: toFloat($age),
           gender: $gender,
           city: $city,
           country: $country,
