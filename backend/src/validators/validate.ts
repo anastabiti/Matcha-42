@@ -1,5 +1,24 @@
 import { Request, Response, NextFunction, RequestHandler } from "express";
 
+
+
+
+
+/*
+https://expressjs.com/en/guide/writing-middleware.html#:~:text=The%20next%20function%20is%20a,request%20and%20the%20response%20objects. 
+
+  Middleware functions are functions that have access to the request object (req), the response object (res), 
+  and the next function in the application’s request-response cycle. The next function is a function in the Express router which, 
+  when invoked, executes the middleware succeeding the current middleware.
+
+  Middleware functions can perform the following tasks:
+
+  Execute any code.
+  Make changes to the request and the response objects.
+  End the request-response cycle.
+  Call the next middleware in the stack.
+
+*/
 export function validatePassword(req: Request, res: Response, next: NextFunction) {
   const password = req.body.password;
 
@@ -226,17 +245,47 @@ export function validateBiography(req: Request, res: Response, next: NextFunctio
       return;
     }
 
-    if (biography.length < 20 || biography.length > 200) {
+    // Trim whitespace and check if the biography is actually empty
+    const trimmedBiography = biography.trim();
+    if (trimmedBiography.length === 0) {
+      res.status(400).json("Biography cannot be empty or contain only whitespace");
+      return;
+    }
+
+    if (trimmedBiography.length < 20 || trimmedBiography.length > 200) {
       res.status(400).json("Biography must be between 20 and 200 characters");
       return;
     }
 
+    // Update the req.body with the trimmed biography
+    req.body.biography = trimmedBiography;
+
     next();
-  } catch {
+  } catch (error) {
     res.status(400).json("Invalid biography");
     return;
   }
 }
+// export function validateBiography(req: Request, res: Response, next: NextFunction): void {
+//   try {
+//     const biography = req.body.biography;
+
+//     if (!biography) {
+//       res.status(400).json("Biography is required");
+//       return;
+//     }
+
+//     if (biography.length < 20 || biography.length > 200) {
+//       res.status(400).json("Biography must be between 20 and 200 characters");
+//       return;
+//     }
+
+//     next();
+//   } catch {
+//     res.status(400).json("Invalid biography");
+//     return;
+//   }
+// }
 
 export function validateInterests(req: Request, res: Response, next: NextFunction): void {
   try {

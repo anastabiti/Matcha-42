@@ -309,7 +309,7 @@ function Setup_page() {
 
   return (
     <div className="flex items-center justify-center mt-28">
-      <div className="w-full max-w-[95%] sm:max-w-screen-lg">
+      <div className="w-full max-w-[95%] sm:max-w-screen-sm">
         <div className="bg-[#A3195B] rounded-2xl p-4 sm:p-6">
           <div className="space-y-4 sm:space-y-6">
             <h2 className="text-xl sm:text-2xl font-semibold text-white mb-4 sm:mb-8">
