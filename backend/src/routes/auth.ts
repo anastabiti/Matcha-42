@@ -295,7 +295,7 @@ authRouter.patch("/reset_it", validatePassword, async (req: Request, res: Respon
       );
 
       if (db_res.records.length > 0) {
-        res.status(200).json("sucess");
+        res.status(200).json("success");
         await new_session.close();
         return;
       } else {
