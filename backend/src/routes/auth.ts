@@ -339,6 +339,4 @@ authRouter.post("/logout", authenticateToken_Middleware, async (req: any, res: R
   }
 });
 
-// ----------------------------------------------------------------------------------
-
 export default authRouter;
