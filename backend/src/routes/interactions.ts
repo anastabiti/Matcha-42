@@ -23,6 +23,7 @@ interactions.post("/like-user", authenticateToken_Middleware, async (req: any, r
 		MATCH (u:User {username: $username})
 		MATCH (otherUser:User {username: $likedUsername})
 		WHERE u <> otherUser
+    SET otherUser.fame_rating = otherUser.fame_rating + 2
 		MERGE (u)-[r:LIKES {createdAt: datetime()}]->(otherUser)
 		WITH u, otherUser, EXISTS((otherUser)-[:LIKES]->(u)) as isMatch
 		
@@ -68,6 +69,7 @@ interactions.post("/unlike-user", authenticateToken_Middleware, async (req: any,
             MATCH (u:User {username: $username})
             MATCH (otherUser:User {username: $likedUsername})
             WHERE u <> otherUser
+            SET otherUser.fame_rating = otherUser.fame_rating - 1
             OPTIONAL MATCH (u)-[l:LIKES]->(otherUser)
             OPTIONAL MATCH (u)-[m:MATCHED]-(otherUser)
             DELETE l, m
@@ -109,6 +111,7 @@ interactions.post("/view-profile", authenticateToken_Middleware, async (req: any
             MATCH (viewer:User {username: $username})
             MATCH (viewed:User {username: $viewedUsername})
             WHERE viewer <> viewed
+            SET viewed.fame_rating = viewed.fame_rating + 1
             MERGE (viewer)-[r:VIEWED]->(viewed)
             SET r.lastViewedAt = datetime()
             RETURN {
@@ -154,6 +157,7 @@ interactions.post("/blocks/:username", authenticateToken_Middleware, async (req:
 		MATCH (u:User {username: $username}), 
 			  (blockedUser:User {username: $blockedUsername})
 		WHERE u <> blockedUser
+    SET blockedUser.fame_rating = blockedUser.fame_rating - 5
 		MERGE (u)-[b:BLOCKED {
 			createdAt: datetime()
 		}]->(blockedUser)
@@ -284,6 +288,7 @@ interactions.delete("/blocks/:username", authenticateToken_Middleware, async (re
 		MATCH (reporter:User {username: $username}), 
 			  (reportedUser:User {username: $reportedUsername})
 		WHERE reporter <> reportedUser
+    SET reportedUser.fame_rating = reportedUser.fame_rating - 5
 		MERGE (reporter)-[r:REPORTED {
 		  createdAt: datetime()
 		}]->(reportedUser)

@@ -81,10 +81,10 @@ const ProfilePage = (props: ProfilePageProps) => {
   const fetchProfile = async () => {
     try {
       const [profileResponse, connectionResponse] = await Promise.all([
-        fetch(`${process.env.VITE_BACKEND_IP}/profile/${username}`, {
+        fetch(`${import.meta.env.VITE_BACKEND_IP}/profile/${username}`, {
           credentials: 'include',
         }),
-        fetch(`${process.env.VITE_BACKEND_IP}/connection-status/${username}`, {
+        fetch(`${import.meta.env.VITE_BACKEND_IP}/connection-status/${username}`, {
           credentials: 'include',
         })
       ]);
@@ -105,6 +105,7 @@ const ProfilePage = (props: ProfilePageProps) => {
         setError(profileData.error || 'Failed to fetch profile');
       }
     } catch (error) {
+      console.error('Error fetching profile:', error);
       setError('Failed to fetch profile');
     } finally {
       setLoading(false);
