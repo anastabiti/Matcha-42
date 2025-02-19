@@ -81,10 +81,10 @@ const ProfilePage = (props: ProfilePageProps) => {
   const fetchProfile = async () => {
     try {
       const [profileResponse, connectionResponse] = await Promise.all([
-        fetch(`${import.meta.env.VITE_BACKEND_IP}/profile/${username}`, {
+        fetch(`${process.env.VITE_BACKEND_IP}/profile/${username}`, {
           credentials: 'include',
         }),
-        fetch(`${import.meta.env.VITE_BACKEND_IP}/connection-status/${username}`, {
+        fetch(`${process.env.VITE_BACKEND_IP}/connection-status/${username}`, {
           credentials: 'include',
         })
       ]);
