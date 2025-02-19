@@ -11,15 +11,18 @@ const email_change = express.Router();
 
 
 
-
+/**************************************************************************************************************
+ * Request to Change email API 
+ *  by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
 email_change.patch(
   "/change_email",
   authenticateToken_Middleware,
   validateEmail,
   async function (req: any, res: any) {
     try {
-      // console.log(req.body, " -------req\n\n\n");
-      // console.log(req.user);
+      
+      
       const user = req.user;
       const new_email = req.body.newEmail;
       const password = req.body.password;
@@ -61,9 +64,9 @@ email_change.patch(
             const verfication_token = await jwt.sign(
               { username: tmp_user.username, new_email: new_email, old_email: tmp_user.email },
               process.env.JWT_TOKEN_SECRET,
-              { expiresIn: "12min" }
+              { expiresIn: "10min" }
             );
-            //   const verfication_token = (await crypto).randomBytes(20).toString("hex");
+
             //send email verification
             const add_hash_to_user_db = await new_session.run(
               `
@@ -115,15 +118,20 @@ email_change.patch(
             return res.status(400).json("WRONG PASSWORD!");
           }
         }
+        return res.status(400).json("Problem in getting the user");
       }
+      return res.status(400).json("Problem in DB");
     } catch {
-      return res.status(400).json("FAILED");
+      return res.status(400).json("Error Occured");
     }
   }
 );
 
-// ---------------
-// Verify email route
+
+/**************************************************************************************************************
+ *  Changing email API , validate the token 
+ *  by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
 email_change.get("/verify-new-email", async (req: any, res: any) => {
   try {
     const token = req.query.token;
