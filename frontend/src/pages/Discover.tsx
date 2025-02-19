@@ -252,7 +252,7 @@ async function likeUser() {
 										</div>
 
 										<div className="py-4 border-y border-[#3a3445]">
-											<p className="text-gray-300 text-lg leading-relaxed">
+											<p className="text-gray-300 text-lg leading-relaxed break-words overflow-wrap">
 												{profiles[currentIndex].preview.bio}
 											</p>
 											<button
