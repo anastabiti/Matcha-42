@@ -75,9 +75,9 @@ function App() {
           </Route>
           <Route path="/resetPassword" element={<ResetPassword />} />
 
-          <Route element={<Layout />}>
             <Route element={<IsLogged />}>
               <Route path="/setup" element={<Setup_page />} />
+          <Route element={<Layout />}>
               <Route element={<RequireSetup />}>
               <Route path="/profile" element={<Profile />} />
               <Route path="/discover" element={<DiscoverPage />} />

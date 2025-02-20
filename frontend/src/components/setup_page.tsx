@@ -20,7 +20,7 @@ import {
   MusicNote,
   SportsEsports,
   Pool,
-  DirectionsRun
+  DirectionsRun,
 } from "@mui/icons-material";
 import Gps from "./Gps";
 
@@ -56,10 +56,8 @@ function Setup_page() {
     "#Music",
     "#Video games",
     "#Swimming",
-    "#Running"
+    "#Running",
   ];
-
-  
 
   const [availableInterests, setAvailableInterests] =
     useState(defaultInterests);
@@ -69,7 +67,7 @@ function Setup_page() {
     biography: "",
     interests: [],
     age: 18,
-    pics: []
+    pics: [],
   });
 
   const navigate = useNavigate();
@@ -116,7 +114,7 @@ function Setup_page() {
     if (validationError) {
       setImageErrors((prev) => [
         ...prev.filter((e) => e.index !== index),
-        { index, message: validationError }
+        { index, message: validationError },
       ]);
       return;
     }
@@ -149,7 +147,7 @@ function Setup_page() {
 
       return {
         ...prev,
-        interests: updatedInterests
+        interests: updatedInterests,
       };
     });
   }
@@ -178,7 +176,7 @@ function Setup_page() {
       setAvailableInterests((prev) => [...prev, formattedInterest]);
       setFormData((prev) => ({
         ...prev,
-        interests: [...prev.interests, formattedInterest]
+        interests: [...prev.interests, formattedInterest],
       }));
     }
 
@@ -238,16 +236,14 @@ function Setup_page() {
       setIsLoading(false);
       return;
     }
-    if(!formData.gender)
-      {
+    if (!formData.gender) {
       setError("Please add  you gender!");
       setIsLoading(false);
       return;
     }
-    
-    console.log(formData.interests.length   , " formData.interests\n\n\n");
-    if(!formData.interests.length)
-      {
+
+    console.log(formData.interests.length, " formData.interests\n\n\n");
+    if (!formData.interests.length) {
       setError("Please add  your interests!");
       setIsLoading(false);
       return;
@@ -260,7 +256,7 @@ function Setup_page() {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData)
+          body: JSON.stringify(formData),
         }
       );
 
@@ -284,7 +280,7 @@ function Setup_page() {
           {
             method: "POST",
             credentials: "include",
-            body: new_data
+            body: new_data,
           }
         );
 
@@ -295,7 +291,6 @@ function Setup_page() {
       }
 
       setSuccess("Your information has been submitted successfully.");
-   
 
       navigate("/discover");
     } catch (error: unknown) {
@@ -308,15 +303,16 @@ function Setup_page() {
   }
 
   return (
-    <div className="flex items-center justify-center mt-28">
-      <div className="w-full max-w-[95%] sm:max-w-screen-sm">
-        <div className="bg-[#A3195B] rounded-2xl p-4 sm:p-6">
-          <div className="space-y-4 sm:space-y-6">
-            <h2 className="text-xl sm:text-2xl font-semibold text-white mb-4 sm:mb-8">
-              Setup Your Account
-            </h2>
+    <div className=" min-h-full bg-[#1a1625] ">
+      <div className="flex items-center justify-center ">
+        <div className="w-full max-w-[95%] sm:max-w-screen-sm mt-9">
+          <div className="bg-[#A3195B] rounded-2xl p-4 sm:p-6">
+            <div className="space-y-4 sm:space-y-6">
+              <h2 className="text-xl sm:text-2xl font-semibold text-white mb-4 sm:mb-8">
+                Setup Your Account
+              </h2>
 
-            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
                 <div id="gender">Gender</div>
                 <RadioGroup
                   aria-labelledby="gender"
@@ -338,166 +334,167 @@ function Setup_page() {
                   />
                 </RadioGroup>
 
-              <TextField
-                fullWidth
-                type="number"
-                label="Age"
-                inputProps={{ min: 18, max: 100 }}
-                value={formData.age}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === "") {
-                    setFormData((prev) => ({ ...prev, age: 18 }));
-                    return;
-                  }
-                  const parsedAge = parseInt(value, 10);
-                  if (
-                    !isNaN(parsedAge) &&
-                    parsedAge >= 18 &&
-                    parsedAge <= 100
-                  ) {
-                    setFormData((prev) => ({ ...prev, age: parsedAge }));
-                  }
-                }}
-                required
-                className="bg-white rounded"
-              />
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Age"
+                  inputProps={{ min: 18, max: 100 }}
+                  value={formData.age}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "") {
+                      setFormData((prev) => ({ ...prev, age: 18 }));
+                      return;
+                    }
+                    const parsedAge = parseInt(value, 10);
+                    if (
+                      !isNaN(parsedAge) &&
+                      parsedAge >= 18 &&
+                      parsedAge <= 100
+                    ) {
+                      setFormData((prev) => ({ ...prev, age: parsedAge }));
+                    }
+                  }}
+                  required
+                  className="bg-white rounded"
+                />
 
-              <TextField
-                required
-                fullWidth
-                label="Biography"
-                multiline
-                rows={4}
-                inputProps={{
-                  minLength: 20,
-                  maxLength: 200
-                }}
-                value={formData.biography}
-                onChange={(e) => {
-                  if (e.target.value.length <= 200) {
-                    handleFormChange("biography", e.target.value || "");
-                  }
-                }}
-                className="bg-white rounded"
-              />
+                <TextField
+                  required
+                  fullWidth
+                  label="Biography"
+                  multiline
+                  rows={4}
+                  inputProps={{
+                    minLength: 20,
+                    maxLength: 200,
+                  }}
+                  value={formData.biography}
+                  onChange={(e) => {
+                    if (e.target.value.length <= 200) {
+                      handleFormChange("biography", e.target.value || "");
+                    }
+                  }}
+                  className="bg-white rounded"
+                />
 
-              <div className="space-y-4">
-                <h2 className="text-xl sm:text-2xl font-semibold text-white mb-4">
-                  Your Interests
-                </h2>
+                <div className="space-y-4">
+                  <h2 className="text-xl sm:text-2xl font-semibold text-white mb-4">
+                    Your Interests
+                  </h2>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                  {availableInterests.map((interest) => (
-                    <button
-                      type="button"
-                      key={interest}
-                      onClick={() => toggleInterest(interest)}
-                      className={`px-3 sm:px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center justify-center
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                    {availableInterests.map((interest) => (
+                      <button
+                        type="button"
+                        key={interest}
+                        onClick={() => toggleInterest(interest)}
+                        className={`px-3 sm:px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center justify-center
                       ${
                         formData.interests.includes(interest)
                           ? "bg-pink-600 text-white"
                           : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                       }`}
-                    >
-                      {interest === "#Photography" && (
-                        <PhotoCamera className="w-4 h-4 mr-2" />
-                      )}
-                      {interest === "#Shopping" && (
-                        <ShoppingCart className="w-4 h-4 mr-2" />
-                      )}
-                      {interest === "#Karaoke" && (
-                        <Mic className="w-4 h-4 mr-2" />
-                      )}
-                      {interest === "#Yoga" && (
-                        <SelfImprovement className="w-4 h-4 mr-2" />
-                      )}
-                      {interest === "#Cooking" && (
-                        <Restaurant className="w-4 h-4 mr-2" />
-                      )}
-                      {interest === "#Tennis" && (
-                        <SportsTennis className="w-4 h-4 mr-2" />
-                      )}
-                      {interest === "#Art" && (
-                        <Palette className="w-4 h-4 mr-2" />
-                      )}
-                      {interest === "#Traveling" && (
-                        <Flight className="w-4 h-4 mr-2" />
-                      )}
-                      {interest === "#Music" && (
-                        <MusicNote className="w-4 h-4 mr-2" />
-                      )}
-                      {interest === "#Video games" && (
-                        <SportsEsports className="w-4 h-4 mr-2" />
-                      )}
-                      {interest === "#Swimming" && (
-                        <Pool className="w-4 h-4 mr-2" />
-                      )}
-                      {interest === "#Running" && (
-                        <DirectionsRun className="w-4 h-4 mr-2" />
-                      )}
-                      {/* Use the truncate utility to prevent text from wrapping and truncate overflowing text with an ellipsis (…) if needed: 
+                      >
+                        {interest === "#Photography" && (
+                          <PhotoCamera className="w-4 h-4 mr-2" />
+                        )}
+                        {interest === "#Shopping" && (
+                          <ShoppingCart className="w-4 h-4 mr-2" />
+                        )}
+                        {interest === "#Karaoke" && (
+                          <Mic className="w-4 h-4 mr-2" />
+                        )}
+                        {interest === "#Yoga" && (
+                          <SelfImprovement className="w-4 h-4 mr-2" />
+                        )}
+                        {interest === "#Cooking" && (
+                          <Restaurant className="w-4 h-4 mr-2" />
+                        )}
+                        {interest === "#Tennis" && (
+                          <SportsTennis className="w-4 h-4 mr-2" />
+                        )}
+                        {interest === "#Art" && (
+                          <Palette className="w-4 h-4 mr-2" />
+                        )}
+                        {interest === "#Traveling" && (
+                          <Flight className="w-4 h-4 mr-2" />
+                        )}
+                        {interest === "#Music" && (
+                          <MusicNote className="w-4 h-4 mr-2" />
+                        )}
+                        {interest === "#Video games" && (
+                          <SportsEsports className="w-4 h-4 mr-2" />
+                        )}
+                        {interest === "#Swimming" && (
+                          <Pool className="w-4 h-4 mr-2" />
+                        )}
+                        {interest === "#Running" && (
+                          <DirectionsRun className="w-4 h-4 mr-2" />
+                        )}
+                        {/* Use the truncate utility to prevent text from wrapping and truncate overflowing text with an ellipsis (…) if needed: 
                     https://tailwindcss.com/docs/text-overflow#truncating-text
                     
                     <span> tag is used for smaller, inline styling within these blocks or within text content without disrupting the overall flow of the webpage.
                     */}
 
-                      <span className="truncate">{interest}</span>
-                    </button>
-                  ))}
+                        <span className="truncate">{interest}</span>
+                      </button>
+                    ))}
 
-                  <div className="col-span-1 sm:col-span-2 flex">
-                    <input
-                      type="text"
-                      placeholder="New Interest"
-                      minLength={2}
-                      maxLength={20}
-                      className="flex-1 px-4 py-2 rounded-full text-sm font-medium bg-gray-800 text-gray-300"
-                      value={new_interest || ""}
-                      onChange={handleNewInterestChange}
-                    />
-                    <Button
-                      type="button"
-                      onClick={addNewInterest}
-                      variant="contained"
-                      className="w-full sm:w-auto"
-                    >
-                      Add
-                    </Button>
+                    <div className="col-span-1 sm:col-span-2 flex">
+                      <input
+                        type="text"
+                        placeholder="New Interest"
+                        minLength={2}
+                        maxLength={20}
+                        className="flex-1 px-4 py-2 rounded-full text-sm font-medium bg-gray-800 text-gray-300"
+                        value={new_interest || ""}
+                        onChange={handleNewInterestChange}
+                      />
+                      <Button
+                        type="button"
+                        onClick={addNewInterest}
+                        variant="contained"
+                        className="w-full sm:w-auto"
+                      >
+                        Add
+                      </Button>
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-4">
-                  {generateImageUploadDivs()}
+                  <div className="space-y-4">
+                    {generateImageUploadDivs()}
+
+                    <button
+                      type="button"
+                      onClick={clearInterest}
+                      className="w-full bg-pink-600 hover:bg-pink-700 text-white rounded-xl py-2 sm:py-3 font-semibold text-sm sm:text-base"
+                    >
+                      Clear Interest
+                    </button>
+                  </div>
+
+                  {error && (
+                    <div className="text-red-500 text-sm bg-red-100 p-2 rounded">
+                      {error}
+                    </div>
+                  )}
+                  {success && (
+                    <div className="text-green-500 text-sm bg-green-100 p-2 rounded">
+                      {success}
+                    </div>
+                  )}
 
                   <button
-                    type="button"
-                    onClick={clearInterest}
+                    // onClick={handleSubmit}
                     className="w-full bg-pink-600 hover:bg-pink-700 text-white rounded-xl py-2 sm:py-3 font-semibold text-sm sm:text-base"
                   >
-                    Clear Interest
+                    {isLoading ? "Submitting..." : "Submit your information"}
                   </button>
                 </div>
-
-                {error && (
-                  <div className="text-red-500 text-sm bg-red-100 p-2 rounded">
-                    {error}
-                  </div>
-                )}
-                {success && (
-                  <div className="text-green-500 text-sm bg-green-100 p-2 rounded">
-                    {success}
-                  </div>
-                )}
-
-                <button
-                  // onClick={handleSubmit}
-                  className="w-full bg-pink-600 hover:bg-pink-700 text-white rounded-xl py-2 sm:py-3 font-semibold text-sm sm:text-base"
-                >
-                  {isLoading ? "Submitting..." : "Submit your information"}
-                </button>
-              </div>
-            </form>
-            <Gps />
+              </form>
+              <Gps />
+            </div>
           </div>
         </div>
       </div>
