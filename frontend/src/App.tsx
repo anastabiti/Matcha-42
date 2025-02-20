@@ -20,6 +20,7 @@ import MatchedPage from "./pages/matches";
 import ChatUserList from "./components/ChatUserList";
 import { useEffect, useState } from "react";
 import Home from "./pages/Home";
+import RequireSetup from "./components/RequireSetup_middleware";
 
 const Logged_so_no_access_to_loginpage = () => {
   const [user, setUser] = useState<boolean | null>(null);
@@ -77,6 +78,7 @@ function App() {
           <Route element={<Layout />}>
             <Route element={<IsLogged />}>
               <Route path="/setup" element={<Setup_page />} />
+              <Route element={<RequireSetup />}>
               <Route path="/profile" element={<Profile />} />
               <Route path="/discover" element={<DiscoverPage />} />
               <Route path="/messages" element={<ChatUserList />} />
@@ -84,6 +86,7 @@ function App() {
               <Route path="/"  element={<Home/>}/>
               <Route path="/chat/:username" element={<Chat />} />
               <Route path="/profile/:username" element={<ProfilePage />} />
+            </Route>
             </Route>
           </Route>
         </Routes>

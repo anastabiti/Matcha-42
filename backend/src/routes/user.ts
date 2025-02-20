@@ -306,6 +306,15 @@ user_information_Router.get(
     return res.status(200).json("IS LOGGED");
   }
 );
+user_information_Router.get(
+  "/user/has_completed_setup",
+  authenticateToken_Middleware,
+  async function (req: any, res: any) {
+    if (req.user.setup_done === true)
+       return res.status(200).json("completed");
+    return res.status(401).json("not completed");
+  }
+);
 
 // -------------
 user_information_Router.get(
