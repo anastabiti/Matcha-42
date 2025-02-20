@@ -23,6 +23,16 @@ export const transporter = nodemailer.createTransport({
 });
 const registrationRouter = express.Router();
 
+/**************************************************************************************************************
+ * Register a new user by requesting the following fields:
+ * - email
+ * - password
+ * - username
+ * - first_name
+ * - last_name
+ * - age
+ *  by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
 registrationRouter.post(
   "/registration",
   validateEmail,
@@ -32,22 +42,7 @@ registrationRouter.post(
   validateAge,
   async (req: Request, res: Response) => {
     try {
-      const plain_pass = req.body.password;
-      const hashedPassword = await argon2.hash(plain_pass);
-      const user = {
-        username: req.body.username,
-        email: req.body.email,
-        password: hashedPassword,
-        first_name: req.body.first_name,
-        last_name: req.body.last_name,
-        verfication_token: "",
-        verified: false,
-        password_reset_token: "",
-        gender: "",
-        biography: "",
-        setup_done: false,
-        age: req.body.age,
-      };
+      const user = req.body;
       const session = await driver.session();
 
       if (session && user) {
@@ -69,8 +64,24 @@ registrationRouter.post(
           res.status(400).json("Username already exists");
           return;
         } else {
-          // console.log("new User");
-          user.verfication_token = (await crypto).randomBytes(20).toString("hex"); //ex: 32341856423cfac6eda221a5e3b3c9861ce96da9
+          //create a new user
+          const plain_pass = req.body.password;
+          const hashedPassword = await argon2.hash(plain_pass);
+          const db_user = {
+            username: req.body.username,
+            email: req.body.email,
+            password: hashedPassword,
+            first_name: req.body.first_name,
+            last_name: req.body.last_name,
+            verfication_token: "",
+            verified: false,
+            password_reset_token: "",
+            gender: "",
+            biography: "",
+            setup_done: false,
+            age: req.body.age,
+          };
+          db_user.verfication_token = (await crypto).randomBytes(20).toString("hex"); //ex: 32341856423cfac6eda221a5e3b3c9861ce96da9 length is 40 characters (20 bytes × 2)
           await session.run(
             `CREATE (a:User {
           username: $username, email: $email, password: $password,
@@ -91,20 +102,20 @@ registrationRouter.post(
           password_reset_token:$password_reset_token
             })
     RETURN a`,
-            user
+            db_user
           );
 
           const mailOptions = {
             from: "anastabiti@gmail.com",
-            to: user.email,
+            to: db_user.email,
             subject: "Verify Your Email  💖",
-            text: `Hi ${user.username},
+            text: `Hi ${db_user.username},
             
             Welcome to Matcha, where sparks fly and hearts connect! 🎉
             
             Before you get started, please verify your email address to activate your account. Click the link below to complete the process:
             
-            🔗 Verify Your Email: ${process.env.back_end_ip}/api/verify-email?token=${user.verfication_token}
+            🔗 Verify Your Email: ${process.env.back_end_ip}/api/verify-email?token=${db_user.verfication_token}
             
             If you didn’t create an account on Matcha, you can safely ignore this email.
             
@@ -150,6 +161,10 @@ registrationRouter.post(
   }
 );
 
+/**************************************************************************************************************
+ * Verify email route
+ * by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
 // Verify email route
 registrationRouter.get("/verify-email", async (req: Request, res: Response) => {
   try {
@@ -175,8 +190,10 @@ registrationRouter.get("/verify-email", async (req: Request, res: Response) => {
       if (updates.records.length > 0) {
         const updatedUser = updates.records[0];
 
-        res.status(200).json("Hello! Welcome to Matcha. Email verified successfully!");
+        // res.status(200).json("Hello! Welcome to Matcha. Email verified successfully!");
         await session.close();
+        res.status(200).redirect(`${process.env.front_end_ip}/login?VERFIED=WELCOME_TO_MATCHA`);
+
         return;
       } else {
         await session.close();

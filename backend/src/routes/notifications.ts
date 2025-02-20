@@ -5,6 +5,11 @@ import { Record } from "neo4j-driver";
 
 const notify = express.Router();
 
+
+/**************************************************************************************************************
+ * Get all notifications that are not read yet by the user 
+ *  by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
 notify.get(
   "/notifications",
   authenticateToken_Middleware,
@@ -39,6 +44,12 @@ notify.get(
   }
 );
 
+
+/**************************************************************************************************************
+ * Mark a notification as read
+ * it uses notificationId to mark a notification as read
+ *  by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
 notify.patch(
   "/notifications/:notificationId/read",
   authenticateToken_Middleware,
@@ -69,7 +80,10 @@ notify.patch(
     }
   }
 );
-
+/**************************************************************************************************************
+ * Mark all notifications as read
+ * by  𝟏𝟑𝟹𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ * **************************************************************************************************************/
 notify.patch(
   "/notifications/read-all",
   authenticateToken_Middleware,

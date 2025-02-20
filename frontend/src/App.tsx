@@ -29,7 +29,7 @@ const Logged_so_no_access_to_loginpage = () => {
     const checkAuthStatus = async () => {
       try {
         const response = await fetch(
-          `${process.env.VITE_BACKEND_IP}/api/user/is_logged`,
+          `${import.meta.env.VITE_BACKEND_IP}/api/user/is_logged`,
           {
             method: "GET",
             credentials: "include",
