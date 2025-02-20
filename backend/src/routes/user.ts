@@ -2,9 +2,16 @@ import express, { Request, Response } from "express";
 import neo4j from "neo4j-driver";
 // import { imagekitUploader } from "./../app";
 import { authenticateToken_Middleware, generateAccessToken } from "./auth";
-import { v2 as cloudinary } from 'cloudinary';
+import { v2 as cloudinary } from "cloudinary";
 import { driver } from "../database";
-import { validateAge, validateBiography, validateEmail, validateGender, validateInterests, validateName } from "../validators/validate";
+import {
+  validateAge,
+  validateBiography,
+  validateEmail,
+  validateGender,
+  validateInterests,
+  validateName,
+} from "../validators/validate";
 
 const user_information_Router = express.Router();
 
@@ -21,18 +28,17 @@ export type UserJWTPayload = {
 user_information_Router.post(
   "/user/setup_information",
   authenticateToken_Middleware,
-  validateAge,validateBiography,validateGender,validateInterests,
+  validateAge,
+  validateBiography,
+  validateGender,
+  validateInterests,
   async (req: any, res: any) => {
-    
-    
-
     let _user = req.user;
     if (!_user) {
       return res.status(401).json("UNAUTHORIZED");
     }
 
     if (_user.username) {
-
       //return this later. -------
       if (_user.setup_done == true) {
         return res.status(400).json("Already done");
@@ -54,7 +60,6 @@ user_information_Router.post(
         }
         if (await req.body.biography) {
           // "MATCH (n:User) WHERE n.username = $username AND n.verified = true RETURN n.password",
-      
 
           await session.run(
             `MATCH (n:User) WHERE n.username = $username
@@ -117,14 +122,17 @@ user_information_Router.post(
 
 // --------------------------------------
 
-
 user_information_Router.post(
   "/user/settings",
   authenticateToken_Middleware,
-  validateName,validateEmail,validateGender,validateBiography,validateAge,validateInterests,
+  validateName,
+  validateEmail,
+  validateGender,
+  validateBiography,
+  validateAge,
+  validateInterests,
 
   async (req: any, res: any) => {
-   
     const logged_user = req.user;
     if (!logged_user) return res.status(401).json("UNAUTH");
 
@@ -215,7 +223,7 @@ user_information_Router.post(
 );
 
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/jpg", "image/png"];
-const MAX_FILE_SIZE = 5000000 // 5MB
+const MAX_FILE_SIZE = 5000000; // 5MB
 
 user_information_Router.post(
   "/user/upload",
@@ -223,7 +231,6 @@ user_information_Router.post(
   async function (req: any, res: any) {
     const _user = req.user;
     try {
-      
       const files = await req.files;
       if (!files) {
         return res.status(200).json("No files");
@@ -241,14 +248,12 @@ user_information_Router.post(
       let existingPics = result.records[0]?.get("pics") || [];
       for (let i = 0; i < keys.length; i++) {
         const file = files[keys[i]];
-        if(file.size > MAX_FILE_SIZE || file.size <= 0)
-        {
+        if (file.size > MAX_FILE_SIZE || file.size <= 0) {
           return res.status(400).json("Too large image size !!!.");
-
         }
-       
+
         let index = Number(keys[i]);
-      
+
         // Validate mime type
         if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
           return res.status(400).json({
@@ -257,14 +262,12 @@ user_information_Router.post(
           });
         }
 
-
-
         //create  a data URI scheme
-        const uploadResult = await cloudinary.uploader.upload(`data:${file.mimetype};base64,${file.data.toString('base64')}`, {
-        })
+        const uploadResult = await cloudinary.uploader
+          .upload(`data:${file.mimetype};base64,${file.data.toString("base64")}`, {})
 
           .catch(() => {
-            return res.status(400).json("Upload failed")
+            return res.status(400).json("Upload failed");
           });
 
         // Handle profile picture (first image)
@@ -424,76 +427,81 @@ user_information_Router.post(
   "/location/WTK",
   authenticateToken_Middleware,
   async function (req: Request, res: Response) {
-    const response = await axios.get("http://api.ipify.org");
-    
-    const pub_ip = response.data;
+    try {
+      const response = await axios.get("http://api.ipify.org");
 
-    const url = `https://apiip.net/api/check?ip=${pub_ip}&accessKey=${process.env.ip_finder_pub}`;
-    const responses = await axios.get(url);
-    const result = responses.data;
+      const pub_ip = response.data;
 
-    // {
-    //   ip: 'hhhhhh'
-    //   continentCode: 'AF',
-    //   continentName: 'Africa',
-    //   countryCode: 'MA',
-    //   countryName: 'Morocco',
-    //   countryNameNative: 'المغرب',
-    //   officialCountryName: 'Kingdom of Morocco',
-    //   regionCode: '05',
-    //   regionName: 'Béni Mellal-Khénifra',
-    //   cityGeoNameId: 2544248,
-    //   city: 'Khouribga',
-    //   cityWOSC: 'Khouribga',
-    //   latitude: 32.8804,
-    //   longitude: -6.9057,
-    //   capital: 'Rabat',
-    //   phoneCode: '212',
-    //   countryFlagEmoj: '🇲🇦',
-    //   countryFlagEmojUnicode: 'U+1F1F2 U+1F1E6',
-    //   isEu: false,
-    //   borders: [ 'DZA', 'ESH', 'ESP' ],
-    //   topLevelDomains: [ '.ma', 'المغرب.' ]
-    // }
+      const url = `https://apiip.net/api/check?ip=${pub_ip}&accessKey=${process.env.ip_finder_pub}`;
+      const responses = await axios.get(url);
+      const result = responses.data;
 
-    const latitude = result.latitude;
-    const longitude = result.longitude;
+      // {
+      //   ip: 'hhhhhh'
+      //   continentCode: 'AF',
+      //   continentName: 'Africa',
+      //   countryCode: 'MA',
+      //   countryName: 'Morocco',
+      //   countryNameNative: 'المغرب',
+      //   officialCountryName: 'Kingdom of Morocco',
+      //   regionCode: '05',
+      //   regionName: 'Béni Mellal-Khénifra',
+      //   cityGeoNameId: 2544248,
+      //   city: 'Khouribga',
+      //   cityWOSC: 'Khouribga',
+      //   latitude: 32.8804,
+      //   longitude: -6.9057,
+      //   capital: 'Rabat',
+      //   phoneCode: '212',
+      //   countryFlagEmoj: '🇲🇦',
+      //   countryFlagEmojUnicode: 'U+1F1F2 U+1F1E6',
+      //   isEu: false,
+      //   borders: [ 'DZA', 'ESH', 'ESP' ],
+      //   topLevelDomains: [ '.ma', 'المغرب.' ]
+      // }
 
-    const user: any = req.user;
+      const latitude = result.latitude;
+      const longitude = result.longitude;
 
-    if (user) {
-      const cityName = result.city;
+      const user: any = req.user;
 
-      const country = result.countryName;
+      if (user) {
+        const cityName = result.city;
 
-      const db_session = driver.session();
-      if (db_session) {
-        // https://neo4j.com/docs/cypher-manual/current/values-and-types/spatial/
-        const result = await db_session.run(
-          `
-            MATCH (n:User) WHERE n.username = $username
-            SET   n.location_WTK = point({latitude: $latitude_WTK, longitude: $longitude_WTK}),
-            n.city_WTK = $cityName_WTK, n.country_WTK = $country_name_WTK
+        const country = result.countryName;
 
-            RETURN n
+        const db_session = driver.session();
+        if (db_session) {
+          // https://neo4j.com/docs/cypher-manual/current/values-and-types/spatial/
+          const result = await db_session.run(
+            `
+              MATCH (n:User) WHERE n.username = $username
+              SET   n.location_WTK = point({latitude: $latitude_WTK, longitude: $longitude_WTK}),
+              n.city_WTK = $cityName_WTK, n.country_WTK = $country_name_WTK
+  
+              RETURN n
+  
+              `,
+            {
+              username: user.username,
+              latitude_WTK: latitude,
+              longitude_WTK: longitude,
+              cityName_WTK: cityName,
+              country_name_WTK: country,
+            }
+          );
 
-            `,
-          {
-            username: user.username,
-            latitude_WTK: latitude,
-            longitude_WTK: longitude,
-            cityName_WTK: cityName,
-            country_name_WTK: country,
-          }
-        );
-        
-        res.status(200).json("location saved");
+          res.status(200).json("location saved");
+          return;
+        }
+        res.status(400).json("error in db session");
+        return;
+      } else {
+        res.status(400).json("Cannot access location");
         return;
       }
-      res.status(400).json("error in db session");
-      return;
-    } else {
-      res.status(400).json("Cannot access location");
+    } catch {
+      res.status(400).json("FAILED to access location");
       return;
     }
   }
