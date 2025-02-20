@@ -1,14 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { Eye, Heart, History, User } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Neo4jDateTime } from '../types/types';
 
 type UserInteraction = {
   username: string;
   first_name: string;
   last_name: string;
   profile_picture: string;
-  lastViewedAt: string;
+  lastViewedAt: Date;
 };
+
+const parseNeo4jDateTime = (dateTime: Neo4jDateTime): Date => {
+  return new Date(
+    dateTime.year.low,
+    dateTime.month.low - 1, // JavaScript months are 0-based
+    dateTime.day.low,
+    dateTime.hour.low,
+    dateTime.minute.low,
+    dateTime.second.low,
+    dateTime.nanosecond.low / 1000000 // Convert nanoseconds to milliseconds
+  );
+};
+
 
 const Home = () => {
   const [activeTab, setActiveTab] = useState('views');
@@ -21,6 +35,12 @@ const Home = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const parseInteraction = (item: any): UserInteraction => ({
+    ...item,
+    lastViewedAt: parseNeo4jDateTime(item.lastViewedAt)
+  });
+  
 
   const fetchData = async () => {
     try {
@@ -43,13 +63,13 @@ const Home = () => {
       ]);
 
       if (viewersData.success) {
-        setViewers(viewersData.viewers);
+        setViewers(viewersData.viewers.map(parseInteraction));
       }
       if (likesData.success) {
-        setLikes(likesData.likes);
+        setLikes(likesData.likes.map(parseInteraction));
       }
       if (historyData.success) {
-        setHistory(historyData.history);
+        setHistory(historyData.history.map(parseInteraction));
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -174,16 +194,16 @@ const Home = () => {
         </div>
 
         <div className="space-y-4">
-          {activeTab === 'views' && viewers.map((viewer) => (
-            <InteractionCard key={`viewer-${viewer.username}`} user={viewer} />
+          {activeTab === 'views' && viewers.map((viewer, index) => (
+            <InteractionCard key={`viewer-${index}`} user={viewer} />
           ))}
           
-          {activeTab === 'likes' && likes.map((like) => (
-            <InteractionCard key={`like-${like.username}`} user={like} />
+          {activeTab === 'likes' && likes.map((like, index) => (
+            <InteractionCard key={`like-${index}`} user={like} />
           ))}
           
-          {activeTab === 'history' && history.map((visit) => (
-            <InteractionCard key={`visit-${visit.username}`} user={visit} />
+          {activeTab === 'history' && history.map((visit, index) => (
+            <InteractionCard key={`visit-${index}`} user={visit} />
           ))}
           
           {((activeTab === 'views' && viewers.length === 0) || 

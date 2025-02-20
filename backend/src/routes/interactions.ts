@@ -7,9 +7,55 @@ const interactions = express.Router();
 
 
 
+// interactions.post("/like-user", authenticateToken_Middleware, async (req: any, res: any) => {
+//   if (!req.user) {
+//     return res.status(401).json({ error: "Unauthorized" });
+//   }
+
+//   const user = req.user;
+//   const username = user.username;
+//   const { likedUsername } = req.body;
+
+//   const session = driver.session();
+//   try {
+//     const result = await session.run(
+//       `
+// 		MATCH (u:User {username: $username})
+// 		MATCH (otherUser:User {username: $likedUsername})
+// 		WHERE u <> otherUser
+//     SET otherUser.fame_rating = otherUser.fame_rating + 2
+// 		MERGE (u)-[r:LIKES {createdAt: datetime()}]->(otherUser)
+// 		WITH u, otherUser, EXISTS((otherUser)-[:LIKES]->(u)) as isMatch
+		
+// 		FOREACH(x IN CASE WHEN isMatch THEN [1] ELSE [] END |
+// 			MERGE (u)-[m:MATCHED {createdAt: datetime()}]-(otherUser)
+// 		)
+		
+// 		RETURN {
+// 			liked: true, 
+// 			isMatch: isMatch,
+// 			matchedAt: CASE WHEN isMatch THEN datetime() ELSE null END
+// 		} as result`,
+//       { username, likedUsername }
+//     );
+
+//     if (result.records.length > 0) {
+//       return res.status(200).json({ success: true });
+//     } else {
+//       return res.status(400).json({ error: "Failed to like user" });
+//     }
+//   } catch (error) {
+//     console.log(error);
+//     return res.status(500).json({ error: "Internal Server Error" });
+//   } finally {
+//     await session.close();
+//   }
+// });
+
+
 interactions.post("/like-user", authenticateToken_Middleware, async (req: any, res: any) => {
   if (!req.user) {
-    return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: "Unauthorized" });
   }
 
   const user = req.user;
@@ -18,38 +64,61 @@ interactions.post("/like-user", authenticateToken_Middleware, async (req: any, r
 
   const session = driver.session();
   try {
-    const result = await session.run(
-      `
-		MATCH (u:User {username: $username})
-		MATCH (otherUser:User {username: $likedUsername})
-		WHERE u <> otherUser
-		MERGE (u)-[r:LIKES {createdAt: datetime()}]->(otherUser)
-		WITH u, otherUser, EXISTS((otherUser)-[:LIKES]->(u)) as isMatch
-		
-		FOREACH(x IN CASE WHEN isMatch THEN [1] ELSE [] END |
-			MERGE (u)-[m:MATCHED {createdAt: datetime()}]-(otherUser)
-		)
-		
-		RETURN {
-			liked: true, 
-			isMatch: isMatch,
-			matchedAt: CASE WHEN isMatch THEN datetime() ELSE null END
-		} as result`,
-      { username, likedUsername }
-    );
+      // Check if the current user has completed setup
+      const setupCheckResult = await session.run(
+          `
+          MATCH (u:User {username: $username})
+          RETURN u.setup_done as hasProfilePic
+          `,
+          { username }
+      );
 
-    if (result.records.length > 0) {
-      return res.status(200).json({ success: true });
-    } else {
-      return res.status(400).json({ error: "Failed to like user" });
-    }
+      const hasProfilePic = setupCheckResult.records[0]?.get('hasProfilePic');
+
+      if (!hasProfilePic) {
+          // Return a normal response indicating setup is required
+          return res.status(200).json({ 
+              success: false,
+              setupRequired: true,
+              message: "Profile setup required"
+          });
+      }
+
+      // Proceed with the like action
+      const result = await session.run(
+          `
+          MATCH (u:User {username: $username})
+          MATCH (otherUser:User {username: $likedUsername})
+          WHERE u <> otherUser
+          SET otherUser.fame_rating = otherUser.fame_rating + 2
+          MERGE (u)-[r:LIKES {createdAt: datetime()}]->(otherUser)
+          WITH u, otherUser, EXISTS((otherUser)-[:LIKES]->(u)) as isMatch
+          
+          FOREACH(x IN CASE WHEN isMatch THEN [1] ELSE [] END |
+              MERGE (u)-[m:MATCHED {createdAt: datetime()}]-(otherUser)
+          )
+          
+          RETURN {
+              liked: true, 
+              isMatch: isMatch,
+              matchedAt: CASE WHEN isMatch THEN datetime() ELSE null END
+          } as result`,
+          { username, likedUsername }
+      );
+
+      if (result.records.length > 0) {
+          return res.status(200).json({ success: true });
+      } else {
+          return res.status(400).json({ error: "Failed to like user" });
+      }
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({ error: "Internal Server Error" });
+      console.log(error);
+      return res.status(500).json({ error: "Internal Server Error" });
   } finally {
-    await session.close();
+      await session.close();
   }
 });
+
 
 
 interactions.post("/unlike-user", authenticateToken_Middleware, async (req: any, res: any) => {
@@ -68,6 +137,8 @@ interactions.post("/unlike-user", authenticateToken_Middleware, async (req: any,
             MATCH (u:User {username: $username})
             MATCH (otherUser:User {username: $likedUsername})
             WHERE u <> otherUser
+            SET otherUser.fame_rating = otherUser.fame_rating - 1
+            WITH u, otherUser
             OPTIONAL MATCH (u)-[l:LIKES]->(otherUser)
             OPTIONAL MATCH (u)-[m:MATCHED]-(otherUser)
             DELETE l, m
@@ -109,6 +180,7 @@ interactions.post("/view-profile", authenticateToken_Middleware, async (req: any
             MATCH (viewer:User {username: $username})
             MATCH (viewed:User {username: $viewedUsername})
             WHERE viewer <> viewed
+            SET viewed.fame_rating = viewed.fame_rating + 1
             MERGE (viewer)-[r:VIEWED]->(viewed)
             SET r.lastViewedAt = datetime()
             RETURN {
@@ -154,6 +226,7 @@ interactions.post("/blocks/:username", authenticateToken_Middleware, async (req:
 		MATCH (u:User {username: $username}), 
 			  (blockedUser:User {username: $blockedUsername})
 		WHERE u <> blockedUser
+    SET blockedUser.fame_rating = blockedUser.fame_rating - 5
 		MERGE (u)-[b:BLOCKED {
 			createdAt: datetime()
 		}]->(blockedUser)
@@ -284,6 +357,7 @@ interactions.delete("/blocks/:username", authenticateToken_Middleware, async (re
 		MATCH (reporter:User {username: $username}), 
 			  (reportedUser:User {username: $reportedUsername})
 		WHERE reporter <> reportedUser
+    SET reportedUser.fame_rating = reportedUser.fame_rating - 5
 		MERGE (reporter)-[r:REPORTED {
 		  createdAt: datetime()
 		}]->(reportedUser)

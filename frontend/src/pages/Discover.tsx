@@ -6,7 +6,7 @@ import ActionButtons from '../components/ActionButton';
 import FilterDialog from '../components/FilterDialog';
 import ProfileCard from '../components/ProfileCard';
 import ProfilePage from './Profilepage';
-
+import { Alert, AlertDescription } from '../components/ui/alert';
 
 const DiscoverPage = () => {
 	const [currentIndex, setCurrentIndex] = useState(0);
@@ -29,7 +29,8 @@ const DiscoverPage = () => {
 		filterTags: []
 	});
 
-
+	const [showAlert, setShowAlert] = useState(false);
+	const [alertMessage, setAlertMessage] = useState('');
 
 
 	useEffect(() => {
@@ -68,29 +69,44 @@ const DiscoverPage = () => {
 		}
 	}
 
-	async function likeUser() {
-		if (!profiles[currentIndex]) return;
 
-		try {
-			const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/like-user`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				credentials: 'include',
-				body: JSON.stringify({
-					likedUsername: profiles[currentIndex].username
-				})
-			});
+// Frontend likeUser function
+async function likeUser() {
+    if (!profiles[currentIndex]) return;
 
-			const res = await response.json();
-			if (res.success) {
-				handleSwipe('right');
-			}
-		} catch (error) {
-			console.error("Error liking profile:", error);
-		}
-	}
+    try {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/like-user`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                likedUsername: profiles[currentIndex].username
+            })
+        });
+
+        const res = await response.json();
+
+        if (res.success) {
+            handleSwipe('right');
+        } else if (res.setupRequired) {
+            // Handle the case where setup isn't done (not an error)
+            setAlertMessage("Please complete your profile setup to like other users");
+            setShowAlert(true);
+            setTimeout(() => setShowAlert(false), 3000);
+        } else {
+            // Handle actual errors
+            setAlertMessage(res.error || "Failed to like user");
+            setShowAlert(true);
+            setTimeout(() => setShowAlert(false), 3000);
+        }
+    } catch (error) {
+        setAlertMessage("Failed to like user. Please try again.");
+        setShowAlert(true);
+        setTimeout(() => setShowAlert(false), 3000);
+    }
+}
 
 	const handleProfileClick = (username: string) => {
 		setIsProfileOpen(true);
@@ -163,6 +179,21 @@ const DiscoverPage = () => {
 
 	return (
 		<div>
+			<AnimatePresence>
+				{showAlert && (
+					<motion.div
+						initial={{ opacity: 0, y: -50 }}
+						animate={{ opacity: 1, y: 100, x: -10 }}
+						exit={{ opacity: 0, y: -50 }}
+						className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50"
+					>
+						<Alert className="bg-[#2a2435] border-[#e94057] text-white">
+							<AlertDescription>{alertMessage}</AlertDescription>
+						</Alert>
+					</motion.div>
+				)}
+			</AnimatePresence>
+
 
 			{isProfileOpen ? <ProfilePage username={profiles[currentIndex].username} isOpen={isProfileOpen}
 				setIsOpen={setIsProfileOpen}
@@ -221,7 +252,7 @@ const DiscoverPage = () => {
 										</div>
 
 										<div className="py-4 border-y border-[#3a3445]">
-											<p className="text-gray-300 text-lg leading-relaxed">
+											<p className="text-gray-300 text-lg leading-relaxed break-words overflow-wrap">
 												{profiles[currentIndex].preview.bio}
 											</p>
 											<button

@@ -105,6 +105,7 @@ const ProfilePage = (props: ProfilePageProps) => {
         setError(profileData.error || 'Failed to fetch profile');
       }
     } catch (error) {
+      console.error('Error fetching profile:', error);
       setError('Failed to fetch profile');
     } finally {
       setLoading(false);
@@ -332,7 +333,7 @@ const ProfilePage = (props: ProfilePageProps) => {
                 <MessageCircle className="w-5 h-5 mr-2 text-[#e94057]" />
                 About Me
               </h3>
-              <p className="text-gray-300 leading-relaxed">
+              <p className="text-gray-300 leading-relaxed break-words overflow-wrap">
                 {profile.biography}
               </p>
             </div>
