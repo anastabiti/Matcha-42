@@ -80,8 +80,27 @@ export async function authenticateToken_Middleware(req: any, res: any, next: any
           await session.close();
           return res.status(401).json("User is Not looged");
         }
+        /*
+        User from DB: Record {
+          keys: [ 'n' ],
+          length: 1,
+          _fields: [
+            Node {
+            identity: [Integer],
+            labels: [Array],
+            properties: [Object],
+            elementId: '4:fb4b2d7a-4682-4a7e-b1cb-3d1b322bd728:654'
+        }
+        ],
+          _fieldLookup: { n: 0 }
+          } */
+        
+
         // Attach the decoded user to the request object
         req.user = decoded;
+        req.user.setup_done = res_db.records[0].get('n').properties.setup_done;
+
+        
         await session.close();
         next();
       } catch (err) {

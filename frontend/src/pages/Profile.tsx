@@ -12,8 +12,20 @@ import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 import { useNavigate } from "react-router-dom";
 import Gps from "../components/Gps";
 import { MAX_FILE_SIZE, SUPPORTED_FORMATS } from "../components/setup_page";
+import {
+  DirectionsRun,
+  Flight,
+  MusicNote,
+  PhotoCamera,
+  Pool,
+  Restaurant,
+  SelfImprovement,
+  SportsEsports,
+  SportsTennis
+} from "@mui/icons-material";
+import { Mic, Palette, ShoppingCart } from "lucide-react";
 
- type FormData= {
+type FormData = {
   last_name: string;
   first_name: string;
   email: string;
@@ -22,10 +34,9 @@ import { MAX_FILE_SIZE, SUPPORTED_FORMATS } from "../components/setup_page";
   interests: string[];
   age: Number;
   pics: string[];
-}
+};
 
-
- type UserInfo ={
+type UserInfo = {
   username: string;
   profile_picture: string;
   last_name: string;
@@ -40,7 +51,7 @@ import { MAX_FILE_SIZE, SUPPORTED_FORMATS } from "../components/setup_page";
   gender: string;
   tags: string[];
   age: Number;
-}
+};
 
 type FormFields =
   | "gender"
@@ -51,10 +62,9 @@ type FormFields =
   | "email";
 
 function Profile() {
-  const defaultInterests = [
+  const defaultInterests: string[] = [
     "#Photography",
     "#Shopping",
-    "#Karaoke",
     "#Yoga",
     "#Cooking",
     "#Tennis",
@@ -63,13 +73,15 @@ function Profile() {
     "#Music",
     "#Video games",
     "#Swimming",
-    "#Running"
+    "#Running",
+    "#Geek",
   ];
+
   type ImageError = {
     index: number;
     message: string;
   };
-  
+
   interface EmailChangeForm {
     newEmail: string;
     password: string;
@@ -86,9 +98,9 @@ function Profile() {
     biography: "",
     interests: [],
     age: 18,
-    pics:[]
+    pics: []
   });
-  const [username__ , setusername] = useState('')
+  const [username__, setusername] = useState("");
   const [showGps, setShowGps] = useState(false);
 
   const navigate = useNavigate();
@@ -124,7 +136,7 @@ function Profile() {
         if (response.ok) {
           const data: UserInfo = await response.json();
 
-          setusername(data.username)
+          setusername(data.username);
           setFormData({
             last_name: data.last_name || "",
             first_name: data["first_name:"] || "",
@@ -263,7 +275,6 @@ function Profile() {
     return null;
   };
 
-
   const handle_image_change = async (
     event: React.ChangeEvent<HTMLInputElement>,
     index: number
@@ -360,7 +371,6 @@ function Profile() {
     );
   }
 
-
   async function handleSubmit(event: React.FormEvent): Promise<void> {
     event.preventDefault();
     setIsLoading(true);
@@ -372,14 +382,12 @@ function Profile() {
       return;
     }
 
-    if(!formData.gender)
-      {
+    if (!formData.gender) {
       setError("Please add  you gender!");
       setIsLoading(false);
       return;
     }
-    if(!formData.interests.length)
-      {
+    if (!formData.interests.length) {
       setError("Please add  your interests!");
       setIsLoading(false);
       return;
@@ -421,7 +429,6 @@ function Profile() {
               new_data.append(key, "NULL");
             }
           });
-          
 
           const resu_ = await fetch(
             `${import.meta.env.VITE_BACKEND_IP}/api/user/upload`,
@@ -461,8 +468,7 @@ function Profile() {
             <h2 className="text-2xl font-semibold text-white mb-8">
               Edit your profile
             </h2>
-              Welcome {username__}
-
+            Welcome {username__}
             <form onSubmit={handleSubmit} className="space-y-6">
               <TextField
                 fullWidth
@@ -595,24 +601,51 @@ function Profile() {
                   {availableInterests.map(function (interest) {
                     return (
                       <button
-                        type="button"
-                        key={interest}
-                        onClick={function () {
-                          toggleInterest(interest);
-                        }}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                          formData.interests.includes(interest)
-                            ? "bg-pink-600 text-white"
-                            : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-                        }`}
-                      >
+                      type="button"
+                      key={interest}
+                      onClick={() => toggleInterest(interest)}
+                      className={`px-3 sm:px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center justify-center
+                    ${
+                      formData.interests.includes(interest)
+                        ? "bg-pink-600 text-white"
+                        : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                    }`}
+                    >
                         {interest === "#Photography" && (
-                          <MonochromePhotosIcon className="mr-2" />
+                          <PhotoCamera className="w-4 h-4 mr-2" />
                         )}
                         {interest === "#Shopping" && (
-                          <ShoppingCartIcon className="mr-2" />
+                          <ShoppingCart className="w-4 h-4 mr-2" />
                         )}
-                        {interest}
+                      
+                        {interest === "#Yoga" && (
+                          <SelfImprovement className="w-4 h-4 mr-2" />
+                        )}
+                        {interest === "#Cooking" && (
+                          <Restaurant className="w-4 h-4 mr-2" />
+                        )}
+                        {interest === "#Tennis" && (
+                          <SportsTennis className="w-4 h-4 mr-2" />
+                        )}
+                        {interest === "#Art" && (
+                          <Palette className="w-4 h-4 mr-2" />
+                        )}
+                        {interest === "#Traveling" && (
+                          <Flight className="w-4 h-4 mr-2" />
+                        )}
+                        {interest === "#Music" && (
+                          <MusicNote className="w-4 h-4 mr-2" />
+                        )}
+                        {interest === "#Video games" && (
+                          <SportsEsports className="w-4 h-4 mr-2" />
+                        )}
+                        {interest === "#Swimming" && (
+                          <Pool className="w-4 h-4 mr-2" />
+                        )}
+                        {interest === "#Running" && (
+                          <DirectionsRun className="w-4 h-4 mr-2" />
+                        )}
+                        <span className="truncate">{interest}</span>{" "}
                       </button>
                     );
                   })}

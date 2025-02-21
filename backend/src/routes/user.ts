@@ -15,6 +15,13 @@ import {
 
 const user_information_Router = express.Router();
 
+const create_interests_Query = `
+MATCH (u:User {username: $username})
+UNWIND $interests as interest
+MERGE (t:Tags {interests: interest}) 
+MERGE (u)-[:has_this_interest]->(t)
+`;
+
 export type UserJWTPayload = {
   username: string;
   email: string;
@@ -25,6 +32,10 @@ export type UserJWTPayload = {
   exp: number;
 };
 
+/**************************************************************************************************************
+ * User setup route
+ * by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
 user_information_Router.post(
   "/user/setup_information",
   authenticateToken_Middleware,
@@ -32,35 +43,45 @@ user_information_Router.post(
   validateBiography,
   validateGender,
   validateInterests,
-  async (req: any, res: any) => {
+  async function (req: any, res: any) {
     let _user = req.user;
     if (!_user) {
       return res.status(401).json("UNAUTHORIZED");
     }
 
     if (_user.username) {
-      //return this later. -------
       if (_user.setup_done == true) {
         return res.status(400).json("Already done");
       }
       const session = driver.session();
       if (session) {
-        if (await req.body.interests) {
-          for (const interest of req.body.interests) {
-            await session.run(
-              `MATCH (u:User {username: $username})
-                MERGE (t:Tags {interests: $interests})
-                MERGE (u)-[:has_this_interest]->(t)`,
-              {
-                username: _user.username,
-                interests: interest,
-              }
-            );
-          }
-        }
-        if (await req.body.biography) {
-          // "MATCH (n:User) WHERE n.username = $username AND n.verified = true RETURN n.password",
+        const all_interests = req.body.interests;
+        // if (all_interests) {
 
+        //   for (const interest of all_interests) {
+        //     /*MERGE :
+        //     First try to MATCH: Look for a Tags node where name equals your interest
+        //     If it finds it → It uses the existing node
+        //     If it doesn't find it → It CREATE's a new node
+        //     */
+        //     await session.run(
+        //       `MATCH (u:User {username: $username})
+        //         MERGE (t:Tags {interests: $interest})
+        //         MERGE (u)-[:has_this_interest]->(t)`,
+        //       {
+        //         username: _user.username,
+        //         interest: interest,
+        //       }
+        //     );
+        //   }
+        // }
+
+        await session.run(create_interests_Query, {
+          username: _user.username,
+          interests: all_interests,
+        });
+
+        if (await req.body.biography) {
           await session.run(
             `MATCH (n:User) WHERE n.username = $username
                         SET n.biography = $biography
@@ -77,51 +98,19 @@ user_information_Router.post(
             }
           );
         }
-        //     if (await req.body.gender) {
-        //       //delete old gender
-        //       await session.run(
-        //         `MATCH (u:User {username: $username})-[r:onta_wla_dakar]->(g:Sex)
-        //           DELETE r`,
-        //         { username: _user.username }
-        //       );
-
-        //       await session.run(
-        //         `MATCH (U:User) WHERE U.username = $username
-        //           MATCH (G:Sex) WHERE G.gender = $gender
-        //           MERGE (U)-[:onta_wla_dakar]->(G)
-
-        // `,
-
-        //         { username: _user.username, gender: await req.body.gender }
-        //       );
-        //     }
+        await session.close();
+        return res.status(200).json("User information route");
       }
-      await session.close();
-      // req.session.user.setup_done = true;
-      // await req.session.save();
-
-      _user.setup_done = true;
-
-      const token = await generateAccessToken(_user);
-      if (!token) {
-        console.error("Failed to generate authentication token");
-        return res.status(401).json({ error: "Authentication failed" });
-      }
-
-      res.cookie("jwt_token", token, {
-        httpOnly: true,
-        sameSite: "strict",
-        maxAge: 3600000, // 1 hour in milliseconds
-      });
-
-      return res.status(200).json("User information route");
+      return res.status(400).json("DB ERROR");
     }
     return res.status(401).json("UNAUTHORIZED");
   }
 );
 
-// --------------------------------------
-
+/**************************************************************************************************************
+ * Update User info route
+ * by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
 user_information_Router.post(
   "/user/settings",
   authenticateToken_Middleware,
@@ -164,24 +153,6 @@ user_information_Router.post(
           }
         );
 
-        // // Update gender relationship
-        // if (gender) {
-        //   // Delete old gender relationship
-        //   await new_session.run(
-        //     `MATCH (u:User {username: $username})-[r:onta_wla_dakar]->(g:Sex)
-        //      DELETE r`,
-        //     { username: logged_user.username }
-        //   );
-
-        //   // Create new gender relationship
-        //   await new_session.run(
-        //     `MATCH (U:User) WHERE U.username = $username
-        //      MATCH (G:Sex) WHERE G.gender = $gender
-        //      MERGE (U)-[:onta_wla_dakar]->(G)`,
-        //     { username: logged_user.username, gender: gender }
-        //   );
-        // }
-
         // Update interests
         if (user_copy.interests && Array.isArray(user_copy.interests)) {
           // Delete old interests
@@ -192,17 +163,21 @@ user_information_Router.post(
           );
 
           // Create new interests
-          for (const interest of user_copy.interests) {
-            await new_session.run(
-              `MATCH (u:User {username: $username})
-               CREATE (t:Tags {interests: $interest})
-               CREATE (u)-[:has_this_interest]->(t)`,
-              {
-                username: logged_user.username,
-                interest: interest,
-              }
-            );
-          }
+          // for (const interest of user_copy.interests) {
+          //   await new_session.run(
+          //     `MATCH (u:User {username: $username})
+          //      MERGE (t:Tags {interests: $interest})
+          //      MERGE (u)-[:has_this_interest]->(t)`,
+          //     {
+          //       username: logged_user.username,
+          //       interest: interest,
+          //     }
+          //   );
+          // }
+          await new_session.run(create_interests_Query, {
+            username: logged_user.username,
+            interests: user_copy.interests,
+          });
         }
 
         if (update_db.records.length > 0) {
@@ -310,8 +285,7 @@ user_information_Router.get(
   "/user/has_completed_setup",
   authenticateToken_Middleware,
   async function (req: any, res: any) {
-    if (req.user.setup_done === true)
-       return res.status(200).json("completed");
+    if (req.user.setup_done === true) return res.status(200).json("completed");
     return res.status(401).json("not completed");
   }
 );
@@ -346,7 +320,7 @@ user_information_Router.get(
               arr_.push(res_interest.records[i].get(0).properties.interests);
               i++;
             }
-            // console.log(arr_, "  arr_   =============================================");
+
             const userNode = res_of_query.records[0].get(0).properties;
 
             const return_data = {

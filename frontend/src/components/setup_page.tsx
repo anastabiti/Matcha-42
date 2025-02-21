@@ -23,6 +23,7 @@ import {
   DirectionsRun,
 } from "@mui/icons-material";
 import Gps from "./Gps";
+import { CodeIcon } from "lucide-react";
 
 type FormData = {
   gender: string;
@@ -47,7 +48,6 @@ function Setup_page() {
   const defaultInterests: string[] = [
     "#Photography",
     "#Shopping",
-    "#Karaoke",
     "#Yoga",
     "#Cooking",
     "#Tennis",
@@ -57,6 +57,7 @@ function Setup_page() {
     "#Video games",
     "#Swimming",
     "#Running",
+    "#Geek",
   ];
 
   const [availableInterests, setAvailableInterests] =
@@ -249,6 +250,9 @@ function Setup_page() {
       return;
     }
     try {
+
+
+      console.log(formData.interests, " formData.interests \n\n||")
       // Upload user information
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_IP}/api/user/setup_information`,
@@ -263,7 +267,7 @@ function Setup_page() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to update user information");
+        throw new Error(data || "Failed to update user information");
       }
 
       // Upload images
@@ -399,12 +403,14 @@ function Setup_page() {
                         {interest === "#Photography" && (
                           <PhotoCamera className="w-4 h-4 mr-2" />
                         )}
+                      
+                        {interest === "#Geek" && (
+                          <CodeIcon className="w-4 h-4 mr-2" />
+                        )}
                         {interest === "#Shopping" && (
                           <ShoppingCart className="w-4 h-4 mr-2" />
                         )}
-                        {interest === "#Karaoke" && (
-                          <Mic className="w-4 h-4 mr-2" />
-                        )}
+                     
                         {interest === "#Yoga" && (
                           <SelfImprovement className="w-4 h-4 mr-2" />
                         )}
