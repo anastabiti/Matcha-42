@@ -264,7 +264,7 @@ match.get("/profile/:username", authenticateToken_Middleware, async (req: any, r
            , {
              fromUsername:req.user.username,
              username:username,
-             type:"Liked",
+             type:"View",
              content:notificationArray
             });
 

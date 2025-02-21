@@ -2,10 +2,9 @@ import express, { response } from "express";
 import neo4j, { Record } from "neo4j-driver";
 import { authenticateToken_Middleware } from "./auth";
 import { driver } from "../database";
+import { getSocketIO } from "../socket";
 
 const interactions = express.Router();
-
-
 
 // interactions.post("/like-user", authenticateToken_Middleware, async (req: any, res: any) => {
 //   if (!req.user) {
@@ -26,13 +25,13 @@ const interactions = express.Router();
 //     SET otherUser.fame_rating = otherUser.fame_rating + 2
 // 		MERGE (u)-[r:LIKES {createdAt: datetime()}]->(otherUser)
 // 		WITH u, otherUser, EXISTS((otherUser)-[:LIKES]->(u)) as isMatch
-		
+
 // 		FOREACH(x IN CASE WHEN isMatch THEN [1] ELSE [] END |
 // 			MERGE (u)-[m:MATCHED {createdAt: datetime()}]-(otherUser)
 // 		)
-		
+
 // 		RETURN {
-// 			liked: true, 
+// 			liked: true,
 // 			isMatch: isMatch,
 // 			matchedAt: CASE WHEN isMatch THEN datetime() ELSE null END
 // 		} as result`,
@@ -52,10 +51,9 @@ const interactions = express.Router();
 //   }
 // });
 
-
 interactions.post("/like-user", authenticateToken_Middleware, async (req: any, res: any) => {
   if (!req.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: "Unauthorized" });
   }
 
   const user = req.user;
@@ -64,29 +62,29 @@ interactions.post("/like-user", authenticateToken_Middleware, async (req: any, r
 
   const session = driver.session();
   try {
-      // Check if the current user has completed setup
-      const setupCheckResult = await session.run(
-          `
+    // Check if the current user has completed setup
+    const setupCheckResult = await session.run(
+      `
           MATCH (u:User {username: $username})
           RETURN u.setup_done as hasProfilePic
           `,
-          { username }
-      );
+      { username }
+    );
 
-      const hasProfilePic = setupCheckResult.records[0]?.get('hasProfilePic');
+    const hasProfilePic = setupCheckResult.records[0]?.get("hasProfilePic");
 
-      if (!hasProfilePic) {
-          // Return a normal response indicating setup is required
-          return res.status(200).json({ 
-              success: false,
-              setupRequired: true,
-              message: "Profile setup required"
-          });
-      }
+    if (!hasProfilePic) {
+      // Return a normal response indicating setup is required
+      return res.status(200).json({
+        success: false,
+        setupRequired: true,
+        message: "Profile setup required",
+      });
+    }
 
-      // Proceed with the like action
-      const result = await session.run(
-          `
+    // Proceed with the like action
+    const result = await session.run(
+      `
           MATCH (u:User {username: $username})
           MATCH (otherUser:User {username: $likedUsername})
           WHERE u <> otherUser
@@ -103,37 +101,61 @@ interactions.post("/like-user", authenticateToken_Middleware, async (req: any, r
               isMatch: isMatch,
               matchedAt: CASE WHEN isMatch THEN datetime() ELSE null END
           } as result`,
-          { username, likedUsername }
+      { username, likedUsername }
+    );
+
+    if (result.records.length > 0) {
+      ///atabiti like notification 
+      const notification_message = `Like: ❤️${req.user.username} Liked YOU ❤️!`;
+      const result_ = await session.run(
+        `
+        MATCH (user:User {username: $username})
+        CREATE (n:Notification {
+          notify_id: randomUUID(),
+          fromUsername: $fromUsername,
+          type: $type,
+          content: $content,
+          createdAt: date(),
+          isRead: false
+          })
+          CREATE (user)-[:YOU_HAVE_A_NOTIFICATION]->(n)
+          RETURN n`,
+        {
+          fromUsername: req.user.username,
+          username: likedUsername,
+          type: "Liked",
+          content: notification_message,
+        }
       );
 
-      if (result.records.length > 0) {
-          return res.status(200).json({ success: true });
-      } else {
-          return res.status(400).json({ error: "Failed to like user" });
-      }
+      const notification = result_.records[0].get("n").properties;
+      getSocketIO().to(likedUsername).emit("notification", notification);
+
+      return res.status(200).json({ success: true });
+    } else {
+      return res.status(400).json({ error: "Failed to like user" });
+    }
   } catch (error) {
-      console.log(error);
-      return res.status(500).json({ error: "Internal Server Error" });
+    console.log(error);
+    return res.status(500).json({ error: "Internal Server Error" });
   } finally {
-      await session.close();
+    await session.close();
   }
 });
 
-
-
 interactions.post("/unlike-user", authenticateToken_Middleware, async (req: any, res: any) => {
-    if (!req.user) {
-        return res.status(401).json({ error: "Unauthorized" });
-    }
+  if (!req.user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
 
-    const user = req.user;
-    const username = user.username;
-    const { likedUsername } = req.body;
+  const user = req.user;
+  const username = user.username;
+  const { likedUsername } = req.body;
 
-    const session = driver.session();
-    try {
-        const result = await session.run(
-            `
+  const session = driver.session();
+  try {
+    const result = await session.run(
+      `
             MATCH (u:User {username: $username})
             MATCH (otherUser:User {username: $likedUsername})
             WHERE u <> otherUser
@@ -147,36 +169,57 @@ interactions.post("/unlike-user", authenticateToken_Middleware, async (req: any,
                 wasMatched: EXISTS((u)-[:MATCHED]-(otherUser))
             } as result
             `,
-            { username, likedUsername }
-        );
+      { username, likedUsername }
+    );
 
-        if (result.records.length > 0) {
-            return res.status(200).json({ success: true });
-        } else {
-            return res.status(400).json({ error: "Failed to unlike user" });
-        }
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({ error: "Internal Server Error" });
-    } finally {
-        await session.close();
+    if (result.records.length > 0) {
+      const notification_message = `Unlike:😟 ${req.user.username} UnLiked you 😥`;
+      const result_ = await session.run(`
+        MATCH (user:User {username: $username})
+        CREATE (n:Notification {
+          notify_id: randomUUID(),
+          fromUsername: $fromUsername,
+          type: $type,
+          content: $content,
+          createdAt: date(),
+          isRead: false
+          })
+          CREATE (user)-[:YOU_HAVE_A_NOTIFICATION]->(n)
+          RETURN n`
+          , {
+            fromUsername:req.user.username,
+            username:likedUsername,
+            type:"UnLiked",
+            content:notification_message
+           });
+
+           const notification = result_.records[0].get('n').properties;
+        getSocketIO().to(likedUsername).emit("notification", notification);
+      return res.status(200).json({ success: true });
+    } else {
+      return res.status(400).json({ error: "Failed to unlike user" });
     }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  } finally {
+    await session.close();
+  }
 });
 
-
 interactions.post("/view-profile", authenticateToken_Middleware, async (req: any, res: any) => {
-    if (!req.user) {
-        return res.status(401).json({ error: "Unauthorized" });
-    }
+  if (!req.user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
 
-    const user = req.user;
-    const username = user.username;
-    const { viewedUsername } = req.body;
+  const user = req.user;
+  const username = user.username;
+  const { viewedUsername } = req.body;
 
-    const session = driver.session();
-    try {
-        const result = await session.run(
-            `
+  const session = driver.session();
+  try {
+    const result = await session.run(
+      `
             MATCH (viewer:User {username: $username})
             MATCH (viewed:User {username: $viewedUsername})
             WHERE viewer <> viewed
@@ -188,26 +231,25 @@ interactions.post("/view-profile", authenticateToken_Middleware, async (req: any
                 lastViewedAt: r.lastViewedAt
             } as result
             `,
-            { username, viewedUsername }
-        );
+      { username, viewedUsername }
+    );
 
-        if (result.records.length > 0) {
-            const record = result.records[0].get('result');
-            return res.status(200).json({
-                success: true,
-                lastViewedAt: record.lastViewedAt
-            });
-        } else {
-            return res.status(400).json({ error: "Failed to record view" });
-        }
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({ error: "Internal Server Error" });
-    } finally {
-        await session.close();
+    if (result.records.length > 0) {
+      const record = result.records[0].get("result");
+      return res.status(200).json({
+        success: true,
+        lastViewedAt: record.lastViewedAt,
+      });
+    } else {
+      return res.status(400).json({ error: "Failed to record view" });
     }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  } finally {
+    await session.close();
+  }
 });
-
 
 interactions.post("/blocks/:username", authenticateToken_Middleware, async (req: any, res: any) => {
   if (!req.user) {
@@ -221,8 +263,8 @@ interactions.post("/blocks/:username", authenticateToken_Middleware, async (req:
 
   const session = driver.session();
   try {
-	const result = await session.run(
-		`
+    const result = await session.run(
+      `
 		MATCH (u:User {username: $username}), 
 			  (blockedUser:User {username: $blockedUsername})
 		WHERE u <> blockedUser
@@ -236,8 +278,8 @@ interactions.post("/blocks/:username", authenticateToken_Middleware, async (req:
 		DELETE l, m
 		RETURN true as blocked
 		`,
-		{ username, blockedUsername }
-	  );
+      { username, blockedUsername }
+    );
     return res.status(200).json({
       success: true,
       blocked: result.records[0].get("blocked"),
@@ -251,16 +293,16 @@ interactions.post("/blocks/:username", authenticateToken_Middleware, async (req:
 });
 
 interactions.get("/profile-viewers", authenticateToken_Middleware, async (req: any, res: any) => {
-    if (!req.user) {
-        return res.status(401).json({ error: "Unauthorized" });
-    }
+  if (!req.user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
 
-    const username = req.user.username;
-    const session = driver.session();
+  const username = req.user.username;
+  const session = driver.session();
 
-    try {
-        const result = await session.run(
-            `
+  try {
+    const result = await session.run(
+      `
             MATCH (viewer:User)-[v:VIEWED]->(user:User {username: $username})
             RETURN {
                 username: viewer.username,
@@ -271,38 +313,39 @@ interactions.get("/profile-viewers", authenticateToken_Middleware, async (req: a
             } as viewer
             ORDER BY v.lastViewedAt DESC
             `,
-            { username }
-        );
+      { username }
+    );
 
-        const viewers = result.records.map((record:Record) => record.get('viewer'));
-        
-        return res.status(200).json({
-            success: true,
-            viewers: viewers
-        });
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({ error: "Internal Server Error" });
-    } finally {
-        await session.close();
-    }
+    const viewers = result.records.map((record: Record) => record.get("viewer"));
+
+    return res.status(200).json({
+      success: true,
+      viewers: viewers,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  } finally {
+    await session.close();
+  }
 });
 
+interactions.delete(
+  "/blocks/:username",
+  authenticateToken_Middleware,
+  async (req: any, res: any) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
 
+    const user = req.user;
+    const username = user.username;
+    const unblockedUsername = req.params.username;
 
-interactions.delete("/blocks/:username", authenticateToken_Middleware, async (req: any, res: any) => {
-	if (!req.user) {
-	  return res.status(401).json({ error: "Unauthorized" });
-	}
-  
-	const user = req.user;
-	const username = user.username;
-	const unblockedUsername = req.params.username;
-  
-	const session = driver.session();
-	try {
-	  const result = await session.run(
-		`
+    const session = driver.session();
+    try {
+      const result = await session.run(
+        `
 		MATCH (u:User {username: $username})-[b:BLOCKED]->(blockedUser:User {username: $unblockedUsername})
 		DELETE b
 		RETURN {
@@ -310,50 +353,50 @@ interactions.delete("/blocks/:username", authenticateToken_Middleware, async (re
 		  unblockedUser: blockedUser.username
 		} as result
 		`,
-		{ username, unblockedUsername }
-	  );
-  
-	  if (result.records.length === 0) {
-		return res.status(404).json({
-		  success: false,
-		  error: "Block relationship not found"
-		});
-	  }
-  
-	  return res.status(200).json({
-		success: true,
-		data: result.records[0].get('result')
-	  });
-  
-	} catch (error) {
-	  console.log(error);
-	  return res.status(500).json({ 
-		success: false, 
-		error: "Failed to unblock user" 
-	  });
-	} finally {
-	  await session.close();
-	}
-  });
+        { username, unblockedUsername }
+      );
 
+      if (result.records.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: "Block relationship not found",
+        });
+      }
 
+      return res.status(200).json({
+        success: true,
+        data: result.records[0].get("result"),
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        success: false,
+        error: "Failed to unblock user",
+      });
+    } finally {
+      await session.close();
+    }
+  }
+);
 
-  interactions.post("/reports/:username", authenticateToken_Middleware, async (req: any, res: any) => {
-	if (!req.user) {
-	  return res.status(401).json({ error: "Unauthorized" });
-	}
-  
-	const user = req.user;
-	const username = user.username;
-	const reportedUsername = req.params.username;
-	
+interactions.post(
+  "/reports/:username",
+  authenticateToken_Middleware,
+  async (req: any, res: any) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
 
-	const reason = "FAKE_ACCOUNT";
-  
-	const session = driver.session();
-	try {
-	  const result = await session.run(
-		`
+    const user = req.user;
+    const username = user.username;
+    const reportedUsername = req.params.username;
+
+    const reason = "FAKE_ACCOUNT";
+
+    const session = driver.session();
+    try {
+      const result = await session.run(
+        `
 		MATCH (reporter:User {username: $username}), 
 			  (reportedUser:User {username: $reportedUsername})
 		WHERE reporter <> reportedUser
@@ -369,40 +412,40 @@ interactions.delete("/blocks/:username", authenticateToken_Middleware, async (re
 		  createdAt: r.createdAt
 		} as result
 		`,
-		{ 
-		  username, 
-		  reportedUsername, 
-		  reason, 
-		}
-	  );
-  
-	  return res.status(200).json({
-		success: true,
-		data: result.records[0].get('result')
-		});
-  
-	} catch (error) {
-		console.log(error);
-		return res.status(500).json({ 
-			success: false, 
-			error: "Failed to report user" 
-	  });
-	} finally {
-	  await session.close();
-	}
-  });
+        {
+          username,
+          reportedUsername,
+          reason,
+        }
+      );
 
-  interactions.get("/visit-history", authenticateToken_Middleware, async (req: any, res: any) => {
-    if (!req.user) {
-        return res.status(401).json({ error: "Unauthorized" });
+      return res.status(200).json({
+        success: true,
+        data: result.records[0].get("result"),
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        success: false,
+        error: "Failed to report user",
+      });
+    } finally {
+      await session.close();
     }
+  }
+);
 
-    const username = req.user.username;
-    const session = driver.session();
+interactions.get("/visit-history", authenticateToken_Middleware, async (req: any, res: any) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
 
-    try {
-        const result = await session.run(
-            `
+  const username = req.user.username;
+  const session = driver.session();
+
+  try {
+    const result = await session.run(
+      `
             MATCH (user:User {username: $username})-[v:VIEWED]->(viewed:User)
             RETURN {
                 username: viewed.username,
@@ -413,36 +456,34 @@ interactions.delete("/blocks/:username", authenticateToken_Middleware, async (re
             } as history
             ORDER BY v.lastViewedAt DESC
             `,
-            { username }
-        );
+      { username }
+    );
 
-        const history = result.records.map((record:Record) => record.get('history'));
-        
-        return res.status(200).json({
-            success: true,
-            history: history
-        });
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({ error: "Internal Server Error" });
-    } finally {
-        await session.close();
-    }
+    const history = result.records.map((record: Record) => record.get("history"));
+
+    return res.status(200).json({
+      success: true,
+      history: history,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  } finally {
+    await session.close();
+  }
 });
-
-
 
 interactions.get("/profile-likes", authenticateToken_Middleware, async (req: any, res: any) => {
   if (!req.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: "Unauthorized" });
   }
 
   const username = req.user.username;
   const session = driver.session();
 
   try {
-      const result = await session.run(
-          `
+    const result = await session.run(
+      `
           MATCH (liker:User)-[l:LIKES]->(user:User {username: $username})
           RETURN {
               username: liker.username,
@@ -453,20 +494,20 @@ interactions.get("/profile-likes", authenticateToken_Middleware, async (req: any
           } as likes
           ORDER BY l.createdAt DESC
           `,
-          { username }
-      );
+      { username }
+    );
 
-      const likes = result.records.map((record:Record) => record.get('likes'));
-      
-      return res.status(200).json({
-          success: true,
-          likes: likes
-      });
+    const likes = result.records.map((record: Record) => record.get("likes"));
+
+    return res.status(200).json({
+      success: true,
+      likes: likes,
+    });
   } catch (error) {
-      console.log(error);
-      return res.status(500).json({ error: "Internal Server Error" });
+    console.log(error);
+    return res.status(500).json({ error: "Internal Server Error" });
   } finally {
-      await session.close();
+    await session.close();
   }
 });
 
