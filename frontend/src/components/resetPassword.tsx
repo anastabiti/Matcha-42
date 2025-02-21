@@ -55,7 +55,6 @@ const ResetPassword = () => {
           setError(data || "Password update failed. Please try again.");
         }
       } catch (error) {
-        console.log(error);
         setError("Unable to connect to server. Please try again later.");
       }
       return;
@@ -82,11 +81,9 @@ const ResetPassword = () => {
           navigate("/login");
         }, 2000);
       } else {
-        console.log(data, " error");
         setError(data || "Resetting failed. Please try again.");
       }
     } catch (error) {
-      console.log(error);
       setError("Unable to connect to server. Please try again later.");
     }
   };

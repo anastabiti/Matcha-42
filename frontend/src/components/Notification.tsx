@@ -72,7 +72,6 @@ const NotificationButton = () => {
 
     // Listen for new notifications
     socket.on("notification", (newNotification: Notification) => {
-      console.log(newNotification, " newNotification---")
       setNotifications(prev => [newNotification, ...prev]);
     });
 

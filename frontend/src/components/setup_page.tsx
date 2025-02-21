@@ -239,17 +239,12 @@ function Setup_page() {
       setIsLoading(false);
       return;
     }
-
-    console.log(formData.interests.length, " formData.interests\n\n\n");
     if (!formData.interests.length) {
       setError("Please add  your interests!");
       setIsLoading(false);
       return;
     }
     try {
-
-
-      console.log(formData.interests, " formData.interests \n\n||")
       // Upload user information
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_IP}/api/user/setup_information`,

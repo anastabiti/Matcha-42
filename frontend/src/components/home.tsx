@@ -28,21 +28,17 @@ const Home_page = () => {
         credentials: "include", //need it to save the session  cookie in the browser
       });
 
-      const data = await response.json();
 
       if (response.ok) {
-        console.log("Logout successful!");
         setFormData({
           username: "",
           password: "",
         });
         navigate("/login");
       } else {
-        console.log(data, " error");
 
       }
     } catch (error) {
-      console.log(error);
     }
   };
 

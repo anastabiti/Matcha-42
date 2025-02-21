@@ -58,9 +58,6 @@ const RegistrationForm = () => {
       const data = await response.json();
 
       if (response.ok) {
-        console.log(
-          "Registration successful! Please check your email for verification."
-        );
         setSuccess(
           "Registration successful! Please check your email for verification."
         );
@@ -73,12 +70,10 @@ const RegistrationForm = () => {
           age: 0
         });
       } else {
-        console.log(data, " error");
 
         setError(data || "Registration failed. Please try again.");
       }
     } catch (error) {
-      console.log(error);
       setError("Unable to connect to server. Please try again later.");
     } finally {
       setIsLoading(false);

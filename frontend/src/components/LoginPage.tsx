@@ -60,7 +60,6 @@ function LoginPage() {
       const data = await response.json();
 
       if (response.status === 200) {
-        console.log("Login successful!");
         setSuccess("Logged in successfully. Redirecting to your HomePage...");
         navigate("/discover");
         setFormData({
@@ -70,11 +69,9 @@ function LoginPage() {
       } else if (response.status === 201) {
         navigate("/setup");
       } else {
-        console.log(data, " error");
         setError(data || "Login failed. Please try again.");
       }
     } catch (error) {
-      console.log(error);
       setError("Unable to connect to server. Please try again later.");
     } finally {
       setIsLoading(false);
