@@ -22,8 +22,6 @@ export function setupSocket(server: HttpServer) {
   });
 
   io.on("connection", async (socket: Socket) => {
-    
-
     const cookie_jwt = socket.handshake.headers.cookie?.split(";") || [];
     let jwt_token = null;
     for (let cookie of cookie_jwt) {

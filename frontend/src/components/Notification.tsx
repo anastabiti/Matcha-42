@@ -2,7 +2,8 @@ import  { useEffect, useState } from "react";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import Badge from "@mui/material/Badge";
-import { socket } from "./Chat";
+import socket from "./Socket";
+// import { socket } from "./Chat";
 
 interface Notification {
   notify_id: string;

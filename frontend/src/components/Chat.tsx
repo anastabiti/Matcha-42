@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { io } from "socket.io-client";
 import { Send } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import sortBy from "lodash/sortBy";
+import socket from "./Socket";
 
 interface Message {
   content: string;
@@ -13,9 +13,9 @@ interface Message {
   date: string;
 }
 
-export const socket = io(`${import.meta.env.VITE_BACKEND_IP}`, {
-  withCredentials: true
-});
+// export const socket = io(`${import.meta.env.VITE_BACKEND_IP}`, {
+//   withCredentials: true,
+// });
 
 const Chat = () => {
   const { username } = useParams();
