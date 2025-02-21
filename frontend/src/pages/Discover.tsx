@@ -70,7 +70,6 @@ const DiscoverPage = () => {
 	}
 
 
-// Frontend likeUser function
 async function likeUser() {
     if (!profiles[currentIndex]) return;
 

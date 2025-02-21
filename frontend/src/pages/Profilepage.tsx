@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { MapPin, ArrowLeft, Heart, MessageCircle, Phone, Video, Camera, MapPinned, Calendar, User, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ProfileActions from '../components/ProfileActions';
+import { PhotoSection, ProfileImage } from '../components/ProfileImage';
 
 type Profile = {
   username: string;
@@ -222,38 +223,15 @@ const ProfilePage = (props: ProfilePageProps) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Photos Section */}
           <div className="relative aspect-[3/4] bg-[#2a2435] rounded-3xl overflow-hidden group">
-            <motion.img
-              key={currentPhoto}
-              src={profile.pics[currentPhoto]}
-              alt={`${profile.first_name}'s photo`}
-              className="w-full h-full object-cover"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.2 }}
+            <PhotoSection
+              pics={profile.pics}
+              firstName={profile.first_name}
+              lastName={profile.last_name}
+              age={profile.age}
+              fameRating={profile.fame_rating}
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
 
-            {/* Photo Navigation */}
-            <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
-              <div className="flex space-x-1">
-                {profile.pics.map((_, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => setCurrentPhoto(idx)}
-                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer
-                      ${idx === currentPhoto ? 'w-8 bg-[#e94057]' : 'w-4 bg-white/50 hover:bg-[#e94057]/50'}`}
-                  />
-                ))}
-              </div>
-              <button
-                onClick={() => setCurrentPhoto((prev) => (prev + 1) % profile.pics.length)}
-                className="w-10 h-10 rounded-full bg-black/30 backdrop-blur-sm 
-                  flex items-center justify-center border border-white/10 
-                  text-white/90 hover:bg-black/50 transition-all"
-              >
-                <Camera className="w-5 h-5" />
-              </button>
-            </div>
+            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
 
             {/* Profile Name */}
             <div className="absolute inset-x-0 bottom-0 p-6">
@@ -274,10 +252,11 @@ const ProfilePage = (props: ProfilePageProps) => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <div className="relative">
-                    <img
-                      src={profile.profile_picture}
+                    <ProfileImage
+                      imageUrl={profile.profile_picture}
                       alt={profile.first_name}
                       className="w-16 h-16 rounded-full object-cover border-2 border-[#e94057]"
+                      containerClassName="w-16 h-16 rounded-full border-2 border-[#e94057]"
                     />
                     <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#e94057] flex items-center justify-center text-white text-xs font-bold">
                       {profile.age}
@@ -285,7 +264,7 @@ const ProfilePage = (props: ProfilePageProps) => {
                   </div>
                   <div>
                     <h2 className="text-white font-semibold">@{profile.username}</h2>
-                    <div className={`text-sm font-medium text-[#e94057] `}>
+                    <div className={`text-sm font-medium text-[#e94057]`}>
                       {profile.isOnline ? 'Online Now' : 'Offline'}
                     </div>
                   </div>
