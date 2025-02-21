@@ -16,9 +16,10 @@ export function setupSocket(server: HttpServer) {
   io = new Server(server, {
     cors: {
       origin: process.env.front_end_ip,
-      methods: ["GET", "POST"],
       credentials: true,
+      
     },
+    transports: ['websocket'], 
   });
 
   io.on("connection", async (socket: Socket) => {
@@ -30,6 +31,10 @@ export function setupSocket(server: HttpServer) {
         break;
       }
     }
+
+  io.on("connect_error", (error) => {
+      console.log("Connection failed:", error.message);
+    });
 
     if (jwt_token) {
       try {
