@@ -1,5 +1,4 @@
-import React from 'react';
-import { Heart, Star, User, MessageCircle, Search, LogOut } from 'lucide-react';
+import { Heart, User, MessageCircle, Search, LogOut } from 'lucide-react';
 
 const Navbar = () => {
   return (

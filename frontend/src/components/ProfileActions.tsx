@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { MoreVertical, UserX, Flag, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Alert, AlertTitle, AlertDescription } from './ui/alert';
 
 const ProfileActions = ({ username }: { username: string }) => {
   const [isOpen, setIsOpen] = useState(false);

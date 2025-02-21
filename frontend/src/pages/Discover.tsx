@@ -109,6 +109,7 @@ async function likeUser() {
 }
 
 	const handleProfileClick = (username: string) => {
+		console.log(username)
 		setIsProfileOpen(true);
 	};
 

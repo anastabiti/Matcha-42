@@ -5,8 +5,6 @@ import RadioGroup from "@mui/material/RadioGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import FormControl from "@mui/material/FormControl";
 import FormLabel from "@mui/material/FormLabel";
-import MonochromePhotosIcon from "@mui/icons-material/MonochromePhotos";
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { TextField } from "@mui/material";
 import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 import { useNavigate } from "react-router-dom";
@@ -23,7 +21,7 @@ import {
   SportsEsports,
   SportsTennis
 } from "@mui/icons-material";
-import { Mic, Palette, ShoppingCart } from "lucide-react";
+import {  Palette, ShoppingCart } from "lucide-react";
 
 type FormData = {
   last_name: string;

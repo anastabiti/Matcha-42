@@ -1,7 +1,7 @@
-import { Heart, User, MessageCircle, Search, LogOut, Bell } from 'lucide-react';
+import { Heart, User, MessageCircle, Search,   } from 'lucide-react';
 import { NavLink as RouterLink } from 'react-router-dom';
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 
 import NotificationButton from './Notification';
 import LogoutButton from './Logout';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import { Eye, Heart, History, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Neo4jDateTime } from '../types/types';
