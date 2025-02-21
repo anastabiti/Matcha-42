@@ -1,6 +1,4 @@
 import express, { Request, Response } from "express";
-import neo4j from "neo4j-driver";
-// import { imagekitUploader } from "./../app";
 import { authenticateToken_Middleware, generateAccessToken } from "./auth";
 import { v2 as cloudinary } from "cloudinary";
 import { driver } from "../database";
@@ -12,9 +10,10 @@ import {
   validateInterests,
   validateName,
 } from "../validators/validate";
+const axios = require("axios");
 
 const user_information_Router = express.Router();
-
+//The UNWIND clause is used to unwind a list of values as individual rows.
 const create_interests_Query = `
 MATCH (u:User {username: $username})
 UNWIND $interests as interest
@@ -196,9 +195,12 @@ user_information_Router.post(
     }
   }
 );
-
+/**************************************************************************************************************
+ * Upload images  route
+ * by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/jpg", "image/png"];
-const MAX_FILE_SIZE = 5000000; // 5MB
+const MAX_FILE_SIZE = 5000000; //bytes; // 5MB
 
 user_information_Router.post(
   "/user/upload",
@@ -210,10 +212,39 @@ user_information_Router.post(
       if (!files) {
         return res.status(200).json("No files");
       }
+      console.log(files, "  -------files\n");
       const session = driver.session();
-      const keys: string[] = Object.keys(files);
-      // if(keys.length <= 0)
-      // return res.status(200).json("No files");
+      /*
+      The Object.keys() static method returns an array of a given object's own enumerable string-keyed property names.
+      const object1 = {
+      a: "somestring",
+      b: 42,
+      c: false,};
+
+      console.log(Object.keys(object1));
+      // Expected output: Array ["a", "b", "c"]
+ 
+      */
+
+      /* files
+        [Object: null prototype] {
+      '0': {
+          name: 
+          data:
+          size: ,
+          encoding: '
+          tempFilePath: '',
+          truncated: false,
+          mimetype: 'image/png',
+          md5: '',
+          mv: [Function: mv]
+          },
+      '1': {
+            .......
+            }
+}  */
+      const keys: string[] = Object.keys(files); //[ '0', '1', '4' ]  keys
+
       // Get existing pics array
       const result = await session.run(
         `MATCH (u:User {username: $username}) 
@@ -222,6 +253,7 @@ user_information_Router.post(
       );
       let existingPics = result.records[0]?.get("pics") || [];
       for (let i = 0; i < keys.length; i++) {
+        console.log(keys[i], " keys[i]");
         const file = files[keys[i]];
         if (file.size > MAX_FILE_SIZE || file.size <= 0) {
           return res.status(400).json("Too large image size !!!.");
@@ -274,6 +306,11 @@ user_information_Router.post(
     }
   }
 );
+
+/**************************************************************************************************************
+ * Check if user is logged
+ * by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
 user_information_Router.get(
   "/user/is_logged",
   authenticateToken_Middleware,
@@ -281,6 +318,11 @@ user_information_Router.get(
     return res.status(200).json("IS LOGGED");
   }
 );
+
+/**************************************************************************************************************
+ * Check if the user did completed the setup
+ * by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
 user_information_Router.get(
   "/user/has_completed_setup",
   authenticateToken_Middleware,
@@ -290,7 +332,10 @@ user_information_Router.get(
   }
 );
 
-// -------------
+/**************************************************************************************************************
+ * get all the data of a user
+ * by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
 user_information_Router.get(
   "/user/info",
   authenticateToken_Middleware,
@@ -313,7 +358,6 @@ user_information_Router.get(
             { username: user.username }
           );
           if (res_of_query.records.length > 0 && res_interest.records.length > 0) {
-            const tags_interest = res_interest.records;
             let i = 0;
             let arr_ = [];
             while (res_interest.records[i] != null) {
@@ -335,8 +379,10 @@ user_information_Router.get(
               age: userNode.age,
               tags: arr_,
             };
+            await session.close();
             return res.status(200).json(return_data);
           }
+          await session.close();
           return res.status(400).json("user infos are not completed");
         }
         return res.status(400).json("problem occured");
@@ -348,35 +394,37 @@ user_information_Router.get(
   }
 );
 
-const axios = require("axios");
-
+/**************************************************************************************************************
+ * Set user location
+ * by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
 user_information_Router.post(
   "/location",
   authenticateToken_Middleware,
   async function (req: Request, res: Response) {
-    // try {
-    const latitude = req.body.latitude;
-    const longitude = req.body.longitude;
+    try {
+      const latitude = req.body.latitude;
+      const longitude = req.body.longitude;
 
-    const user: any = req.user;
-    if (latitude && longitude && user) {
-      const response = await axios.get(
-        `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-        {
-          headers: {
-            "Accept-Language": "en", //city we country names in english better
-          },
-        }
-      );
+      const user: any = req.user;
+      if (latitude && longitude && user) {
+        const response = await axios.get(
+          `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+          {
+            headers: {
+              "Accept-Language": "en", //city and country names in english 
+            },
+          }
+        );
 
-      const cityName = (await response.data.address.city.split(" ")[0]) || "Unknown City"; //  city: 'Khouribga ⵅⵯⵔⵉⴱⴳⴰ خريبكة',
-      const country = response.data.address.country.split(" ")[0] || "NA"; // country: 'Maroc ⵍⵎⵖⵔⵉⴱ المغرب',
+        const cityName = (await response.data.address.city.split(" ")[0]) || "Unknown City"; //  city: 'Khouribga ⵅⵯⵔⵉⴱⴳⴰ خريبكة',
+        const country = response.data.address.country.split(" ")[0] || "NA"; // country: 'Maroc ⵍⵎⵖⵔⵉⴱ المغرب',
 
-      const db_session = driver.session();
-      if (db_session) {
-        // https://neo4j.com/docs/cypher-manual/current/values-and-types/spatial/
-        const result = await db_session.run(
-          `
+        const db_session = driver.session();
+        if (db_session) {
+          // https://neo4j.com/docs/cypher-manual/current/values-and-types/spatial/
+          const result = await db_session.run(
+            `
             MATCH (n:User) WHERE n.username = $username
             SET   n.location = point({latitude: $latitude, longitude: $longitude}),
             n.city = $cityName, n.country = $country_name,
@@ -385,24 +433,27 @@ user_information_Router.post(
             n.country_WTK = $country_name
             RETURN n
             `,
-          {
-            username: user.username,
-            latitude: latitude,
-            longitude: longitude,
-            cityName: cityName,
-            country_name: country,
-          }
-        );
-        res.status(200).json("location saved");
+            {
+              username: user.username,
+              latitude: latitude,
+              longitude: longitude,
+              cityName: cityName,
+              country_name: country,
+            }
+          );
+          res.status(200).json("location saved");
+          return;
+        }
+        res.status(400).json("error in db session");
+        return;
+      } else {
+        res.status(400).json("Cannot access location");
         return;
       }
-      res.status(400).json("error in db session");
-      return;
-    } else {
-      res.status(400).json("Cannot access location");
+    } catch {
+      res.status(400).json("Error while setting location try again later!");
       return;
     }
-    // } catch {}
   }
 );
 
@@ -491,5 +542,4 @@ user_information_Router.post(
 );
 
 export default user_information_Router;
-// tmpuser
-//sklsdkKkd78*&KJ
+
