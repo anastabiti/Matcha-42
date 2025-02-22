@@ -76,7 +76,7 @@ const Gps = () => {
       const address = response.data.address;
       return address.city || address.town || address.village || "Unknown Location";
     } catch (err) {
-      console.error("Failed to get city name:", err);
+      // console.error("Failed to get city name:", err);
       return "Unknown Location";
     }
   };

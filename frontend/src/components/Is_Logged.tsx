@@ -23,7 +23,6 @@ const IsLogged = () => {
           setUser(false);
         }
       } catch (error) {
-        console.error('Auth check failed:', error);
         setUser(false);
       } finally {
         setLoading(false); 

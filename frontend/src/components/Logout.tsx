@@ -10,9 +10,7 @@ const LogoutButton = () => {
 
       if (response.ok) {
         window.location.href = "/login"; 
-      } else {
-        console.error("Logout failed");
-      }
+      } 
     } catch (error) {
       console.error("Error logging out:", error);
     }

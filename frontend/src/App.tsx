@@ -46,7 +46,6 @@ const Logged_so_no_access_to_loginpage = () => {
           setUser(false);
         }
       } catch (error) {
-        console.error("Auth check failed:", error);
         setUser(false);
       } finally {
         setLoading(false);

@@ -19,6 +19,7 @@ const fileUpload = require('express-fileupload');
 import { v2 as cloudinary } from 'cloudinary';
 import notify from "./routes/notifications";
 import { driver } from "./database/index";
+import dotenv from "dotenv";
 
 const app: Application = express();
 
@@ -77,5 +78,16 @@ app.use("/", interactions);
 app.use("/api", discord_auth);
 app.use("/api", chat);
 app.use("/api", notify);
+
+
+dotenv.config();
+const port = process.env.PORT || 3000;
+import http from "http";
+import { setupSocket } from "./socket";
+const server = http.createServer(app);
+setupSocket(server);
+server.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
 
 export default app;

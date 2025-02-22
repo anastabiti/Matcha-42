@@ -195,7 +195,7 @@ export function setupSocket(server: HttpServer) {
               socket.emit("messageError", { message: "Users are not matched" });
             }
           } catch (error) {
-            console.error("Error in sendMessage:", error);
+            // console.error("Error in sendMessage:", error);
             socket.emit("messageError", { message: "Failed to send message" });
           } finally {
             await session_db.close();

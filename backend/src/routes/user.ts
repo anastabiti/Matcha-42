@@ -188,7 +188,7 @@ user_information_Router.post(
         return res.status(400).json("Database session error");
       }
     } catch (error) {
-      console.error("Error updating user settings:", error);
+      // console.error("Error updating user settings:", error);
       return res.status(400).json("Error updating user settings");
     } finally {
       await new_session.close();
