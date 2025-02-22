@@ -1,15 +1,25 @@
 import express, { Request, Response } from "express";
-import { body, ValidationError, validationResult } from "express-validator";
-import neo4j from "neo4j-driver";
-// import { imagekitUploader } from "./../app";
 import { authenticateToken_Middleware, generateAccessToken } from "./auth";
-import { v2 as cloudinary } from 'cloudinary';
+import { v2 as cloudinary } from "cloudinary";
+import { driver } from "../database";
+import {
+  validateAge,
+  validateBiography,
+  validateEmail,
+  validateGender,
+  validateInterests,
+  validateName,
+} from "../validators/validate";
+const axios = require("axios");
 
 const user_information_Router = express.Router();
-const driver = neo4j.driver(
-  "neo4j://localhost:7687",
-  neo4j.auth.basic(process.env.database_username as string, process.env.database_password as string)
-);
+//The UNWIND clause is used to unwind a list of values as individual rows.
+const create_interests_Query = `
+MATCH (u:User {username: $username})
+UNWIND $interests as interest
+MERGE (t:Tags {interests: interest}) 
+MERGE (u)-[:has_this_interest]->(t)
+`;
 
 export type UserJWTPayload = {
   username: string;
@@ -21,65 +31,56 @@ export type UserJWTPayload = {
   exp: number;
 };
 
+/**************************************************************************************************************
+ * User setup route
+ * by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
 user_information_Router.post(
-  "/user/information",
+  "/user/setup_information",
   authenticateToken_Middleware,
-  body("gender")
-    .notEmpty()
-    .withMessage("Gender cannot be empty")
-    .isIn(["male", "female"])
-    .withMessage("Gender must be 'male' or 'female'"),
-  body("age").isInt({ min: 18, max: 100 }),
-  body("biography")
-    .notEmpty()
-    .withMessage("Biography cannot be empty")
-    .isLength({ min: 20, max: 200 })
-    .withMessage("Biography must be between 20 and 200 characters"),
-  async (req: any, res: any) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      console.log(errors, " errors 13->>>.");
-      return res.status(400).json("Please! complete all fields");
-    }
-    console.log("------------------------------=-------=-=-=-[123]");
-    // const _user = authenticateToken(req);
+  validateAge,
+  validateBiography,
+  validateGender,
+  validateInterests,
+  async function (req: any, res: any) {
     let _user = req.user;
     if (!_user) {
-      console.log("User authentication failed");
       return res.status(401).json("UNAUTHORIZED");
     }
 
-    console.log(_user, " ==================+++++++++++++++++++++101010");
     if (_user.username) {
-      console.log(_user.setup_done, " user.setup_done");
       if (_user.setup_done == true) {
         return res.status(400).json("Already done");
       }
       const session = driver.session();
       if (session) {
-        if (await req.body.interests) {
-          for (const interest of req.body.interests) {
-            await session.run(
-              `MATCH (u:User {username: $username})
-                MERGE (t:Tags {interests: $interests})
-                MERGE (u)-[:has_this_interest]->(t)`,
-              {
-                username: _user.username,
-                interests: interest,
-              }
-            );
-          }
-        }
-        console.log(_user.username, " _user.username--=-=-==--=");
-        if (await req.body.biography) {
-          // "MATCH (n:User) WHERE n.username = $username AND n.verified = true RETURN n.password",
-          console.log(
-            typeof {
-              _username: _user.username,
-              biography: req.body.biography,
-            }
-          );
+        const all_interests = req.body.interests;
+        // if (all_interests) {
 
+        //   for (const interest of all_interests) {
+        //     /*MERGE :
+        //     First try to MATCH: Look for a Tags node where name equals your interest
+        //     If it finds it → It uses the existing node
+        //     If it doesn't find it → It CREATE's a new node
+        //     */
+        //     await session.run(
+        //       `MATCH (u:User {username: $username})
+        //         MERGE (t:Tags {interests: $interest})
+        //         MERGE (u)-[:has_this_interest]->(t)`,
+        //       {
+        //         username: _user.username,
+        //         interest: interest,
+        //       }
+        //     );
+        //   }
+        // }
+
+        await session.run(create_interests_Query, {
+          username: _user.username,
+          interests: all_interests,
+        });
+
+        if (await req.body.biography) {
           await session.run(
             `MATCH (n:User) WHERE n.username = $username
                         SET n.biography = $biography
@@ -96,105 +97,39 @@ user_information_Router.post(
             }
           );
         }
-        //     if (await req.body.gender) {
-        //       //delete old gender
-        //       await session.run(
-        //         `MATCH (u:User {username: $username})-[r:onta_wla_dakar]->(g:Sex)
-        //           DELETE r`,
-        //         { username: _user.username }
-        //       );
-
-        //       await session.run(
-        //         `MATCH (U:User) WHERE U.username = $username
-        //           MATCH (G:Sex) WHERE G.gender = $gender
-        //           MERGE (U)-[:onta_wla_dakar]->(G)
-
-        // `,
-
-        //         { username: _user.username, gender: await req.body.gender }
-        //       );
-        //     }
+        await session.close();
+        return res.status(200).json("User information route");
       }
-      console.log("llllllllllllllllllllllllllll");
-      await session.close();
-      // req.session.user.setup_done = true;
-      // await req.session.save();
-
-      _user.setup_done = true;
-      console.log("22222222222222222222222");
-
-      const token = await generateAccessToken(_user);
-      if (!token) {
-        console.error("Failed to generate authentication token");
-        return res.status(401).json({ error: "Authentication failed" });
-      }
-      console.log("4444444444444444444444444");
-
-      res.cookie("jwt_token", token, {
-        httpOnly: true,
-        sameSite: "lax",
-        maxAge: 3600000, // 1 hour in milliseconds
-      });
-      console.log("5555555555555555555555");
-
-      return res.status(200).json("User information route");
+      return res.status(400).json("DB ERROR");
     }
     return res.status(401).json("UNAUTHORIZED");
   }
 );
 
-// // --------------------------------------
-
-//error handling ,parsing to be used in the other forms
-
+/**************************************************************************************************************
+ * Update User info route
+ * by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
 user_information_Router.post(
   "/user/settings",
   authenticateToken_Middleware,
-  body("last_name")
-    .isLength({ min: 3, max: 30 })
-    .notEmpty()
-    .withMessage("last_name cannot be empty"),
-  body("first_name")
-    .isLength({ min: 3, max: 30 })
-    .notEmpty()
-    .withMessage("first_name cannot be empty"),
-  body("email")
-    .notEmpty()
-    .isLength({ min: 7, max: 100 })
-    .withMessage("email cannot be empty")
-    .isEmail(),
-  body("gender")
-    .notEmpty()
-    .withMessage("Gender cannot be empty")
-    .isIn(["male", "female"])
-    .withMessage("Gender must be 'male' or 'female'"),
-  body("biography")
-    .notEmpty()
-    .withMessage("Biography cannot be empty")
-    .isLength({ min: 20, max: 200 })
-    .withMessage("Biography must be between 20 and 200 characters"),
-  body("interests").isArray().withMessage("Interests must be an array"),
-  body("age").isInt({ min: 18, max: 100 }),
+  validateName,
+  validateEmail,
+  validateGender,
+  validateBiography,
+  validateAge,
+  validateInterests,
 
   async (req: any, res: any) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      const firstError = errors.array()[0] as any;
-      return res.status(400).json(`Invalid : ${firstError.path}`);
-    }
-
     const logged_user = req.user;
-    console.log(logged_user.email, " >>>>>>>>>>>>-----------email is here-<<<<<<<<<<<");
     if (!logged_user) return res.status(401).json("UNAUTH");
 
     const user_copy = { ...req.body };
     const new_session = driver.session();
-    console.log(logged_user, " logged_user\n\n\n\n\n");
     try {
       if (new_session) {
         const gender = req.body.gender;
         const email = req.body.email;
-        console.log("NEW EMAIL IS : ", email, "\n\n\n");
         // Update basic user information
         const update_db = await new_session.run(
           `  
@@ -217,24 +152,6 @@ user_information_Router.post(
           }
         );
 
-        // // Update gender relationship
-        // if (gender) {
-        //   // Delete old gender relationship
-        //   await new_session.run(
-        //     `MATCH (u:User {username: $username})-[r:onta_wla_dakar]->(g:Sex)
-        //      DELETE r`,
-        //     { username: logged_user.username }
-        //   );
-
-        //   // Create new gender relationship
-        //   await new_session.run(
-        //     `MATCH (U:User) WHERE U.username = $username
-        //      MATCH (G:Sex) WHERE G.gender = $gender
-        //      MERGE (U)-[:onta_wla_dakar]->(G)`,
-        //     { username: logged_user.username, gender: gender }
-        //   );
-        // }
-
         // Update interests
         if (user_copy.interests && Array.isArray(user_copy.interests)) {
           // Delete old interests
@@ -245,17 +162,21 @@ user_information_Router.post(
           );
 
           // Create new interests
-          for (const interest of user_copy.interests) {
-            await new_session.run(
-              `MATCH (u:User {username: $username})
-               MERGE (t:Tags {interests: $interest})
-               MERGE (u)-[:has_this_interest]->(t)`,
-              {
-                username: logged_user.username,
-                interest: interest,
-              }
-            );
-          }
+          // for (const interest of user_copy.interests) {
+          //   await new_session.run(
+          //     `MATCH (u:User {username: $username})
+          //      MERGE (t:Tags {interests: $interest})
+          //      MERGE (u)-[:has_this_interest]->(t)`,
+          //     {
+          //       username: logged_user.username,
+          //       interest: interest,
+          //     }
+          //   );
+          // }
+          await new_session.run(create_interests_Query, {
+            username: logged_user.username,
+            interests: user_copy.interests,
+          });
         }
 
         if (update_db.records.length > 0) {
@@ -274,9 +195,12 @@ user_information_Router.post(
     }
   }
 );
-
+/**************************************************************************************************************
+ * Upload images  route
+ * by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/jpg", "image/png"];
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 5000000; //bytes; // 5MB
 
 user_information_Router.post(
   "/user/upload",
@@ -288,9 +212,38 @@ user_information_Router.post(
       if (!files) {
         return res.status(200).json("No files");
       }
-
+      console.log(files, "  -------files\n");
       const session = driver.session();
-      const keys: string[] = Object.keys(files);
+      /*
+      The Object.keys() static method returns an array of a given object's own enumerable string-keyed property names.
+      const object1 = {
+      a: "somestring",
+      b: 42,
+      c: false,};
+
+      console.log(Object.keys(object1));
+      // Expected output: Array ["a", "b", "c"]
+ 
+      */
+
+      /* files
+        [Object: null prototype] {
+      '0': {
+          name: 
+          data:
+          size: ,
+          encoding: '
+          tempFilePath: '',
+          truncated: false,
+          mimetype: 'image/png',
+          md5: '',
+          mv: [Function: mv]
+          },
+      '1': {
+            .......
+            }
+}  */
+      const keys: string[] = Object.keys(files); //[ '0', '1', '4' ]  keys
 
       // Get existing pics array
       const result = await session.run(
@@ -299,32 +252,15 @@ user_information_Router.post(
         { username: _user.username }
       );
       let existingPics = result.records[0]?.get("pics") || [];
-      console.log();
       for (let i = 0; i < keys.length; i++) {
+        console.log(keys[i], " keys[i]");
         const file = files[keys[i]];
-        console.log(
-          "[",
-          files[keys[i]],
-          " ----------files[keys[i]];\n",
-          keys[i],
-          "\n\n\n",
-          files,
-          " ---files",
-          " i is ",
-          i,
-          "\n\n\n\n\n\n\n keys.length ",
-          keys.length,
-          "]\n\n\n"
-        );
+        if (file.size > MAX_FILE_SIZE || file.size <= 0) {
+          return res.status(400).json("Too large image size !!!.");
+        }
+
         let index = Number(keys[i]);
-        console.log(
-          typeof keys[i],
-          " typeof(keys[i])\n\n",
-          keys[i],
-          " keys[i]\n",
-          typeof index,
-          " typeof(index)\n"
-        );
+
         // Validate mime type
         if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
           return res.status(400).json({
@@ -333,24 +269,13 @@ user_information_Router.post(
           });
         }
 
-        // // Upload to ImageKit
-        // const ret = await imagekitUploader.upload({
-        //   file: file.data,
-        //   fileName: file.name,
-        // });
-
-        // Upload an image
-        console.log('Processing file:', file); // Debug log
-        console.log('Processing file:', file[0]); // Debug log
-
         //create  a data URI scheme
-        const uploadResult = await cloudinary.uploader.upload(`data:${file.mimetype};base64,${file.data.toString('base64')}`, {
-        })
+        const uploadResult = await cloudinary.uploader
+          .upload(`data:${file.mimetype};base64,${file.data.toString("base64")}`, {})
 
-          .catch((error) => {
-            console.log(error);
+          .catch(() => {
+            return res.status(400).json("Upload failed");
           });
-          console.log(uploadResult?.url,  "------uploadResult--------")
 
         // Handle profile picture (first image)
         if (index === 0) {
@@ -377,21 +302,40 @@ user_information_Router.post(
       session.close();
       return res.status(200).json("Images uploaded successfully.");
     } catch (error) {
-      console.error("Image upload failed:", error);
       return res.status(400).json("Image upload failed.");
     }
   }
 );
+
+/**************************************************************************************************************
+ * Check if user is logged
+ * by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
 user_information_Router.get(
   "/user/is_logged",
   authenticateToken_Middleware,
   async function (req: any, res: any) {
-    console.log("is_looged is called ");
     return res.status(200).json("IS LOGGED");
   }
 );
 
-// -------------
+/**************************************************************************************************************
+ * Check if the user did completed the setup
+ * by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
+user_information_Router.get(
+  "/user/has_completed_setup",
+  authenticateToken_Middleware,
+  async function (req: any, res: any) {
+    if (req.user.setup_done === true) return res.status(200).json("completed");
+    return res.status(401).json("not completed");
+  }
+);
+
+/**************************************************************************************************************
+ * get all the data of a user
+ * by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
 user_information_Router.get(
   "/user/info",
   authenticateToken_Middleware,
@@ -400,39 +344,27 @@ user_information_Router.get(
       const user = req.user;
 
       if (user.setup_done == false) return res.status(405).json("Complete Profile Setup first");
-      // console.log(req, " req is here");
+
       if (user) {
-        // console.log(user.username, " -----------------------------the user who is logged in now");
         const session = driver.session();
         if (session) {
           const res_of_query = await session.run(
             "MATCH (n:User) WHERE n.username = $username  RETURN n",
             { username: user.username }
           );
-          // const res_of_query = await session.run(
-          //   "MATCH (n:User {username: $username})-[:onta_wla_dakar]->(g:Sex)  RETURN n, g",
-          //   { username: user.username }
-          // );
+
           const res_interest = await session.run(
             "MATCH (n:User {username: $username})-[:has_this_interest]->(t:Tags)  RETURN  t",
             { username: user.username }
           );
           if (res_of_query.records.length > 0 && res_interest.records.length > 0) {
-            console.log("here");
-            const tags_interest = res_interest.records;
             let i = 0;
             let arr_ = [];
             while (res_interest.records[i] != null) {
-              // console.log(
-              //   // res_interest.records[i]._fields[0].properties.interests,
-              //   res_interest.records[i].get(0).properties.interests,
-
-              //   " (- -) \n"
-              // );
               arr_.push(res_interest.records[i].get(0).properties.interests);
               i++;
             }
-            // console.log(arr_, "  arr_   =============================================");
+
             const userNode = res_of_query.records[0].get(0).properties;
 
             const return_data = {
@@ -447,8 +379,10 @@ user_information_Router.get(
               age: userNode.age,
               tags: arr_,
             };
+            await session.close();
             return res.status(200).json(return_data);
           }
+          await session.close();
           return res.status(400).json("user infos are not completed");
         }
         return res.status(400).json("problem occured");
@@ -460,63 +394,66 @@ user_information_Router.get(
   }
 );
 
-const axios = require("axios");
-
+/**************************************************************************************************************
+ * Set user location
+ * by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
 user_information_Router.post(
   "/location",
   authenticateToken_Middleware,
   async function (req: Request, res: Response) {
-    // try {
-    const latitude = req.body.latitude;
-    const longitude = req.body.longitude;
+    try {
+      const latitude = req.body.latitude;
+      const longitude = req.body.longitude;
 
-    const user: any = req.user;
-    console.log(user, "  user");
-    if (latitude && longitude && user) {
-      const response = await axios.get(
-        `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-        {
-          headers: {
-            "Accept-Language": "en", //city we country names in english better
-          },
-        }
-      );
-      console.log(response.data, " -----------------------------data\n\n\n\n");
-
-      const cityName = (await response.data.address.city.split(" ")[0]) || "Unknown City"; //  city: 'Khouribga ⵅⵯⵔⵉⴱⴳⴰ خريبكة',
-      const country = response.data.address.country.split(" ")[0] || "NA"; // country: 'Maroc ⵍⵎⵖⵔⵉⴱ المغرب',
-
-      const db_session = driver.session();
-      if (db_session) {
-        // https://neo4j.com/docs/cypher-manual/current/values-and-types/spatial/
-        const result = await db_session.run(
-          `
-            MATCH (n:User) WHERE n.username = $username
-            SET   n.location = point({latitude: $latitude, longitude: $longitude}),
-            n.city = $cityName, n.country = $country_name
-        
-            RETURN n
-            
-            `,
+      const user: any = req.user;
+      if (latitude && longitude && user) {
+        const response = await axios.get(
+          `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
           {
-            username: user.username,
-            latitude: latitude,
-            longitude: longitude,
-            cityName: cityName,
-            country_name: country,
+            headers: {
+              "Accept-Language": "en", //city and country names in english 
+            },
           }
         );
-        console.log(req.body);
-        res.status(200).json("location saved");
+
+        const cityName = (await response.data.address.city.split(" ")[0]) || "Unknown City"; //  city: 'Khouribga ⵅⵯⵔⵉⴱⴳⴰ خريبكة',
+        const country = response.data.address.country.split(" ")[0] || "NA"; // country: 'Maroc ⵍⵎⵖⵔⵉⴱ المغرب',
+
+        const db_session = driver.session();
+        if (db_session) {
+          // https://neo4j.com/docs/cypher-manual/current/values-and-types/spatial/
+          const result = await db_session.run(
+            `
+            MATCH (n:User) WHERE n.username = $username
+            SET   n.location = point({latitude: $latitude, longitude: $longitude}),
+            n.city = $cityName, n.country = $country_name,
+            n.location_WTK = point({latitude: $latitude, longitude: $longitude}),
+            n.city_WTK = $cityName,
+            n.country_WTK = $country_name
+            RETURN n
+            `,
+            {
+              username: user.username,
+              latitude: latitude,
+              longitude: longitude,
+              cityName: cityName,
+              country_name: country,
+            }
+          );
+          res.status(200).json("location saved");
+          return;
+        }
+        res.status(400).json("error in db session");
+        return;
+      } else {
+        res.status(400).json("Cannot access location");
         return;
       }
-      res.status(400).json("error in db session");
-      return;
-    } else {
-      res.status(400).json("Cannot access location");
+    } catch {
+      res.status(400).json("Error while setting location try again later!");
       return;
     }
-    // } catch {}
   }
 );
 
@@ -524,83 +461,85 @@ user_information_Router.post(
   "/location/WTK",
   authenticateToken_Middleware,
   async function (req: Request, res: Response) {
-    const response = await axios.get("http://api.ipify.org");
-    console.log(response.data, " , -------res");
+    try {
+      const response = await axios.get("http://api.ipify.org");
 
-    const pub_ip = response.data;
+      const pub_ip = response.data;
 
-    const url = `https://apiip.net/api/check?ip=${pub_ip}&accessKey=${process.env.ip_finder_pub}`;
-    const responses = await axios.get(url);
-    const result = responses.data;
-    console.log(result, "sssss---------------result");
+      const url = `https://apiip.net/api/check?ip=${pub_ip}&accessKey=${process.env.ip_finder_pub}`;
+      const responses = await axios.get(url);
+      const result = responses.data;
 
-    // {
-    //   ip: 'hhhhhh'
-    //   continentCode: 'AF',
-    //   continentName: 'Africa',
-    //   countryCode: 'MA',
-    //   countryName: 'Morocco',
-    //   countryNameNative: 'المغرب',
-    //   officialCountryName: 'Kingdom of Morocco',
-    //   regionCode: '05',
-    //   regionName: 'Béni Mellal-Khénifra',
-    //   cityGeoNameId: 2544248,
-    //   city: 'Khouribga',
-    //   cityWOSC: 'Khouribga',
-    //   latitude: 32.8804,
-    //   longitude: -6.9057,
-    //   capital: 'Rabat',
-    //   phoneCode: '212',
-    //   countryFlagEmoj: '🇲🇦',
-    //   countryFlagEmojUnicode: 'U+1F1F2 U+1F1E6',
-    //   isEu: false,
-    //   borders: [ 'DZA', 'ESH', 'ESP' ],
-    //   topLevelDomains: [ '.ma', 'المغرب.' ]
-    // }
+      // {
+      //   ip: 'hhhhhh'
+      //   continentCode: 'AF',
+      //   continentName: 'Africa',
+      //   countryCode: 'MA',
+      //   countryName: 'Morocco',
+      //   countryNameNative: 'المغرب',
+      //   officialCountryName: 'Kingdom of Morocco',
+      //   regionCode: '05',
+      //   regionName: 'Béni Mellal-Khénifra',
+      //   cityGeoNameId: 2544248,
+      //   city: 'Khouribga',
+      //   cityWOSC: 'Khouribga',
+      //   latitude: 32.8804,
+      //   longitude: -6.9057,
+      //   capital: 'Rabat',
+      //   phoneCode: '212',
+      //   countryFlagEmoj: '🇲🇦',
+      //   countryFlagEmojUnicode: 'U+1F1F2 U+1F1E6',
+      //   isEu: false,
+      //   borders: [ 'DZA', 'ESH', 'ESP' ],
+      //   topLevelDomains: [ '.ma', 'المغرب.' ]
+      // }
 
-    const latitude = result.latitude;
-    const longitude = result.longitude;
+      const latitude = result.latitude;
+      const longitude = result.longitude;
 
-    const user: any = req.user;
+      const user: any = req.user;
 
-    if (user) {
-      const cityName = result.city;
+      if (user) {
+        const cityName = result.city;
 
-      const country = result.countryName;
+        const country = result.countryName;
 
-      const db_session = driver.session();
-      if (db_session) {
-        // https://neo4j.com/docs/cypher-manual/current/values-and-types/spatial/
-        const result = await db_session.run(
-          `
-            MATCH (n:User) WHERE n.username = $username
-            SET   n.location_WTK = point({latitude: $latitude_WTK, longitude: $longitude_WTK}),
-            n.city_WTK = $cityName_WTK, n.country_WTK = $country_name_WTK
+        const db_session = driver.session();
+        if (db_session) {
+          // https://neo4j.com/docs/cypher-manual/current/values-and-types/spatial/
+          const result = await db_session.run(
+            `
+              MATCH (n:User) WHERE n.username = $username
+              SET   n.location_WTK = point({latitude: $latitude_WTK, longitude: $longitude_WTK}),
+              n.city_WTK = $cityName_WTK, n.country_WTK = $country_name_WTK
+  
+              RETURN n
+  
+              `,
+            {
+              username: user.username,
+              latitude_WTK: latitude,
+              longitude_WTK: longitude,
+              cityName_WTK: cityName,
+              country_name_WTK: country,
+            }
+          );
 
-            RETURN n
-
-            `,
-          {
-            username: user.username,
-            latitude_WTK: latitude,
-            longitude_WTK: longitude,
-            cityName_WTK: cityName,
-            country_name_WTK: country,
-          }
-        );
-        console.log(req.body);
-        res.status(200).json("location saved");
+          res.status(200).json("location saved");
+          return;
+        }
+        res.status(400).json("error in db session");
+        return;
+      } else {
+        res.status(400).json("Cannot access location");
         return;
       }
-      res.status(400).json("error in db session");
-      return;
-    } else {
-      res.status(400).json("Cannot access location");
+    } catch {
+      res.status(400).json("FAILED to access location");
       return;
     }
   }
 );
 
 export default user_information_Router;
-// tmpuser
-//sklsdkKkd78*&KJ
+

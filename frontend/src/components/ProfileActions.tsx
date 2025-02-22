@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { MoreVertical, UserX, Flag, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Alert, AlertTitle, AlertDescription } from './ui/alert';
 
 const ProfileActions = ({ username }: { username: string }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,7 +11,7 @@ const ProfileActions = ({ username }: { username: string }) => {
 
   const handleBlockUser = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/blocks/${username}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/blocks/${username}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -36,7 +35,7 @@ const ProfileActions = ({ username }: { username: string }) => {
 
   const handleUnblockUser = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/blocks/${username}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/blocks/${username}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -60,7 +59,7 @@ const ProfileActions = ({ username }: { username: string }) => {
 
   const handleReportFake = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/reports/${username}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/reports/${username}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

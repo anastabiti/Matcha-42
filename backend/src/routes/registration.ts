@@ -1,31 +1,16 @@
 import express, { Request, Response } from "express";
-const { body, validationResult } = require("express-validator");
-// const bcrypt = require("bcrypt");
 const crypto = import("crypto");
 import argon2 from "argon2";
-
-const passwordValidator = require("password-validator");
 import nodemailer from "nodemailer";
 import { driver } from "../database";
+import {
+  validateAge,
+  validateEmail,
+  validateName,
+  validatePassword,
+  validateUsername,
+} from "../validators/validate";
 
-// Create a schema for password validation
-const schema = new passwordValidator();
-schema
-  .is()
-  .min(8) // Minimum length 8
-  .is()
-  .max(50) // Maximum length 100
-  .has()
-  .uppercase() // Must have uppercase letters
-  .has()
-  .lowercase() // Must have lowercase letters
-  .has()
-  .digits(2) // Must have at least 2 digits
-  .has()
-  .not()
-  .spaces() // Should not have spaces
-  .has()
-  .symbols(); // Must have at least 1 symbol
 export const transporter = nodemailer.createTransport({
   service: "Gmail",
   host: "smtp.gmail.com",
@@ -38,94 +23,35 @@ export const transporter = nodemailer.createTransport({
 });
 const registrationRouter = express.Router();
 
-// registration route
+/**************************************************************************************************************
+ * Register a new user by requesting the following fields:
+ * - email
+ * - password
+ * - username
+ * - first_name
+ * - last_name
+ * - age
+ *  by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
 registrationRouter.post(
   "/registration",
-  body("email").isEmail().isLength({ min: 7, max: 30 }),
-  body("password").isLength({ min: 8, max: 50 }),
-  body("username")
-    .isLength({ min: 6, max: 20 })
-    .not()
-    .contains(" ")
-    .withMessage("Username cannot contain spaces")
-    .not()
-    .contains("\t")
-    .withMessage("Username cannot contain tabs")
-    .isAlphanumeric(),
-  body("first_name").isLength({ min: 3, max: 30 }),
-  body("last_name").isLength({ min: 3, max: 30 }),
-  body("age").isInt({ min: 18, max: 100 }),
-
+  validateEmail,
+  validatePassword,
+  validateUsername,
+  validateName,
+  validateAge,
   async (req: Request, res: Response) => {
-    if (schema.validate(req.body.password) === false) {
-      res
-        .status(400)
-        .json(
-          "Password must be between 8 and 50 characters, contain at least 2 digits, an uppercase letter, a lowercase letter and no spaces"
-        );
-      return;
-    }
-    const errors = validationResult(req);
-
-    // console.log(errors.array()[0].msg, errors.array()[0].path, "errors");
-    // {
-    //   type: 'field',
-    //   value: 'e',
-    //   msg: 'Invalid value',
-    //   path: 'password',
-    //   location: 'body'
-    // }
-    if (!errors.isEmpty()) {
-      if (errors.array()[0].path === "email") res.status(400).json("Invalid email");
-      else if (errors.array()[0].path === "password")
-        res.status(400).json("Password must be between 6 and 30 characters");
-      else if (errors.array()[0].path === "username")
-        res.status(400).json("Username must be between 6 and 20 characters,No spaces,No tabs,must be alphanumeric");
-      else if (errors.array()[0].path === "first_name")
-        res.status(400).json("First name must be between 3 and 30 characters");
-      else if (errors.array()[0].path === "last_name")
-        res.status(400).json("Last name must be between 3 and 30 characters");
-      else if (errors.array()[0].path === "age") res.status(400).json("Age  must be above 18");
-    } else {
-      // console.log(req.body, 'req.body');
-      // console.log(req.body.username, " username");
-      // console.log(req.body.email, " email");
-      // console.log(req.body.password, " password");
-      // console.log(req.body.last_name, " last_name");
-      // console.log(req.body.first_name, " first_name");
-
-      // store these to neo4j
-      // hash passwrod before storing it
-
-      // const salt = await bcrypt.genSalt(10);
-      // const hashedPassword = await bcrypt.hash(req.body.password, salt);
-      const plain_pass = req.body.password;
-      const hashedPassword = await argon2.hash(plain_pass);
-      const user = {
-        username: req.body.username,
-        email: req.body.email,
-        password: hashedPassword,
-        first_name: req.body.first_name,
-        last_name: req.body.last_name,
-        verfication_token: "",
-        verified: false,
-        password_reset_token: "",
-        gender: "",
-        biography: "",
-        setup_done: false,
-        age: req.body.age,
-      };
+    try {
+      const user = req.body;
       const session = await driver.session();
-      // console.log(process.env.database_username, process.env.database_password, "database");
 
       if (session && user) {
-        console.log("session created");
         // First check if email exists
-        const _check_email_ = await session.run(
-          // "MATCH (u:User {email: $email}) RETURN u",
-          "MATCH (u:User) WHERE u.email = $email RETURN u",
-          { email: user.email, username: user.username }
-        );
+        const _check_email_ = await session.run("MATCH (u:User) WHERE u.email = $email RETURN u", {
+          email: user.email,
+          username: user.username,
+        });
+
         const check_username = await session.run(
           "MATCH (u:User) WHERE u.username = $username RETURN u",
           { username: user.username }
@@ -133,50 +59,70 @@ registrationRouter.post(
 
         if (_check_email_.records.length > 0) {
           res.status(400).json("Email already exists");
+          return;
         } else if (check_username.records.length > 0) {
           res.status(400).json("Username already exists");
+          return;
         } else {
-          console.log("new User");
-          user.verfication_token = (await crypto).randomBytes(20).toString("hex");
-          console.log(user.verfication_token, "verfication_token");
+          //create a new user
+          const plain_pass = req.body.password;
+          const hashedPassword = await argon2.hash(plain_pass);
+          const db_user = {
+            username: req.body.username,
+            email: req.body.email,
+            password: hashedPassword,
+            first_name: req.body.first_name,
+            last_name: req.body.last_name,
+            verfication_token: "",
+            verified: false,
+            password_reset_token: "",
+            gender: "",
+            biography: "",
+            setup_done: false,
+            age: req.body.age,
+          };
+          db_user.verfication_token = (await crypto).randomBytes(20).toString("hex"); //ex: 32341856423cfac6eda221a5e3b3c9861ce96da9 length is 40 characters (20 bytes × 2)
           await session.run(
-            `CREATE (a:User {username: $username, email: $email, password: $password,
-             first_name: $first_name,
-              last_name: $last_name,verified:false,
-               verfication_token:$verfication_token,setup_done:$setup_done,
-               gender:"",
-                pics: ["","","","",""],
-            fame_rating:0,              is_logged:  false
-      ,
-    country: "",notifications:[],
-    city: "",
-    country_WTK: "",
-    city_WTK: "",
-    location: null,
-    location_WTK: null,
-            age:$age,
-               password_reset_token:$password_reset_token}) RETURN a`,
-            user
+            `CREATE (a:User {
+          username: $username, email: $email, password: $password,
+          first_name: $first_name,
+          last_name: $last_name, verified: false ,
+          verfication_token:$verfication_token, setup_done:$setup_done,
+          gender:"",
+          pics: ["", "", "", "", ""],
+          fame_rating:0, is_logged: false
+          ,
+          country: "", notifications:[],
+          city: "",
+          country_WTK: "",
+          city_WTK: "",
+          location: null ,
+          location_WTK: null ,
+          age:toInteger($age),
+          password_reset_token:$password_reset_token
+            })
+    RETURN a`,
+            db_user
           );
 
           const mailOptions = {
             from: "anastabiti@gmail.com",
-            to: user.email,
-            subject: "Verify Your Email for Tinder! 💖",
-            text: `Hi ${user.username},
+            to: db_user.email,
+            subject: "Verify Your Email  💖",
+            text: `Hi ${db_user.username},
             
-            Welcome to Tinder, where sparks fly and hearts connect! 🎉
+            Welcome to Matcha, where sparks fly and hearts connect! 🎉
             
             Before you get started, please verify your email address to activate your account. Click the link below to complete the process:
             
-            🔗 Verify Your Email: http://localhost:3000/api/verify-email?token=${user.verfication_token}
+            🔗 Verify Your Email: ${process.env.back_end_ip}/api/verify-email?token=${db_user.verfication_token}
             
-            If you didn’t create an account on Tinder, you can safely ignore this email.
+            If you didn’t create an account on Matcha, you can safely ignore this email.
             
             Let the love adventure begin! ❤️
             
             Best regards,  
-            The Tinder Team`,
+            The Matcha Team`,
           };
 
           transporter.sendMail(mailOptions, (error, info) => {
@@ -188,37 +134,47 @@ registrationRouter.post(
                   if (error) {
                     console.error("Error sending email: ", error);
                   } else {
-                    console.log("Email sent: ", info.response);
+                    res.status(200).json("User created successfully");
+                    return;
                   }
                 });
               }, 5000);
             } else {
-              console.log("Email sent: ", info.response);
+              res.status(200).json("User created successfully");
+              return;
             }
           });
 
           await session.close();
           res.status(200).json("User created successfully");
+          return;
         }
       } else {
         await session.close();
         res.status(400).json("Error occured");
+        return;
       }
+    } catch {
+      res.status(400).json("Error occured");
+      return;
     }
   }
 );
 
+/**************************************************************************************************************
+ * Verify email route
+ * by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
 // Verify email route
 registrationRouter.get("/verify-email", async (req: Request, res: Response) => {
   try {
     const token = req.query.token;
-    console.log(token, " token");
     if (token) {
       const session = driver.session();
 
       if (!session) {
-        res.status(400);
-        res.send("Error occured");
+        res.status(400).json("Error occured");
+        return;
       }
       const updates = await session.run(
         `
@@ -233,25 +189,25 @@ registrationRouter.get("/verify-email", async (req: Request, res: Response) => {
 
       if (updates.records.length > 0) {
         const updatedUser = updates.records[0];
-        console.log("User verified:", updatedUser);
-        console.log("User verified:", updatedUser);
-        res.send("Hello! Welcome to Matcha. Email verified successfully!");
+
+        // res.status(200).json("Hello! Welcome to Matcha. Email verified successfully!");
         await session.close();
+        res.status(200).redirect(`${process.env.front_end_ip}/login?VERFIED=WELCOME_TO_MATCHA`);
+
+        return;
       } else {
         await session.close();
-        res.status(400).send("Invalid or expired token");
+        res.status(400).json("Invalid or expired token");
+        return;
       }
     } else {
-      res.status(400);
-      res.send("Invalid token");
+      res.status(400).json("Error occured");
+      return;
     }
-  } catch (error) {
-    console.log(error, " error occured");
-    res.status(400);
-    res.send("Error occured");
+  } catch {
+    res.status(400).json("Error occured");
+    return;
   }
 });
 
 export default registrationRouter;
-//atabiti_a
-//sjjJh77^$hJ$uyh

@@ -1,3 +1,4 @@
+import { User } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { toast } from 'react-toastify';
@@ -15,7 +16,7 @@ const ChatUserList: React.FC = () => {
     const fetchChatUsers = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:3000/api/chat/Users_chatedWith', {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/chat/Users_chatedWith`, {
           credentials: 'include'
         });
 
@@ -56,11 +57,19 @@ const ChatUserList: React.FC = () => {
                   to={`/chat/${user.username}`}
                   className="flex items-center p-3 bg-[#2a2639] rounded-lg hover:bg-[#342f45] transition-colors"
                 >
-                  <img
-                    src={user.profilePic}
-                    alt={`${user.username}'s profile`}
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
+                  {Boolean(user.profilePic) ? (
+                    <img
+                      src={user.profilePic}
+                      alt={`${user.username}'s profile`}
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div
+                      className="w-12 h-12 rounded-full bg-[#3a3445] flex items-center justify-center"
+                    >
+                      <User className="w-6 h-6 text-[#e94057]" />
+                    </div>
+                  )}
                   <span className="ml-4 text-white">{user.username}</span>
                 </Link>
               ))

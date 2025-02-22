@@ -1,23 +1,12 @@
 import express, { Request, Response } from "express";
-import { env } from "process";
-const { body, validationResult } = require("express-validator");
-const router = express.Router();
 import jwt from "jsonwebtoken";
-// const bcrypt = require("bcrypt");
 import argon2 from "argon2";
-
-const authRouter = express.Router();
-const crypto = import("crypto");
 import nodemailer from "nodemailer";
-import { auth } from "neo4j-driver-core";
-import { Profile, VerifyCallback } from "passport-google-oauth20";
-const neo4j = require("neo4j-driver");
-const driver = neo4j.driver(
-  "neo4j://localhost:7687",
-  neo4j.auth.basic(process.env.database_username, process.env.database_password)
-);
+import { driver } from "../database";
+import { validateEmail, validatePassword, validateUsername } from "../validators/validate";
+const crypto = import("crypto");
+const authRouter = express.Router();
 
-//define user model
 export type User = {
   username: string;
   email: string;
@@ -31,11 +20,11 @@ export type User = {
   verfication_token: string;
 };
 
-interface User_jwt {
+type User_jwt = {
   username: string;
   email: string;
   setup_done: boolean;
-}
+};
 const transporter = nodemailer.createTransport({
   service: "Gmail",
   host: "smtp.gmail.com",
@@ -47,34 +36,23 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export function authenticateToken(req: any) {
+/**************************************************************************************************************
+ * Authentication Middleware: Verifies JWT token and ensures the user is logged in.
+ *
+ * The middleware performs the following steps:
+ * 1. Extracts the JWT token from the request cookies
+ * 2. Checks if a token exists, and returns 401 if none is found
+ * 3. Verifies the token's authenticity using the JWT_TOKEN_SECRET
+ * 4. Queries the database to confirm the user exists and is logged in (is_logged = true)
+ * 5. If verification succeeds:
+ *    - Attaches the decoded user information to the request object
+ *    - Calls the next middleware in the chain
+ * 6. Returns appropriate error responses if verification fails
+ * by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
+export async function authenticateToken_Middleware(req: any, res: any, next: any) {
   try {
-    if (!req) return null;
-    console.log(req.headers["cookie"], " ---> 1\n");
-
-    let token = null;
-    const cookies = req.headers.cookie?.split(";") || [];
-    for (let cookie of cookies) {
-      if (cookie.trim().startsWith("jwt_token=")) {
-        token = cookie.split("=")[1];
-        break;
-      }
-    }
-    console.log(token, " ---- token");
-    if (token != null) {
-      const res = jwt.verify(token, process.env.JWT_TOKEN_SECRET as string);
-      if (res) return res;
-      else return null;
-    } else return null;
-  } catch {
-    return null;
-  }
-}
-// -----------------------------------------------
-export const authenticateToken_Middleware = async (req: any, res: any, next: any) => {
-  try {
-    // console.log(req.headers["cookie"], " ---> req.headers\n");
-    // console.log("inside middelware---------------------------")
+    //* Creates a new database session using the Neo4j driver.
     const session = driver.session();
     if (session) {
       let token = null;
@@ -86,23 +64,44 @@ export const authenticateToken_Middleware = async (req: any, res: any, next: any
         }
       }
 
-      // console.log(token, " ---- token");
-
       if (!token) {
         return res.status(401).json("No token provided");
       }
 
       try {
-        const decoded: any = await jwt.verify(token, process.env.JWT_TOKEN_SECRET as string);
-        console.log(decoded.username, " decoded.username ----------------=-\n\n\n\n");
+        const decoded: any = await jwt.verify(token, process.env.JWT_TOKEN_SECRET as string); //type casting.
+
         const res_db = await session.run(
           `MATCH (n:User) WHERE n.username = $username AND n.is_logged = true
           RETURN n`,
           { username: decoded.username }
         );
-        if (res_db.records.length <= 0) return res.status(401).json("User is Not looged");
+        if (res_db.records.length <= 0) {
+          await session.close();
+          return res.status(401).json("User is Not looged");
+        }
+        /*
+        User from DB: Record {
+          keys: [ 'n' ],
+          length: 1,
+          _fields: [
+            Node {
+            identity: [Integer],
+            labels: [Array],
+            properties: [Object],
+            elementId: '4:fb4b2d7a-4682-4a7e-b1cb-3d1b322bd728:654'
+        }
+        ],
+          _fieldLookup: { n: 0 }
+          } */
+        
+
         // Attach the decoded user to the request object
         req.user = decoded;
+        req.user.setup_done = res_db.records[0].get('n').properties.setup_done;
+
+        
+        await session.close();
         next();
       } catch (err) {
         return res.status(403).json("Invalid token");
@@ -111,11 +110,14 @@ export const authenticateToken_Middleware = async (req: any, res: any, next: any
   } catch (error) {
     return res.status(401).json("error");
   }
-};
-// --------------------------------------------------
+}
+
+/**************************************************************************************************************
+ * API to generate acess token AKA jwt
+ *  by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
 export function generateAccessToken(user: User_jwt) {
   if (!user || !user.username) {
-    console.error("Invalid user data for token generation");
     return null;
   }
 
@@ -131,199 +133,229 @@ export function generateAccessToken(user: User_jwt) {
         expiresIn: "1h",
       }
     );
-    console.log("Generated token:", token);
+
     return token;
   } catch (error) {
-    console.error("Error generating JWT:", error);
     return null;
   }
 }
 
-// ----------------------------------------------------------------------------------
-//  User/Password auth ---------------------------------------------------------------
-// ----------------------------------------------------------------------------------
+/**************************************************************************************************************
+ * Login API: Authenticates a user by validating username and password.
+ *
+ * The endpoint performs the following steps:
+ * 1. Validates both username and password through middleware
+ * 2. Checks if the user exists in the database and has been verified
+ * 3. Verifies the provided password against the stored hash using argon2
+ * 4. If authentication is successful:
+ *    - Generates a JWT token
+ *    - Sets the user's 'is_logged' status to true in the database
+ *    - Sets an HTTP-only cookie with the token (valid for 1 hour)
+ *    - Returns status 200 if user setup is complete, or 201 if setup is pending
+ * 5. Returns appropriate error messages if authentication fails:
+ *    - Wrong password
+ *    - User doesn't exist
+ *    - General login failure
+ *  by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
+authRouter.post("/login", validateUsername, validatePassword, async (req: any, res: Response) => {
+  try {
+    const password = req.body.password;
 
-authRouter.post("/login", async (req: any, res: Response) => {
-  const password = req.body.password;
-  console.log(password, " password");
-  console.log(req.body.username, "  username");
-  const session = driver.session();
-  if (session) {
-    const user_data = await session.run(
-      "MATCH (n:User) WHERE n.username = $username AND n.verified = true RETURN n",
-      { username: req.body.username }
-    );
+    const session = driver.session();
+    if (session) {
+      const user_data = await session.run(
+        "MATCH (n:User) WHERE n.username = $username AND n.verified = true RETURN n",
+        { username: req.body.username }
+      );
 
-    if (user_data.records.length > 0) {
-      console.log(user_data.records[0]._fields[0].properties, " user data");
-      const user = await user_data.records[0]._fields[0].properties;
-      if (user.password) console.log(user.password, "password is ");
+      if (user_data.records.length > 0) {
+        const user = await user_data.records[0]._fields[0].properties;
 
-      if (await argon2.verify(user.password, password)) {
-        console.log("matched");
-        const user_ = req.body.username;
-        if (user_) {
-          const token = generateAccessToken(user);
-          if (!token) {
-            console.error("Failed to generate authentication token");
-            res.status(401).json({ error: "Authentication failed" });
-            return;
-          }
-          console.log(token, " [-JWT TOKEN-]");
-          //check later
-          const res_db = await session.run(
-            `MATCH (n:User) WHERE n.username = $username AND n.verified = true
+        if (await argon2.verify(user.password, password)) {
+          if (user.username) {
+            const token = generateAccessToken(user);
+            if (!token) {
+              res.status(401).json({ error: "Authentication failed" });
+              return;
+            }
+
+            const res_db = await session.run(
+              `MATCH (n:User) WHERE n.username = $username AND n.verified = true
                       SET n.is_logged  = true
                      RETURN n`,
-            { username: user_ }
-          );
+              { username: user.username }
+            );
 
-          res.cookie("jwt_token", token, {
-            httpOnly: true,
-            sameSite: "lax",
-            maxAge: 3600000, // 1 hour in milliseconds
-          });
+            res.cookie("jwt_token", token, {
+              httpOnly: true,
+              sameSite: "strict",
+              /*Strict not allows the cookie to be sent on a cross-site request or iframe. Lax allows GET only. None allows all the requests, but secure is required.
+               */
+              maxAge: 3600000, // 1 hour in milliseconds
+            });
 
-          
-          if (user.setup_done == true) {
-            res.status(200).json("login successful");
-            return;
-          } else {
-            res.status(201).json("login successful");
-            return;
+            if (user.setup_done == true) {
+              res.status(200).json("login successful");
+              return;
+            } else {
+              res.status(201).json("login successful");
+              return;
+            }
           }
+          res.status(400).json("Problem in username!");
+          return;
+        } else {
+          res.status(400).json("Wrong Password");
+          return;
         }
-      } else {
-        console.log("username does not exist");
-        res.status(400).json("Username does not exist or Email not verified");
-        return 
       }
+      res.status(400).json("User does not exist");
+      return;
     }
-    res.status(400).json("User does not exist");
-    return
+  } catch {
+    res.status(400).json("Login failed");
+    return;
   }
 });
 
-// ----------------------------------------------------------------------------------
+/**************************************************************************************************************
+ * Reset Password API: it checks if email exists, then it will generate a reset token, store it in the database,
+ * and send an email to the user with a link containing the token. The token expires in 10 minutes.
+ * The link redirects to the frontend reset password page where the user can set a new password.
+ * If the email doesn't exist in the database, it returns an error message.
+ *  by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
+authRouter.post("/password_reset", validateEmail, async (req: Request, res: Response) => {
+  try {
+    const email = req.body.email;
+    const session = driver.session();
+    if (session) {
+      const url_token = jwt.sign({ email: email }, process.env.JWT_TOKEN_SECRET as string, {
+        expiresIn: "10min",
+      });
 
-authRouter.post(
-  "/password_reset",
-
-  body("email").isEmail(),
-  async (req: Request, res: Response) => {
-    const errors = validationResult(req);
-    console.log(errors, "errors-=-=-=---=-=-=-=-=");
-
-    if (!errors.isEmpty()) res.status(400).json({ errors: errors.array() });
-    else {
-      try {
-        console.log(req.body.email, " email");
-        const email = req.body.email;
-        const session = driver.session();
-        if (session) {
-          const url_token = jwt.sign({ email: email }, process.env.JWT_TOKEN_SECRET as string, {
-            expiresIn: "10min",
-          });
-          const res_ = await session.run(
-            `MATCH (n:User) WHERE n.email = $email
+      const res_ = await session.run(
+        `MATCH (n:User) WHERE n.email = $email
             SET n.password_reset_token = $url_token 
             RETURN n.email`,
-            { email: email, url_token: url_token }
-          );
-          console.log(res_.records, " res_");
-          if (res_.records.length > 0) {
-            console.log("password reset successful, check your email for further instructions");
-            ///////////////////
+        { email: email, url_token: url_token }
+      );
 
-            const mailOptions = {
-              from: "anastabiti@gmail.com",
-              to: email,
-              subject: "Reset Your password ,Tinder! 💖",
-              text: `Hi ${email},
+      if (res_.records.length > 0) {
+        const mailOptions = {
+          from: "anastabiti@gmail.com",
+          to: email,
+          subject: "Reset Your password ,Matcha! 💖",
+          text: `Hi ${email},
 
         Welcome use the link below to reset your password! 🎉        
         🔗 Reset Your Password: ${process.env.front_end_ip}/resetPassword?token=${url_token}
         
         
         Best regards,  
-        The Tinder Team`,
-            };
+        The Matcha Team`,
+        };
 
-            transporter.sendMail(mailOptions, (error, info) => {
-              if (error) {
-                console.error("Error sending email: ", error);
-              } else {
-                console.log("Email sent: password reset ", info.response);
-              }
-            });
-
-            res
-              .status(200)
-              .json("password reset successful, check your email for further instructions");
-          } else {
-            console.log("email does not exist");
-            res.status(400).json("email does not exist");
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            res.status(400).json("Failed to send email try again ! Thank you ");
+            return;
           }
+        });
+
+        res
+          .status(200)
+          .json("password reset successful, check your email for further instructions");
+        await session.close();
+        return;
+      } else {
+        res.status(400).json("email does not exist");
+        await session.close();
+        return;
+      }
+    }
+  } catch (Error) {
+    res.status(400).json("Error in password reset");
+    return;
+  }
+});
+
+/**************************************************************************************************************
+ * Reset Password API: it verify the token and update old pass with the new one
+ *  by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
+
+authRouter.patch("/reset_it", validatePassword, async (req: Request, res: Response) => {
+  try {
+    const token = req.body.token;
+    const password = req.body.password;
+
+    if (!token) {
+      res.status(400).send("Invalid token");
+      return;
+    }
+    const jwt_: any = jwt.verify(token, process.env.JWT_TOKEN_SECRET as string);
+    const new_session = driver.session();
+    if (new_session) {
+      const db_res = await new_session.run(
+        `
+            MATCH (n:User) WHERE n.email = $email AND n.password_reset_token = $token
+            SET n.password = $password,
+            n.password_reset_token = $tmp_password_reset_token
+            RETURN n
+            `,
+        {
+          email: jwt_.email,
+          token: token,
+          password: await argon2.hash(password),
+          tmp_password_reset_token: (await crypto).randomBytes(25).toString("hex"),
         }
-      } catch (Error) {
-        console.log("error");
-        res.status(400).json("Error in password reset");
+      );
+
+      if (db_res.records.length > 0) {
+        res.status(200).json("success");
+        await new_session.close();
+        return;
+      } else {
+        res.status(400).json("Already Expired");
+        await new_session.close();
+        return;
       }
     }
+    res.status(400).json("Invalid Token");
+    return;
+  } catch (jwtError) {
+    res.status(400).json("Expired or invalid token");
+    return;
   }
-);
+});
 
-authRouter.patch(
-  "/reset_it",
-  body("password").isLength({ min: 6, max: 30 }),
-  async (req: any, res: any) => {
-    try {
-      const token = req.body.token as string;
-      const password = req.body.password;
-      console.log(token, " token", password, " new password is \n\n\n");
-      if (!token) {
-        return res.status(400).send("Invalid token");
-      }
-
-      const jwt_ = await jwt.verify(token, process.env.JWT_TOKEN_SECRET as string);
-      const new_session = driver.session();
-      if (new_session) {
-        const res = new_session.run(`
-            MATCH
-            `);
-      }
-      console.log(jwt_, "--------------------jwt_-----------------\n\n\n\n");
-      return res.status(200).json("sucess");
-    } catch (jwtError) {
-      console.error("Token verification failed:", jwtError);
-      return res.status(400).send("Expired or invalid token");
-    }
-  }
-);
-
-// --------------------------
-
+/**************************************************************************************************************
+ * Logout API
+ *  by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
 authRouter.post("/logout", authenticateToken_Middleware, async (req: any, res: Response) => {
-  console.log("log out -+==_==+++++_=>>.......???>>>>>>");
   try {
     const session = driver.session();
     if (session) {
-      console.log(req.user);
       const res_db = await session.run(
-        `MATCH (n:User) WHERE n.username = $username AND n.verified = true
+        `MATCH (n:User) WHERE n.username = $username
        SET n.is_logged  = false
       RETURN n`,
         { username: req.user.username }
       );
+      await session.close();
       res.status(200).json("LOGOUT SUCCESSFULLY");
+      return;
     } else {
       res.status(400).json("ERROR");
+      return;
     }
   } catch {
     res.status(400).json("ERROR !");
+    return;
   }
 });
-
-// ----------------------------------------------------------------------------------
 
 export default authRouter;

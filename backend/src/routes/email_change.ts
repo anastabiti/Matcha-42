@@ -1,37 +1,28 @@
 import express from "express";
-import { body, ValidationError, validationResult } from "express-validator";
 import neo4j from "neo4j-driver";
 import { authenticateToken_Middleware, generateAccessToken } from "./auth";
-// import bcrypt from "bcrypt";
 import argon2 from "argon2";
-
 import { transporter } from "./registration";
-// import jwt from 'jsonwebtoken';
+import { driver } from "../database";
 const jwt = require("jsonwebtoken");
+import { validateEmail } from "../validators/validate";
 
 const email_change = express.Router();
-const driver = neo4j.driver(
-  "neo4j://localhost:7687",
-  neo4j.auth.basic(process.env.database_username as string, process.env.database_password as string)
-);
+
+
+
+/**************************************************************************************************************
+ * Request to Change email API 
+ *  by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
 email_change.patch(
   "/change_email",
   authenticateToken_Middleware,
-  body("newEmail")
-    .notEmpty()
-    .isLength({ min: 7, max: 100 })
-    .withMessage("email cannot be empty")
-    .isEmail(),
+  validateEmail,
   async function (req: any, res: any) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      const firstError = errors.array()[0] as any;
-      return res.status(400).json(`Invalid : ${firstError.path}`);
-    }
-
     try {
-      console.log(req.body, " -------req\n\n\n");
-      console.log(req.user);
+      
+      
       const user = req.user;
       const new_email = req.body.newEmail;
       const password = req.body.password;
@@ -47,20 +38,13 @@ email_change.patch(
         );
         if (check_usr_db.records.length > 0) {
           const tmp_user = check_usr_db.records[0].get(0).properties;
-          console.log(
-            tmp_user.password,
-            " tmp_user.password ",
-            password,
-            " passwword---------------------------",
-            user,
-            "  user is\n\n\n\n"
-          );
+        
 
-          // const check_pass = await bcrypt.compare(password, tmp_user.password);
-          const check_pass = await argon2.verify(tmp_user.password,password);
-          console.log(check_pass, " pass check");
+        
+          const check_pass = await argon2.verify(tmp_user.password, password);
+        
           if (check_pass) {
-            console.log(tmp_user, " user data");
+        
             if (!tmp_user.verified) return res.status(400).json("User email is not verified");
 
             if (!tmp_user.setup_done) return res.status(400).json("User setup is not completed");
@@ -80,9 +64,9 @@ email_change.patch(
             const verfication_token = await jwt.sign(
               { username: tmp_user.username, new_email: new_email, old_email: tmp_user.email },
               process.env.JWT_TOKEN_SECRET,
-              { expiresIn: "12min" }
+              { expiresIn: "10min" }
             );
-            //   const verfication_token = (await crypto).randomBytes(20).toString("hex");
+
             //send email verification
             const add_hash_to_user_db = await new_session.run(
               `
@@ -106,24 +90,23 @@ email_change.patch(
                             If you didn’t request this change, please ignore this email.
 
                         Best regards,  
-                        The Tinder Team`,
+                        The Matcha Team`,
               };
 
               transporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
-                  console.error("Error sending email: ", error);
                   //try agin after 5 seconds
                   setTimeout(() => {
                     transporter.sendMail(mailOptions, (error, info) => {
                       if (error) {
-                        console.error("Error sending email: ", error);
+                        return res.status(400).json("Error sending email");
                       } else {
-                        console.log("Email sent: ", info.response);
+                        return res.status(200).json("SUCCESS");
                       }
                     });
                   }, 5000);
                 } else {
-                  console.log("Email sent: ", info.response);
+                  return res.status(200).json("SUCCESS");
                 }
               });
               await new_session.close();
@@ -131,27 +114,28 @@ email_change.patch(
             }
             await new_session.close();
             return res.status(400).json("FAILED");
-          }
-          else
-          {
+          } else {
             return res.status(400).json("WRONG PASSWORD!");
-
-
           }
         }
+        return res.status(400).json("Problem in getting the user");
       }
+      return res.status(400).json("Problem in DB");
     } catch {
-      return res.status(400).json("FAILED");
+      return res.status(400).json("Error Occured");
     }
   }
 );
 
-// ---------------
-// Verify email route
+
+/**************************************************************************************************************
+ *  Changing email API , validate the token 
+ *  by  𝟏𝟑𝟑𝟕 𝐚𝐭𝐚𝐛𝐢𝐭𝐢 ʕʘ̅͜ʘ̅ʔ
+ **************************************************************************************************************/
 email_change.get("/verify-new-email", async (req: any, res: any) => {
   try {
     const token = req.query.token;
-    console.log(token, " token");
+    
     if (token) {
       const session = driver.session();
 
@@ -161,7 +145,7 @@ email_change.get("/verify-new-email", async (req: any, res: any) => {
       }
 
       const decoded = await jwt.verify(token, process.env.JWT_TOKEN_SECRET as string);
-      console.log(decoded, "decodeded asas");
+      
 
       const updates = await session.run(
         `
@@ -172,13 +156,13 @@ email_change.get("/verify-new-email", async (req: any, res: any) => {
             SET a.old_email = $old_email
             RETURN a
             `,
-        { token: token, email: decoded.new_email ,old_email:decoded.old_email}
+        { token: token, email: decoded.new_email, old_email: decoded.old_email }
       );
 
       if (updates.records.length > 0) {
         const updatedUser = updates.records[0];
-        console.log("User verified:", updatedUser);
-        console.log("User verified:", updatedUser);
+        
+        
         res.status(200).json("Hello! New Email is  verified successfully!");
         await session.close();
       } else {
@@ -190,7 +174,6 @@ email_change.get("/verify-new-email", async (req: any, res: any) => {
       res.send("Invalid token");
     }
   } catch (error) {
-    console.log(error, " error occured");
     res.status(400);
     res.send("Error occured");
   }

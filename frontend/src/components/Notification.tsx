@@ -2,7 +2,8 @@ import  { useEffect, useState } from "react";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import Badge from "@mui/material/Badge";
-import { socket } from "./Chat";
+import socket from "./Socket";
+// import { socket } from "./Chat";
 
 interface Notification {
   notify_id: string;
@@ -21,7 +22,7 @@ const NotificationButton = () => {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:3000/api/notifications",
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/notifications`,
         {
           credentials: 'include'
         }
@@ -40,7 +41,7 @@ const NotificationButton = () => {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      await fetch(`http://localhost:3000/api/notifications/${notificationId}/read`, {
+      await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/notifications/${notificationId}/read`, {
         method: "PATCH",
           credentials: 'include'
         
@@ -55,7 +56,7 @@ const NotificationButton = () => {
 
   const markAllAsRead = async () => {
     try {
-      await fetch("http://localhost:3000/api/notifications/read-all", {
+      await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/notifications/read-all`, {
         method: "PATCH",
         
           credentials: 'include'
@@ -72,7 +73,6 @@ const NotificationButton = () => {
 
     // Listen for new notifications
     socket.on("notification", (newNotification: Notification) => {
-      console.log(newNotification, " newNotification---")
       setNotifications(prev => [newNotification, ...prev]);
     });
 
@@ -81,7 +81,7 @@ const NotificationButton = () => {
     };
   }, []);
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = notifications.filter(n => !n.isRead).length; //counts how many unread notifications there are in the notifications array.
 
   return (
     <div className="relative">

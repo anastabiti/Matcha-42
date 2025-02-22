@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageCircle, Phone, Video, Heart } from 'lucide-react';
+import { MessageCircle, Phone, Video, Heart, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 type Match = {
@@ -24,7 +24,7 @@ const Matches = () => {
 
   const fetchMatches = async () => {
     try {
-      const response = await fetch("http://localhost:3000/matches", {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/matches`, {
         credentials: 'include',
       });
       const data = await response.json();
@@ -100,14 +100,20 @@ const Matches = () => {
                 {/* Profile Info */}
                 <div className="flex items-center gap-4">
                   <div className="relative">
-                    <img
-                      src={match.profile_picture}
-                      alt={match.name}
-                      className="w-14 h-14 rounded-full object-cover cursor-pointer"
-                      onClick={() => navigate(`/profile/${match.username}`)}
-                    />
-                    {match.isOnline && (
-                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#2a2435]" />
+                    {typeof match.profile_picture === 'string' && match.profile_picture.length > 0 ? (
+                      <img
+                        src={match.profile_picture}
+                        alt={match.name}
+                        className="w-14 h-14 rounded-full object-cover cursor-pointer"
+                        onClick={() => navigate(`/profile/${match.username}`)}
+                      />
+                    ) : (
+                      <div
+                        className="w-14 h-14 rounded-full bg-[#3a3445] flex items-center justify-center cursor-pointer"
+                        onClick={() => navigate(`/profile/${match.username}`)}
+                      >
+                        <User className="w-7 h-7 text-[#e94057]" />
+                      </div>
                     )}
                   </div>
                   <h3

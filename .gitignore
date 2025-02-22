@@ -1,3 +1,6 @@
 .env
 ./.env
 ./database/.env
+../node_modules/
+node_modules/
+./database/node_modules/

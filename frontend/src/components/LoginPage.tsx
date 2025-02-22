@@ -14,46 +14,52 @@ function LoginPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  function handleInputChange(event) {
+  function handleInputChange(event: any) {
     const { name, value } = event.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   }
 
   function handleDiscordLogin() {
-    window.location.href = "http://localhost:3000/api/auth/discord";
+    window.location.href = `${
+      import.meta.env.VITE_BACKEND_IP
+    }/api/auth/discord`;
   }
 
   function handleGoogleLogin() {
-    window.location.href = "http://localhost:3000/api/auth/google";
+    window.location.href = `${import.meta.env.VITE_BACKEND_IP}/api/auth/google`;
   }
 
   function handleIntraLogin() {
-    window.location.href = "http://localhost:3000/api/auth/intra42";
+    window.location.href = `${
+      import.meta.env.VITE_BACKEND_IP
+    }/api/auth/intra42`;
   }
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: any) {
     e.preventDefault();
     setIsLoading(true);
     setError("");
     setSuccess("");
 
     try {
-      const response = await fetch("http://localhost:3000/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_IP}/api/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+          credentials: "include",
+        }
+      );
 
       const data = await response.json();
 
-      if (response.ok) {
-        console.log("Login successful!");
+      if (response.status === 200) {
         setSuccess("Logged in successfully. Redirecting to your HomePage...");
         navigate("/discover");
         setFormData({
@@ -63,11 +69,9 @@ function LoginPage() {
       } else if (response.status === 201) {
         navigate("/setup");
       } else {
-        console.log(data, " error");
         setError(data || "Login failed. Please try again.");
       }
     } catch (error) {
-      console.log(error);
       setError("Unable to connect to server. Please try again later.");
     } finally {
       setIsLoading(false);
@@ -75,10 +79,13 @@ function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+    <div className="h-screen bg-gray-900 flex items-center justify-center">
       <div className="w-full max-w-md">
+        {/* Sets maximum width to 28rem (448px)
+              Prevents the element from growing wider than this size
+      md is part of Tailwind's default sizing scale */}
         <div className="bg-gray-900 rounded-2xl p-6">
-          <div className="space-y-6">
+          <div className="space-y-4">
             <h2 className="text-2xl font-semibold text-white mb-8">
               Login to Your Account
             </h2>
@@ -86,10 +93,13 @@ function LoginPage() {
               <input
                 type="text"
                 name="username"
+                minLength={6}
+                maxLength={40}
                 placeholder="Username"
                 className="w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-400"
                 value={formData.username}
                 onChange={handleInputChange}
+                autoComplete="username" //to fix this [DOM] Input elements should have autocomplete attributes (suggested: "username"): (More info: https://goo.gl/9p2vKq) <input type=​"text" name=​"username" minlength=​"6" maxlength=​"20" placeholder=​"Username" class=​"w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-400" required value>​
                 required
               />
 
@@ -97,16 +107,21 @@ function LoginPage() {
                 <input
                   type="password"
                   name="password"
+                  minLength={8}
+                  maxLength={50}
                   placeholder="Password"
                   className="w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-400"
                   value={formData.password}
                   onChange={handleInputChange}
+                  autoComplete="new-password" //fix [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) <input type=​"password" name=​"password" minlength=​"8" maxlength=​"50" placeholder=​"Password" class=​"w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-400" required value>​
                   required
                 />
               </div>
 
               {error && <div className="text-red-500 text-sm">{error}</div>}
-              {success && <div className="text-green-500 text-sm">{success}</div>}
+              {success && (
+                <div className="text-green-500 text-sm">{success}</div>
+              )}
 
               <Button
                 type="submit"
@@ -148,7 +163,9 @@ function LoginPage() {
               <Button
                 // variant="contained"
                 onClick={handleIntraLogin}
-                startIcon={<img src="42-Final-sigle-seul.svg" width={25} alt="42" />}
+                startIcon={
+                  <img src="42-Final-sigle-seul.svg" width={25} alt="42" />
+                }
                 sx={{ borderRadius: 3 }}
               >
                 Intra
@@ -166,7 +183,7 @@ function LoginPage() {
               >
                 Reset Password
               </Button>
-              
+
               <Button
                 component={Link}
                 to="/register"

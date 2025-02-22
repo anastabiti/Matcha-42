@@ -19,7 +19,7 @@ const Home_page = () => {
 
 
     try {
-      const response = await fetch("http://localhost:3000/api/logout", {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/logout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -28,21 +28,17 @@ const Home_page = () => {
         credentials: "include", //need it to save the session  cookie in the browser
       });
 
-      const data = await response.json();
 
       if (response.ok) {
-        console.log("Logout successful!");
         setFormData({
           username: "",
           password: "",
         });
         navigate("/login");
       } else {
-        console.log(data, " error");
 
       }
     } catch (error) {
-      console.log(error);
     }
   };
 
