@@ -29,7 +29,7 @@ export const ProfileImage: React.FC<ProfileImageProps> = ({
 
   const handleImageError: React.ReactEventHandler<HTMLImageElement> = (e) => {
     const target = e.currentTarget;
-    target.onerror = null; // Prevent infinite loop
+    target.onerror = null;
     
     const fallbackContainer = document.createElement('div');
     fallbackContainer.className = `${containerClassName} bg-[#3a3445] flex items-center justify-center`;

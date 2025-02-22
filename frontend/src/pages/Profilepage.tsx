@@ -52,19 +52,44 @@ const ProfilePage = (props: ProfilePageProps) => {
   const { getUserStatus } = useSocket({ currentUsername });
 
   const OnlineStatusIndicator = ({ username }: { username: string }) => {
-    const status = getUserStatus(username);
+    const userStatus = getUserStatus(username);
     
+    const formatLastSeen = (timestamp: number) => {
+      const now = Date.now();
+      const diff = now - timestamp;
+      const minutes = Math.floor(diff / 60000);
+      const hours = Math.floor(diff / 3600000);
+      const days = Math.floor(diff / 86400000);
+  
+      if (minutes < 1) {
+        return 'Just now';
+      }else if (minutes < 60) {
+        return `Last seen ${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+      } else if (hours < 24) {
+        return `Last seen ${hours} hour${hours !== 1 ? 's' : ''} ago`;
+      } else if (days < 7) {
+        return `Last seen ${days} day${days !== 1 ? 's' : ''} ago`;
+      } else {
+        return `Last seen ${new Date(timestamp).toLocaleDateString()}`;
+      }
+    };
+  
     return (
       <div className="flex items-center gap-2">
         <div 
           className={`w-2 h-2 rounded-full ${
-            status === 'online' ? 'bg-green-500' : 'bg-gray-400'
+            userStatus.status === 'online' ? 'bg-green-500' : 'bg-gray-400'
           }`} 
         />
         <span className={`text-sm font-medium ${
-          status === 'online' ? 'text-green-500' : 'text-gray-400'
+          userStatus.status === 'online' ? 'text-green-500' : 'text-gray-400'
         }`}>
-          {status === 'online' ? 'Online Now' : 'Offline'}
+          {userStatus.status === 'online' 
+            ? 'Online Now'
+            : userStatus.lastSeen 
+              ? formatLastSeen(userStatus.lastSeen)
+              : 'Offline'
+          }
         </span>
       </div>
     );

@@ -31,6 +31,27 @@ function cleanupInactiveUsers() {
 // Run cleanup every minute
 setInterval(cleanupInactiveUsers, 60000);
 
+async function updateLastSeen(username: string) {
+  const session_db = driver.session();
+  try {
+    const currentTime = Date.now();
+    await session_db.run(
+      `MATCH (u:User {username: $username})
+       SET u.lastSeen = $lastSeen
+       RETURN u`,
+      { 
+        username,
+        lastSeen: currentTime
+      }
+    );
+  } catch (error) {
+    console.error('Error updating last seen time:', error);
+  } finally {
+    await session_db.close();
+  }
+}
+
+
 export function setupSocket(server: HttpServer) {
   io = new Server(server, {
     cors: {
@@ -98,14 +119,16 @@ export function setupSocket(server: HttpServer) {
           } catch {}
         });
 
-        socket.on("disconnect", () => {
+        socket.on("disconnect", async () => {
           console.log(`❌ User ${username_logged} disconnected`);
+          // Update last connection time in database when user disconnects
+          await updateLastSeen(username_logged);
+          
           const user = activeChatUsers.get(username_logged);
           if (user) {
             user.status = 'offline';
             user.lastActive = Date.now();
             activeChatUsers.set(username_logged, user);
-            // Broadcast user's offline status
             io.emit("userStatus", { 
               username: username_logged, 
               status: 'offline' 
