@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { MapPin, ArrowLeft, Heart, MessageCircle, Phone, Video, Camera, MapPinned, Calendar, User, Star } from 'lucide-react';
+import { MapPin, ArrowLeft, Heart, MessageCircle, Phone, Video, MapPinned, Calendar, User, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ProfileActions from '../components/ProfileActions';
 import { PhotoSection, ProfileImage } from '../components/ProfileImage';
@@ -42,7 +42,7 @@ const ProfilePage = (props: ProfilePageProps) => {
     isLiked: false,
     isMatched: false
   });
-  const [currentPhoto, setCurrentPhoto] = useState(0);
+  // const [currentPhoto, setCurrentPhoto] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
