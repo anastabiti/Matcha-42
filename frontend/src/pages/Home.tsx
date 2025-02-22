@@ -1,4 +1,4 @@
-import  { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Eye, Heart, History, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Neo4jDateTime } from '../types/types';
@@ -10,6 +10,7 @@ type UserInteraction = {
   profile_picture: string;
   lastViewedAt: Date;
 };
+
 
 const parseNeo4jDateTime = (dateTime: Neo4jDateTime): Date => {
   return new Date(
@@ -32,6 +33,7 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -40,7 +42,7 @@ const Home = () => {
     ...item,
     lastViewedAt: parseNeo4jDateTime(item.lastViewedAt)
   });
-  
+
 
   const fetchData = async () => {
     try {
@@ -85,7 +87,7 @@ const Home = () => {
     { id: 'history', label: 'Visit History', icon: History, count: history.length }
   ];
 
-  const TabButton = ({ id, label, icon: Icon, count, isActive }:any) => (
+  const TabButton = ({ id, label, icon: Icon, count, isActive }: any) => (
     <button
       onClick={() => setActiveTab(id)}
       className={`flex items-center justify-between w-full p-4 rounded-xl transition-all
@@ -109,11 +111,17 @@ const Home = () => {
     >
       <div className="flex items-center space-x-4">
         <div className="relative">
-          <img
-            src={user.profile_picture}
-            alt={user.first_name}
-            className="w-12 h-12 rounded-full object-cover border-2 border-[#e94057]"
-          />
+          {user.profile_picture?.trim() ? (
+            <img
+              src={user.profile_picture}
+              alt={user.first_name}
+              className="w-12 h-12 rounded-full object-cover border-2 border-[#e94057]"
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-[#3a3445] flex items-center justify-center border-2 border-[#e94057]">
+              <User className="w-6 h-6 text-[#e94057]" />
+            </div>
+          )}
         </div>
         <div>
           <h3 className="text-white font-medium">
@@ -197,28 +205,28 @@ const Home = () => {
           {activeTab === 'views' && viewers.map((viewer, index) => (
             <InteractionCard key={`viewer-${index}`} user={viewer} />
           ))}
-          
+
           {activeTab === 'likes' && likes.map((like, index) => (
             <InteractionCard key={`like-${index}`} user={like} />
           ))}
-          
+
           {activeTab === 'history' && history.map((visit, index) => (
             <InteractionCard key={`visit-${index}`} user={visit} />
           ))}
-          
-          {((activeTab === 'views' && viewers.length === 0) || 
+
+          {((activeTab === 'views' && viewers.length === 0) ||
             (activeTab === 'likes' && likes.length === 0) ||
             (activeTab === 'history' && history.length === 0)) && (
-            <div className="bg-[#2a2435] rounded-xl p-8 text-center">
-              <User className="w-12 h-12 text-[#e94057] mx-auto mb-4" />
-              <h3 className="text-white font-medium mb-2">
-                No {activeTab.replace('views', 'profile views')} yet
-              </h3>
-              <p className="text-white/50">
-                {getEmptyStateMessage(activeTab)}
-              </p>
-            </div>
-          )}
+              <div className="bg-[#2a2435] rounded-xl p-8 text-center">
+                <User className="w-12 h-12 text-[#e94057] mx-auto mb-4" />
+                <h3 className="text-white font-medium mb-2">
+                  No {activeTab.replace('views', 'profile views')} yet
+                </h3>
+                <p className="text-white/50">
+                  {getEmptyStateMessage(activeTab)}
+                </p>
+              </div>
+            )}
         </div>
       </div>
     </div>
