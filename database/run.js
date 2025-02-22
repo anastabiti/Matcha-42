@@ -10,20 +10,12 @@ async function populateNeo4jDatabase() {
   const NEO4J_URI = "neo4j://localhost:7687";
   const NEO4J_USER = "neo4j";
   const NEO4J_PASSWORD = "kjod876fytf";
-  const TOTAL_USERS = 200
+  const TOTAL_USERS = 500
 
-  // Cities data with coordinates
+  
   const CITIES = {
     Khouribga: { x: -6.9081, y: 32.877 },
-    // Fes: { x: -5.0033, y: 34.0333 },
-    // Casablanca: { x: -7.5898, y: 33.5731 },
-    // Tangier: { x: -5.8129, y: 35.7595 },
-    // Settat: { x: -7.6166, y: 32.9833 },
-    // Rabat: { x: -6.8498, y: 34.0209 },
-    // Marrakesh: { x: -7.9811, y: 31.6295 },
-    // Agadir: { x: -9.5982, y: 30.4278 },
-    // Meknes: { x: -5.5474, y: 33.8935 },
-    // Oujda: { x: -1.9086, y: 34.6867 }
+    Fes: { x: -5.0033, y: 34.0333 },
   };
 
   // Extended interests list

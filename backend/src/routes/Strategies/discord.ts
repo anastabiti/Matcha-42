@@ -135,11 +135,11 @@ passport.use(
 
               return cb(null, user_x);
             } else {
-              // console.log(
-              //   " create a new User discord auth--------------- \n\n\n\n",
-              //   profile.username,
-              //   " ]\n\n\n"
-              // );
+              console.log(
+                " create a new User discord auth--------------- \n\n\n\n",
+                profile ,
+                " ]\n\n\n"
+              );
               if (profile.username) {
                 const check_useername_exists = await new_session.run(
                   `MATCH (n:User) WHERE n.username  = $username return n`,
@@ -154,8 +154,8 @@ passport.use(
                     username: diff_username,
                     email: email_,
                     password: (await crypto).randomBytes(25).toString("hex"),
-                    first_name: profile.global_name || "",
-                    last_name: profile?.global_name || "",
+                    first_name:  profile?.username || "first_name",
+                    last_name: profile?.username || "last_name",
                     verfication_token: "",
                     verified: true,
                     password_reset_token: "",
@@ -172,8 +172,8 @@ passport.use(
                 username: profile.username,
                 email: email_,
                 password: await argon2.hash((await crypto).randomBytes(25).toString("hex")),
-                first_name: profile.global_name || "",
-                last_name: profile.global_name || "",
+                first_name:  profile?.username || "first_name",
+                last_name: profile?.username || "last_name",
                 verfication_token: "",
                 verified: true,
                 password_reset_token: "",
