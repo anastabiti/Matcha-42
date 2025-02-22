@@ -200,7 +200,9 @@ discord_auth.get("/auth/discord", passport.authenticate("discord"));
 discord_auth.get(
   "/auth/discord/callback",
   passport.authenticate("discord", { session: false }),
-  catchAuthErrors,
+  catchAuthErrors,//TokenError: Invalid "code" in request.
+  //at Strategy.OAuth2Strategy.parseErrorResponse (/media/atabiti/atabiti_ssd/last_work/backend/node_modules/passport-oauth2/lib/strategy.js:373:12)
+  //at Strategy.OAuth2Strategy._creat
   async function (req: any, res: any, next: any) {
     try {
       const user = req.user;
