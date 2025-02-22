@@ -4,6 +4,7 @@ import { MapPin, ArrowLeft, Heart, MessageCircle, Phone, Video, MapPinned, Calen
 import { motion } from 'framer-motion';
 import ProfileActions from '../components/ProfileActions';
 import { PhotoSection, ProfileImage } from '../components/ProfileImage';
+import { useSocket } from '../hooks/useSokets';
 
 type Profile = {
   username: string;
@@ -46,6 +47,29 @@ const ProfilePage = (props: ProfilePageProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+
+  const currentUsername = localStorage.getItem('username') || '';
+  const { getUserStatus } = useSocket({ currentUsername });
+
+  const OnlineStatusIndicator = ({ username }: { username: string }) => {
+    const status = getUserStatus(username);
+    
+    return (
+      <div className="flex items-center gap-2">
+        <div 
+          className={`w-2 h-2 rounded-full ${
+            status === 'online' ? 'bg-green-500' : 'bg-gray-400'
+          }`} 
+        />
+        <span className={`text-sm font-medium ${
+          status === 'online' ? 'text-green-500' : 'text-gray-400'
+        }`}>
+          {status === 'online' ? 'Online Now' : 'Offline'}
+        </span>
+      </div>
+    );
+  };
+
   useEffect(() => {
 
     const recordView = async () => {
@@ -57,11 +81,10 @@ const ProfilePage = (props: ProfilePageProps) => {
           },
           credentials: 'include',
           body: JSON.stringify({
-            viewedUsername: username // username of profile being viewed
+            viewedUsername: username
           })
         });
       } catch (error) {
-        // console.error('Error recording view:', error);
       }
     };
     if (username) {
@@ -78,6 +101,30 @@ const ProfilePage = (props: ProfilePageProps) => {
     }
   };
 
+  const ProfileHeader = () => (
+    <div className="bg-[#2a2435] rounded-3xl p-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <div className="relative">
+            <ProfileImage
+              imageUrl={profile?.profile_picture || ''}
+              alt={profile?.first_name || ''}
+              className="w-16 h-16 rounded-full object-cover border-2 border-[#e94057]"
+              containerClassName="w-16 h-16 rounded-full border-2 border-[#e94057]"
+            />
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#e94057] flex items-center justify-center text-white text-xs font-bold">
+              {profile?.age}
+            </div>
+          </div>
+          <div>
+            <h2 className="text-white font-semibold">@{profile?.username}</h2>
+            {profile && <OnlineStatusIndicator username={profile.username} />}
+          </div>
+        </div>
+        {profile && <ProfileActions username={profile.username} />}
+      </div>
+    </div>
+  );
 
   const fetchProfile = async () => {
     try {
@@ -248,30 +295,9 @@ const ProfilePage = (props: ProfilePageProps) => {
           {/* Profile Details Section */}
           <div className="space-y-6">
             {/* Profile Header */}
-            <div className="bg-[#2a2435] rounded-3xl p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="relative">
-                    <ProfileImage
-                      imageUrl={profile.profile_picture}
-                      alt={profile.first_name}
-                      className="w-16 h-16 rounded-full object-cover border-2 border-[#e94057]"
-                      containerClassName="w-16 h-16 rounded-full border-2 border-[#e94057]"
-                    />
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#e94057] flex items-center justify-center text-white text-xs font-bold">
-                      {profile.age}
-                    </div>
-                  </div>
-                  <div>
-                    <h2 className="text-white font-semibold">@{profile.username}</h2>
-                    <div className={`text-sm font-medium text-[#e94057]`}>
-                      {profile.isOnline ? 'Online Now' : 'Offline'}
-                    </div>
-                  </div>
-                </div>
-                <ProfileActions username={profile.username} />
-              </div>
-            </div>
+
+            <ProfileHeader />
+            {/* <ConnectSection /> */}
 
             {/* Connect Section */}
             <ConnectSection />

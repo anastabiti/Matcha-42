@@ -14,12 +14,15 @@ import match from "./routes/matchRoutes";
 import discord_auth from "./routes/Strategies/discord";
 import interactions from "./routes/interactions";
 import chat from "./routes/chat";
+import userStatus from "./routes/userStatus";
+
 const fileUpload = require('express-fileupload');
 
 import { v2 as cloudinary } from 'cloudinary';
 import notify from "./routes/notifications";
 import { driver } from "./database/index";
 import dotenv from "dotenv";
+
 
 const app: Application = express();
 
@@ -75,6 +78,7 @@ app.use("/api", user_information_Router);
 app.use("/api", email_change);
 app.use('/', match);
 app.use("/", interactions);
+app.use('/', userStatus);
 app.use("/api", discord_auth);
 app.use("/api", chat);
 app.use("/api", notify);
@@ -84,6 +88,7 @@ dotenv.config();
 const port = process.env.PORT || 3000;
 import http from "http";
 import { setupSocket } from "./socket";
+
 const server = http.createServer(app);
 setupSocket(server);
 server.listen(port, () => {

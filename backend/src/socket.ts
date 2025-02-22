@@ -7,17 +7,35 @@ let io: Server;
 
 interface ChatUser {
   username: string;
-  activeChat?: string; // Stores who the user is actively chatting with
+  activeChat?: string;
+  socketId: string;
+  lastActive: number;
+  status: 'online' | 'offline';
 }
 
 const activeChatUsers = new Map<string, ChatUser>();
+
+
+function cleanupInactiveUsers() {
+  const now = Date.now();
+  for (const [username, user] of activeChatUsers.entries()) {
+    // Remove users inactive for more than 30 seconds
+    if (now - user.lastActive > 30000) {
+      activeChatUsers.delete(username);
+      // Broadcast user offline status
+      io.emit("userStatus", { username, status: 'offline' });
+    }
+  }
+}
+
+// Run cleanup every minute
+setInterval(cleanupInactiveUsers, 60000);
 
 export function setupSocket(server: HttpServer) {
   io = new Server(server, {
     cors: {
       origin: process.env.front_end_ip,
       credentials: true,
-      
     },
     transports: ['websocket'], 
   });
@@ -32,57 +50,101 @@ export function setupSocket(server: HttpServer) {
       }
     }
 
-  io.on("connect_error", (error) => {
+    io.on("connect_error", (error) => {
       console.log("Connection failed:", error.message);
     });
 
     if (jwt_token) {
       try {
         const decoded: any = jwt.verify(jwt_token, process.env.JWT_TOKEN_SECRET as string);
-        // socket.join(username_logged);
         const username_logged = decoded.username;
 
+        // Initialize or update user's online status
+        activeChatUsers.set(username_logged, {
+          username: username_logged,
+          socketId: socket.id,
+          lastActive: Date.now(),
+          status: 'online'
+        });
 
+        // Broadcast user's online status to all clients
+        io.emit("userStatus", { 
+          username: username_logged, 
+          status: 'online' 
+        });
+
+        // Send current online users to the newly connected user
+        const onlineUsers = Array.from(activeChatUsers.entries()).map(([username, user]) => ({
+          username,
+          status: user.status
+        }));
+        socket.emit("onlineUsers", onlineUsers);
         
         socket.join(username_logged);
+
+        // Handle heartbeat to maintain accurate online status
+        socket.on("heartbeat", () => {
+          const user = activeChatUsers.get(username_logged);
+          if (user) {
+            user.lastActive = Date.now();
+            activeChatUsers.set(username_logged, user);
+          }
+        });
+
         socket.on("leaveRoom", async ({ username }) => {
           const session_db = driver.session();
           try {
             socket.leave(username);
           } catch {}
         });
-    
 
         socket.on("disconnect", () => {
           console.log(`❌ User ${username_logged} disconnected`);
+          const user = activeChatUsers.get(username_logged);
+          if (user) {
+            user.status = 'offline';
+            user.lastActive = Date.now();
+            activeChatUsers.set(username_logged, user);
+            // Broadcast user's offline status
+            io.emit("userStatus", { 
+              username: username_logged, 
+              status: 'offline' 
+            });
+          }
         });
 
-        // Track when users open a chat
         socket.on("openChat", (chatWithUser: string) => {
-          // console.log( username_logged ,  " what to chat with " ,chatWithUser ,  " 😆😆😆😆😆😆😆😆")
-          // console.log( activeChatUsers ,  " BEFORE 🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪🤪")
-
-          // Map(2) {
-          //   'atabiti' => { username: 'atabiti', activeChat: 'atabiti_99db24c15d475f7732e1' },
-          //   'atabiti_99db24c15d475f7732e1' => { username: 'atabiti_99db24c15d475f7732e1', activeChat: 'atabiti' }
-          // } 
-          //ensures that the activeChatUsers map contains an entry for the username_logged before attempting to set its activeChat property
           if (!activeChatUsers.has(username_logged)) {
-            activeChatUsers.set(username_logged, { username: username_logged });
+            activeChatUsers.set(username_logged, { 
+              username: username_logged,
+              socketId: socket.id,
+              lastActive: Date.now(),
+              status: 'online'
+            });
           }
           const user = activeChatUsers.get(username_logged);
           if (user) {
             user.activeChat = chatWithUser;
+            user.lastActive = Date.now();
+            activeChatUsers.set(username_logged, user);
           }
-          // console.log( activeChatUsers ,  " After 😵‍💫 ")
         });
 
-        // Track when users close/leave a chat
         socket.on("closeChat", () => {
           const user = activeChatUsers.get(username_logged);
           if (user) {
             user.activeChat = undefined;
+            user.lastActive = Date.now();
+            activeChatUsers.set(username_logged, user);
           }
+        });
+
+        socket.on("getUserStatus", (username: string) => {
+          const user = activeChatUsers.get(username);
+          socket.emit("userStatusResponse", {
+            username,
+            status: user?.status || 'offline'
+          });
         });
 
         socket.on("sendMessage", async (message: any) => {
@@ -109,10 +171,10 @@ export function setupSocket(server: HttpServer) {
             if (check_matching.records.length > 0) {
               await session_db.run(
                 `MATCH (sender:User {username: $sender}), (receiver:User {username: $to})
-                                 CREATE (m:Message {createdAt: $createdAt, content: $content, status: 'sent'})
-                                 CREATE (sender)-[:SENT]->(m)
-                                 CREATE (m)-[:RECEIVED_BY]->(receiver)
-                                 RETURN m`,
+                CREATE (m:Message {createdAt: $createdAt, content: $content, status: 'sent'})
+                CREATE (sender)-[:SENT]->(m)
+                CREATE (m)-[:RECEIVED_BY]->(receiver)
+                RETURN m`,
                 {
                   sender: newMessage.sender,
                   to: newMessage.to,
@@ -124,61 +186,26 @@ export function setupSocket(server: HttpServer) {
               socket.to(message.to).emit("newMessage", newMessage);
               io.to(username_logged).emit("newMessage", newMessage);
 
-              //notification
-
-              //   const query = `
-              //                 MATCH (user:User {username: $username})
-              //                 CREATE (n:Notification {
-              //                   notify_id: randomUUID(),
-              //                   fromUsername: $fromUsername,
-              //                   type: $type,
-              //                   content: $content,
-              //                   createdAt: date(),
-              //                   isRead: false
-              //                 })
-              //                 CREATE (user)-[:YOU_HAVE_A_NOTIFICATION]->(n)
-              //                 RETURN n
-              //               `;
-
-              //   const notificationArray = `${username_logged} messaged you!`;
-              //   const result = await session_db.run(query, {
-              //     fromUsername: username,
-              //     username: newMessage.to,
-              //     type: "Liked",
-              //     content: notificationArray,
-              //   });
-
-              //   const notification = result.records[0].get("n").properties;
-              //   getSocketIO().to(newMessage.to).emit("notification", notification);
-              // Check if recipient should receive a notification
               const recipientUser = activeChatUsers.get(message.to);
-              // console.log(recipientUser ,  " recp iser")
-              /*
-                If Bob sends a message to Alice:
-
-                If Alice is offline → Send notification
-                If Alice is chatting with Charlie → Send notification
-                If Alice is actively chatting with Bob → Don't send notification 
-            */
-                const isRecipientOffline = recipientUser === null;
-                const isRecipientChattingWithSomeoneElse = recipientUser?.activeChat !== username_logged;
+              const isRecipientOffline = !recipientUser || recipientUser.status === 'offline';
+              const isRecipientChattingWithSomeoneElse = recipientUser?.activeChat !== username_logged;
               
               const shouldNotify = isRecipientOffline || isRecipientChattingWithSomeoneElse;
+              
               if (shouldNotify) {
-                // Create notification in database
                 const query = `
-                     MATCH (user:User {username: $username})
-                     CREATE (n:Notification {
-                         notify_id: randomUUID(),
-                         fromUsername: $fromUsername,
-                         type: $type,
-                         content: $content,
-                         createdAt: date(),
-                         isRead: false
-                     })
-                     CREATE (user)-[:YOU_HAVE_A_NOTIFICATION]->(n)
-                     RETURN n
-                 `;
+                  MATCH (user:User {username: $username})
+                  CREATE (n:Notification {
+                    notify_id: randomUUID(),
+                    fromUsername: $fromUsername,
+                    type: $type,
+                    content: $content,
+                    createdAt: date(),
+                    isRead: false
+                  })
+                  CREATE (user)-[:YOU_HAVE_A_NOTIFICATION]->(n)
+                  RETURN n
+                `;
 
                 const notificationContent = `${username_logged} messaged you!`;
                 const result = await session_db.run(query, {
@@ -195,16 +222,13 @@ export function setupSocket(server: HttpServer) {
               socket.emit("messageError", { message: "Users are not matched" });
             }
           } catch (error) {
-            // console.error("Error in sendMessage:", error);
             socket.emit("messageError", { message: "Failed to send message" });
           } finally {
             await session_db.close();
           }
         });
       } catch (error) {
-        // console.error("JWT verification failed:", error);
-        socket.emit("messageError", { message: "User is not logged" });
-
+        socket.emit("messageError", { message: "User is not logged in" });
       }
     }
   });
