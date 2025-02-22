@@ -61,7 +61,7 @@ const ProfilePage = (props: ProfilePageProps) => {
           })
         });
       } catch (error) {
-        console.error('Error recording view:', error);
+        // console.error('Error recording view:', error);
       }
     };
     if (username) {
@@ -106,7 +106,7 @@ const ProfilePage = (props: ProfilePageProps) => {
         setError(profileData.error || 'Failed to fetch profile');
       }
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      // console.error('Error fetching profile:', error);
       setError('Failed to fetch profile');
     } finally {
       setLoading(false);
@@ -135,7 +135,7 @@ const ProfilePage = (props: ProfilePageProps) => {
         }));
       }
     } catch (error) {
-      console.error("Error toggling like:", error);
+      // console.error("Error toggling like:", error);
     }
   };
 
