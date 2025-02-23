@@ -97,6 +97,7 @@ const Chat = () => {
   };
 
   useEffect(() => {
+    //ensures that a chat window automatically scrolls to the bottom whenever new messages are added
     const chatContainer = document.getElementById("chat-messages");
     if (chatContainer) {
       /*
@@ -122,7 +123,11 @@ const Chat = () => {
       <div
         id="chat-messages"
         className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-4"
-        style={{
+        /*overflow-y-auto
+         When an element’s content exceeds its vertical boundaries (i.e., it’s taller than the element’s set height), 
+         this setting automatically displays a vertical scrollbar.
+        */
+         style={{
           //https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-behavior
           scrollBehavior: "smooth"
         }}

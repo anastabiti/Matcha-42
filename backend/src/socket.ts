@@ -206,8 +206,9 @@ export function setupSocket(server: HttpServer) {
                 }
               );
 
-              socket.to(message.to).emit("newMessage", newMessage);
-              io.to(username_logged).emit("newMessage", newMessage);
+              io.to([username_logged,message.to]).emit("newMessage", newMessage);
+              // socket.to(message.to).emit("newMessage", newMessage);
+              // io.to(username_logged).emit("newMessage", newMessage);
 
               const recipientUser = activeChatUsers.get(message.to);
               const isRecipientOffline = !recipientUser || recipientUser.status === 'offline';
@@ -254,6 +255,8 @@ export function setupSocket(server: HttpServer) {
         socket.emit("messageError", { message: "User is not logged in" });
       }
     }
+    socket.emit("messageError", { message: "User is not logged in" });
+
   });
 }
 
