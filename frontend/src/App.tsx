@@ -69,9 +69,9 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/register" element={<RegistrationForm />} />
-          <Route element={<Logged_so_no_access_to_loginpage />}>
+          {/* <Route element={<Logged_so_no_access_to_loginpage />}> */}
             <Route path="/login" element={<LoginPage />} />
-          </Route>
+          {/* </Route> */}
           <Route path="/resetPassword" element={<ResetPassword />} />
 
             <Route element={<IsLogged />}>

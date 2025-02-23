@@ -19,7 +19,7 @@ const LogoutButton = () => {
   return (
     <button
       onClick={handleLogout}
-      className="hidden md:flex items-center text-gray-400 hover:text-[#e94057] transition-colors"
+      className=" items-center text-gray-400 hover:text-[#e94057] transition-colors"
     >
       <LogOut className="w-5 h-5" />
     </button>

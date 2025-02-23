@@ -9,6 +9,11 @@ export default defineConfig({
     chunkSizeWarningLimit: 1600,
   },
   
+  preview: {
+    host: true,
+    port: 7070,
+    allowedHosts: ['e1r5p1.1337.ma', "localhost"]
+  }
 })
 // export default defineConfig({
 //   //   plugins: [react()],
