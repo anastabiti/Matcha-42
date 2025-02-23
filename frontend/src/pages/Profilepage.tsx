@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { MapPin, ArrowLeft, Heart, MessageCircle, Phone, Video, MapPinned, Calendar, User, Star } from 'lucide-react';
+import { ArrowLeft, Heart, MessageCircle, MapPinned, Calendar, User, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ProfileActions from '../components/ProfileActions';
 import { PhotoSection, ProfileImage } from '../components/ProfileImage';
@@ -14,7 +14,6 @@ type Profile = {
   gender: string;
   biography: string;
   location: string;
-  distance: number;
   profile_picture: string;
   pics: string[];
   interests: string[];
@@ -53,17 +52,17 @@ const ProfilePage = (props: ProfilePageProps) => {
 
   const OnlineStatusIndicator = ({ username }: { username: string }) => {
     const userStatus = getUserStatus(username);
-    
+
     const formatLastSeen = (timestamp: number) => {
       const now = Date.now();
       const diff = now - timestamp;
       const minutes = Math.floor(diff / 60000);
       const hours = Math.floor(diff / 3600000);
       const days = Math.floor(diff / 86400000);
-  
+
       if (minutes < 1) {
         return 'Just now';
-      }else if (minutes < 60) {
+      } else if (minutes < 60) {
         return `Last seen ${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
       } else if (hours < 24) {
         return `Last seen ${hours} hour${hours !== 1 ? 's' : ''} ago`;
@@ -73,20 +72,18 @@ const ProfilePage = (props: ProfilePageProps) => {
         return `Last seen ${new Date(timestamp).toLocaleDateString()}`;
       }
     };
-  
+
     return (
       <div className="flex items-center gap-2">
-        <div 
-          className={`w-2 h-2 rounded-full ${
-            userStatus.status === 'online' ? 'bg-green-500' : 'bg-gray-400'
-          }`} 
+        <div
+          className={`w-2 h-2 rounded-full ${userStatus.status === 'online' ? 'bg-green-500' : 'bg-gray-400'
+            }`}
         />
-        <span className={`text-sm font-medium ${
-          userStatus.status === 'online' ? 'text-green-500' : 'text-gray-400'
-        }`}>
-          {userStatus.status === 'online' 
+        <span className={`text-sm font-medium ${userStatus.status === 'online' ? 'text-green-500' : 'text-gray-400'
+          }`}>
+          {userStatus.status === 'online'
             ? 'Online Now'
-            : userStatus.lastSeen 
+            : userStatus.lastSeen
               ? formatLastSeen(userStatus.lastSeen)
               : 'Offline'
           }
@@ -231,16 +228,6 @@ const ProfilePage = (props: ProfilePageProps) => {
                 icon={<MessageCircle className="w-6 h-6" />}
                 variant="secondary"
               />
-              <ActionButton
-                onClick={() => navigate(`/call/audio/${username}`)}
-                icon={<Phone className="w-6 h-6" />}
-                variant="secondary"
-              />
-              <ActionButton
-                onClick={() => navigate(`/call/video/${username}`)}
-                icon={<Video className="w-6 h-6" />}
-                variant="secondary"
-              />
             </>
           )}
         </div>
@@ -345,14 +332,9 @@ const ProfilePage = (props: ProfilePageProps) => {
                   value={`${profile.age} years`}
                 />
                 <InfoCard
-                  icon={<MapPin className="w-5 h-5" />}
-                  label="Distance"
-                  value={`${profile.distance} km away`}
-                />
-                <InfoCard
                   icon={<MapPinned className="w-5 h-5" />}
                   label="Location"
-                  value={`${profile.city}, ${profile.location}`}
+                  value={profile.city}
                 />
               </div>
             </div>
