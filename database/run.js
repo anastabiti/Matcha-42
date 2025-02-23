@@ -1,8 +1,15 @@
-import { faker } from "@faker-js/faker";
-import neo4j from "neo4j-driver";
-import argon2 from "argon2";
+// import { faker } from "@faker-js/faker";
+// import neo4j from "neo4j-driver";
+// import argon2 from "argon2";
 
-import dotenv from "dotenv";
+const { faker } = require("@faker-js/faker");
+const neo4j = require("neo4j-driver");
+const argon2 = require("argon2");
+const dotenv = require("dotenv");
+
+
+
+// import dotenv from "dotenv";
 dotenv.config();
 
 
