@@ -21,7 +21,7 @@ function cleanupInactiveUsers() {
   for (const [username, user] of activeChatUsers.entries()) {
     // Remove users inactive for more than 30 seconds
     if (now - user.lastActive > 30000) {
-      activeChatUsers.delete(username);
+    
       // Broadcast user offline status
       io.emit("userStatus", { username, status: 'offline' });
     }

@@ -20,20 +20,23 @@ const Navigation = () => (
       <NavLink to="/messages" icon={<MessageCircle />} text="Messages" />
       <NavLink to="/profile" icon={<User />} text="Profile" />
       <NotificationButton></NotificationButton>
+      <LogoutButton></LogoutButton>
 
 
     </div>
 
-    <div className="flex md:hidden items-center space-x-8">
+    <div className="flex md:hidden items-center space-x-2">
       <MobileNavLink to="/discover" icon={<Search />} />
       <MobileNavLink to="/matches" icon={<Heart />} />
       <MobileNavLink to="/messages" icon={<MessageCircle />} />
-      {/* <MobileNavLink to="/notifications" icon={<Bell />} /> */}
       <MobileNavLink to="/profile" icon={<User />} />
+      <NotificationButton/>
+      <LogoutButton/> 
+
+
     </div>
 
-      {/* <LogOut className="w-5 h-5" /> */}
-      <LogoutButton></LogoutButton>
+
     
   </nav>
 );

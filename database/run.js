@@ -1,21 +1,22 @@
 import { faker } from "@faker-js/faker";
 import neo4j from "neo4j-driver";
 import argon2 from "argon2";
-// faker.setLocale('en');
 
+import dotenv from "dotenv";
+dotenv.config();
 
 
 async function populateNeo4jDatabase() {
   // Configuration
   const NEO4J_URI = "neo4j://localhost:7687";
-  const NEO4J_USER = "neo4j";
-  const NEO4J_PASSWORD = "kjod876fytf";
+  const NEO4J_USER = process.env.database_username;
+  const NEO4J_PASSWORD = process.env.database_password
   const TOTAL_USERS = 500
 
   
   const CITIES = {
     Khouribga: { x: -6.9081, y: 32.877 },
-    Fes: { x: -5.0033, y: 34.0333 },
+    Casa: { x: -7.5898, y: 33.5731 },
   };
 
   // Extended interests list
@@ -235,6 +236,7 @@ async function populateNeo4jDatabase() {
         verified: true,
         is_logged: false,
         fame_rating: faker.number.int({ min: 0, max: 800 }),
+        lastSeen:Date.now()
       };
 
       // Create user node
@@ -260,7 +262,8 @@ async function populateNeo4jDatabase() {
           setup_done: $setup_done,
           verified: $verified,
           is_logged: $is_logged,
-          fame_rating: $fame_rating,
+          fame_rating: toInteger($fame_rating),
+          lastSeen :$lastSeen,
           notifications: []
         })
       `,

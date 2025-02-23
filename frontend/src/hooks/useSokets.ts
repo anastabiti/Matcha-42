@@ -162,7 +162,7 @@ export const useSocket = ({ currentUsername }: UseSocketProps) => {
     socket.on('userStatus', async ({ username, status }: UserStatus) => {
       setUserStatuses(prev => {
         const newMap = new Map(prev);
-        const currentStatus = newMap.get(username);
+        // const currentStatus = newMap.get(username);
         newMap.set(username, {
           status,
           lastSeen: status === 'offline' ? Date.now() : null
