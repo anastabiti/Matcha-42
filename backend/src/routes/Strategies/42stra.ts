@@ -196,14 +196,6 @@ forty_two_str.get(
       const token = generateAccessToken(user);
       res.cookie("jwt_token", token, {
         httpOnly: true,
-        sameSite:"strict",
-        /*Strict not allows the cookie to be sent on a cross-site request or iframe. Lax allows GET only. None allows all the requests, but secure is required.
-        What Does the HttpOnly Cookie Flag Do?
-    The HttpOnly cookie flag is often added to cookies that may contain sensitive information about the user.
-    Essentially, this type of flag tells the server to not reveal cookie information contained in embedded scripts. 
-    HttpOnly also tells the server that the information contained in the flagged cookies should not be transferred beyond the server. 
-    This flag is especially important in protecting secure information that could be compromised during a cross-site request forgery (CSRF) attack or 
-    if there is a flaw in the code that causes cross-site scripting (XSS). Both of these instances could lead user data to be leaked to hackers */
         maxAge: 3600000, // 1 hour in milliseconds
       });
 

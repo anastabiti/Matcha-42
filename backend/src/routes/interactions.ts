@@ -6,6 +6,28 @@ import { getSocketIO } from "../socket";
 
 const interactions = express.Router();
 
+// First check if the user is blocked
+export const checkBlocked =
+  //An OPTIONAL MATCH matches patterns against the graph database, just like a MATCH does. The difference is that if no matches are found, OPTIONAL MATCH will use a null for missing parts of the pattern.
+  async (session: any, fromUsername: string, toUsername: string) => {
+    const result = await session.run(
+      `
+    // Check for BLOCKED relationship
+    OPTIONAL MATCH (blocker:User {username: $toUsername})-[:BLOCKED]-(blocked:User {username: $fromUsername})
+    RETURN  EXISTS((blocker)-[:BLOCKED]-(blocked)) as isBlocked
+    `,
+      {
+        fromUsername: fromUsername,
+        toUsername: toUsername,
+      }
+    );
+
+    const record = result.records[0];
+    return {
+      isBlocked: record.get("isBlocked"),
+    };
+  };
+
 // interactions.post("/like-user", authenticateToken_Middleware, async (req: any, res: any) => {
 //   if (!req.user) {
 //     return res.status(401).json({ error: "Unauthorized" });
@@ -82,6 +104,9 @@ interactions.post("/like-user", authenticateToken_Middleware, async (req: any, r
       });
     }
 
+    const relationshipStatus = await checkBlocked(session, req.user.username, likedUsername);
+    if (relationshipStatus.isBlocked !== true) {
+
     // Proceed with the like action
     const result = await session.run(
       `
@@ -105,10 +130,13 @@ interactions.post("/like-user", authenticateToken_Middleware, async (req: any, r
     );
 
     if (result.records.length > 0) {
-      ///atabiti like notification 
-      const notification_message = `Like: ❤️${req.user.username} Liked YOU ❤️!`;
-      const result_ = await session.run(
-        `
+      // Check if user is blocked or reported
+      console.log(" ------------------------here------------------", relationshipStatus);
+
+        ///atabiti like notification
+        const notification_message = `Like: ❤️${req.user.username} Liked YOU ❤️!`;
+        const result_ = await session.run(
+          `
         MATCH (user:User {username: $username})
         CREATE (n:Notification {
           notify_id: randomUUID(),
@@ -120,20 +148,24 @@ interactions.post("/like-user", authenticateToken_Middleware, async (req: any, r
           })
           CREATE (user)-[:YOU_HAVE_A_NOTIFICATION]->(n)
           RETURN n`,
-        {
-          fromUsername: req.user.username,
-          username: likedUsername,
-          type: "Liked",
-          content: notification_message,
-        }
-      );
+          {
+            fromUsername: req.user.username,
+            username: likedUsername,
+            type: "Liked",
+            content: notification_message,
+          }
+        );
 
-      const notification = result_.records[0].get("n").properties;
-      getSocketIO().to(likedUsername).emit("notification", notification);
+        //
+        const notification = result_.records[0].get("n").properties;
+        getSocketIO().to(likedUsername).emit("notification", notification);
+      
 
       return res.status(200).json({ success: true });
+    }
+
     } else {
-      return res.status(400).json({ error: "Failed to like user" });
+      return res.status(400).json({ error: "BLOCKED USERS" });
     }
   } catch (error) {
     console.log(error);
@@ -173,8 +205,14 @@ interactions.post("/unlike-user", authenticateToken_Middleware, async (req: any,
     );
 
     if (result.records.length > 0) {
+
+
+
+    const relationshipStatus = await checkBlocked(session, req.user.username, likedUsername);
+    if (relationshipStatus.isBlocked !== true) {
       const notification_message = `Unlike:😟 ${req.user.username} UnLiked you 😥`;
-      const result_ = await session.run(`
+      const result_ = await session.run(
+        `
         MATCH (user:User {username: $username})
         CREATE (n:Notification {
           notify_id: randomUUID(),
@@ -185,16 +223,18 @@ interactions.post("/unlike-user", authenticateToken_Middleware, async (req: any,
           isRead: false
           })
           CREATE (user)-[:YOU_HAVE_A_NOTIFICATION]->(n)
-          RETURN n`
-          , {
-            fromUsername:req.user.username,
-            username:likedUsername,
-            type:"UnLiked",
-            content:notification_message
-           });
+          RETURN n`,
+        {
+          fromUsername: req.user.username,
+          username: likedUsername,
+          type: "UnLiked",
+          content: notification_message,
+        }
+      );
 
-           const notification = result_.records[0].get('n').properties;
-        getSocketIO().to(likedUsername).emit("notification", notification);
+      const notification = result_.records[0].get("n").properties;
+      getSocketIO().to(likedUsername).emit("notification", notification);
+    }
       return res.status(200).json({ success: true });
     } else {
       return res.status(400).json({ error: "Failed to unlike user" });

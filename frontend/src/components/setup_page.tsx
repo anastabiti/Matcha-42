@@ -299,9 +299,9 @@ function Setup_page() {
   }
 
   return (
-    <div className=" min-h-full bg-[#1a1625] ">
+    <div className="min-h-screen  bg-[#1a1625] ">
       <div className="flex items-center justify-center ">
-        <div className="w-full max-w-[95%] sm:max-w-screen-sm mt-9">
+        <div className="w-full max-w-[95%] sm:max-w-screen-sm mt-20">
           <div className="bg-[#A3195B] rounded-2xl p-4 sm:p-6">
             <div className="space-y-4 sm:space-y-6">
               <h2 className="text-xl sm:text-2xl font-semibold text-white mb-4 sm:mb-8">
