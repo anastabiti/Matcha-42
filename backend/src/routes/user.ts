@@ -212,7 +212,6 @@ user_information_Router.post(
       if (!files) {
         return res.status(200).json("No files");
       }
-      console.log(files, "  -------files\n");
       const session = driver.session();
       /*
       The Object.keys() static method returns an array of a given object's own enumerable string-keyed property names.
@@ -220,8 +219,6 @@ user_information_Router.post(
       a: "somestring",
       b: 42,
       c: false,};
-
-      console.log(Object.keys(object1));
       // Expected output: Array ["a", "b", "c"]
  
       */
@@ -253,7 +250,6 @@ user_information_Router.post(
       );
       let existingPics = result.records[0]?.get("pics") || [];
       for (let i = 0; i < keys.length; i++) {
-        console.log(keys[i], " keys[i]");
         const file = files[keys[i]];
         if (file.size > MAX_FILE_SIZE || file.size <= 0) {
           return res.status(400).json("Too large image size !!!.");

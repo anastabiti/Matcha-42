@@ -99,7 +99,7 @@ passport.use(
         //     accessToken: '',
         //     fetchedAt: 2025-02-04T18:08:15.618Z
         //   }
-        // console.log(profile.email, "  profile--------");
+        
         const new_session = await driver.session();
         if (new_session) {
           const email_ = profile.email;
@@ -135,11 +135,6 @@ passport.use(
 
               return cb(null, user_x);
             } else {
-              console.log(
-                " create a new User discord auth--------------- \n\n\n\n",
-                profile ,
-                " ]\n\n\n"
-              );
               if (profile.username) {
                 const check_useername_exists = await new_session.run(
                   `MATCH (n:User) WHERE n.username  = $username return n`,
@@ -147,7 +142,7 @@ passport.use(
                 );
                 if (check_useername_exists.records?.length > 0) {
                   //case: user registered with a username like "atabiti" , then a user with diff email logged with 42, but he has the same username "atabiti", i have to generate a new username for him.
-                  // console.log("[------same username found----] , ", check_useername_exists.records);
+                  
                   const diff_username =
                     profile.username + "_" + (await crypto).randomBytes(10).toString("hex");
                   const result_ = await new_session.run(create_new_user_cipher, {

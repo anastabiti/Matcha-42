@@ -30,13 +30,13 @@ const app: Application = express();
 
 app.use(fileUpload()); // Use the express-fileupload middleware
 
-driver.verifyConnectivity()
-  .then(() => {
-    console.log('Successfully connected to Neo4j');
-  })
-  .catch((error: any) => {
-    console.error('Neo4j connection error:', error);
-  });
+// driver.verifyConnectivity()
+//   .then(() => {
+
+//   })
+//   .catch((error: any) => {
+//     console.error('Neo4j connection error:', error);
+//   });
 
 
 
@@ -92,7 +92,7 @@ import { setupSocket } from "./socket";
 const server = http.createServer(app);
 setupSocket(server);
 server.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  
 });
 
 export default app;

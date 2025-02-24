@@ -69,8 +69,8 @@ export function validatePassword(req: Request, res: Response, next: NextFunction
 export function validateEmail(req: Request, res: Response, next: NextFunction) {
   const email = req.body.email || req.body.newEmail;
 
-  // console.log(email , " email")
-  // console.log(req.body , " body")
+  
+  
 
   if (!email) {
     res.status(400).json("Email is required");
@@ -114,9 +114,9 @@ export function validateEmail(req: Request, res: Response, next: NextFunction) {
 
   // Check the parts after the last dot
   const domainParts = domain.split(".");
-  // console.log(domainParts, " domain part -----------")
+  
   const topLevelDomain = domainParts[domainParts.length - 1];
-  // console.log(topLevelDomain, " topLevelDomain  -----------")
+  
 
   //   [ 'gmail', 'com' ]  domain part -----------
   // com  topLevelDomain  -
@@ -290,7 +290,6 @@ export function validateBiography(req: Request, res: Response, next: NextFunctio
 export function validateInterests(req: Request, res: Response, next: NextFunction): void {
   try {
     const interests = req.body.interests;
-    console.log(interests , "  -----------interests----------\n\n")
     if (!interests) {
       res.status(400).json("Interests are required");
       return;

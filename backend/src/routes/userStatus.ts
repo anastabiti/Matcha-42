@@ -40,7 +40,6 @@ userStatus.get('/user-status/:username', async (req, res) => {
 	  const { username } = req.params;
 	  
 	  // Add debug logging
-	  console.log('Fetching status for username:', username);
 	  
 	  const result = await session_db.run(
 		`MATCH (u:User {username: $username})
@@ -52,7 +51,6 @@ userStatus.get('/user-status/:username', async (req, res) => {
 		const lastSeen = result.records[0].get('lastSeen');
 		
 		// Debug log the raw value
-		console.log('Raw lastSeen value from DB:', lastSeen);
 		
 		let parsedLastSeen = null;
 		
@@ -68,13 +66,11 @@ userStatus.get('/user-status/:username', async (req, res) => {
 		  
 		  // Validate the parsed timestamp
 		  if (isNaN(parsedLastSeen) || parsedLastSeen <= 0) {
-			console.log('Invalid timestamp detected:', parsedLastSeen);
 			parsedLastSeen = null;
 		  }
 		}
 		
 		// Debug log the parsed value
-		console.log('Parsed lastSeen value:', parsedLastSeen);
 		
 		res.json({
 		  username,
@@ -82,7 +78,6 @@ userStatus.get('/user-status/:username', async (req, res) => {
 		  lastSeen: parsedLastSeen
 		});
 	  } else {
-		console.log('No user found for username:', username);
 		res.status(404).json({ error: 'User not found' });
 	  }
 	} catch (error) {

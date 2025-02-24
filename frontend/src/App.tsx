@@ -3,8 +3,7 @@ import {
   Route,
   Routes,
   BrowserRouter,
-  Outlet,
-  Navigate
+
 } from "react-router-dom";
 import RegistrationForm from "./components/RegistrationForm";
 import LoginPage from "./components/LoginPage";
@@ -18,50 +17,49 @@ import Chat from "./components/Chat";
 import ProfilePage from "./pages/Profilepage";
 import MatchedPage from "./pages/matches";
 import ChatUserList from "./components/ChatUserList";
-import { useEffect, useState } from "react";
 import Home from "./pages/Home";
 import RequireSetup from "./components/RequireSetup_middleware";
 
-const Logged_so_no_access_to_loginpage = () => {
-  const [user, setUser] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(true);
+// const Logged_so_no_access_to_loginpage = () => {
+//   const [user, setUser] = useState<boolean | null>(null);
+//   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_IP}/api/user/is_logged`,
-          {
-            method: "GET",
-            credentials: "include",
-            headers: {
-              "Content-Type": "application/json"
-            }
-          }
-        );
+//   useEffect(() => {
+//     const checkAuthStatus = async () => {
+//       try {
+//         const response = await fetch(
+//           `${import.meta.env.VITE_BACKEND_IP}/api/user/is_logged`,
+//           {
+//             method: "GET",
+//             credentials: "include",
+//             headers: {
+//               "Content-Type": "application/json"
+//             }
+//           }
+//         );
 
-        if (response.ok) {
-          setUser(true);
-        } else {
-          setUser(false);
-        }
-      } catch (error) {
-        setUser(false);
-      } finally {
-        setLoading(false);
-      }
-    };
+//         if (response.ok) {
+//           setUser(true);
+//         } else {
+//           setUser(false);
+//         }
+//       } catch (error) {
+//         setUser(false);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
 
-    checkAuthStatus();
-  }, []);
+//     checkAuthStatus();
+//   }, []);
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-  // If the user is authenticated , render the nested routes using <Outlet />.
-  // If the user is not authenticated , redirect them to the login page using <Navigate />.
-  return user ? <Navigate to="/discover" /> : <Outlet />;
-};
+//   if (loading) {
+//     return <div>Loading...</div>;
+//   }
+//   // If the user is authenticated , render the nested routes using <Outlet />.
+//   // If the user is not authenticated , redirect them to the login page using <Navigate />.
+//   return user ? <Navigate to="/discover" /> : <Outlet />;
+// };
 
 function App() {
   return (

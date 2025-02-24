@@ -71,9 +71,9 @@ export function setupSocket(server: HttpServer) {
       }
     }
 
-    io.on("connect_error", (error) => {
-      console.log("Connection failed:", error.message);
-    });
+    // io.on("connect_error", (error) => {
+    //   
+    // });
 
     if (jwt_token) {
       try {
@@ -120,7 +120,6 @@ export function setupSocket(server: HttpServer) {
         });
 
         socket.on("disconnect", async () => {
-          console.log(`❌ User ${username_logged} disconnected`);
           // Update last connection time in database when user disconnects
           await updateLastSeen(username_logged);
           

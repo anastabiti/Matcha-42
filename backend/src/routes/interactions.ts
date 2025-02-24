@@ -66,7 +66,7 @@ export const checkBlocked =
 //       return res.status(400).json({ error: "Failed to like user" });
 //     }
 //   } catch (error) {
-//     console.log(error);
+
 //     return res.status(500).json({ error: "Internal Server Error" });
 //   } finally {
 //     await session.close();
@@ -131,7 +131,6 @@ interactions.post("/like-user", authenticateToken_Middleware, async (req: any, r
 
     if (result.records.length > 0) {
       // Check if user is blocked or reported
-      console.log(" ------------------------here------------------", relationshipStatus);
 
         ///atabiti like notification
         const notification_message = `Like: ❤️${req.user.username} Liked YOU ❤️!`;
@@ -168,7 +167,6 @@ interactions.post("/like-user", authenticateToken_Middleware, async (req: any, r
       return res.status(400).json({ error: "BLOCKED USERS" });
     }
   } catch (error) {
-    console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });
   } finally {
     await session.close();
@@ -240,7 +238,6 @@ interactions.post("/unlike-user", authenticateToken_Middleware, async (req: any,
       return res.status(400).json({ error: "Failed to unlike user" });
     }
   } catch (error) {
-    console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });
   } finally {
     await session.close();
@@ -255,8 +252,6 @@ interactions.post("/view-profile", authenticateToken_Middleware, async (req: any
   const user = req.user;
   const username = user.username;
   const { viewedUsername } = req.body;
-
-  console.log("Viewed Username: ", viewedUsername);
   const session = driver.session();
   try {
     const result = await session.run(
@@ -285,7 +280,6 @@ interactions.post("/view-profile", authenticateToken_Middleware, async (req: any
       return res.status(400).json({ error: "Failed to record view" });
     }
   } catch (error) {
-    console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });
   } finally {
     await session.close();
@@ -326,7 +320,6 @@ interactions.post("/blocks/:username", authenticateToken_Middleware, async (req:
       blocked: result.records[0].get("blocked"),
     });
   } catch (error) {
-    console.log(error);
     return res.status(500).json({ success: false, error: "Failed to block user" });
   } finally {
     await session.close();
@@ -364,7 +357,6 @@ interactions.get("/profile-viewers", authenticateToken_Middleware, async (req: a
       viewers: viewers,
     });
   } catch (error) {
-    console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });
   } finally {
     await session.close();
@@ -409,7 +401,6 @@ interactions.delete(
         data: result.records[0].get("result"),
       });
     } catch (error) {
-      console.log(error);
       return res.status(500).json({
         success: false,
         error: "Failed to unblock user",
@@ -465,7 +456,6 @@ interactions.post(
         data: result.records[0].get("result"),
       });
     } catch (error) {
-      console.log(error);
       return res.status(500).json({
         success: false,
         error: "Failed to report user",
@@ -507,7 +497,6 @@ interactions.get("/visit-history", authenticateToken_Middleware, async (req: any
       history: history,
     });
   } catch (error) {
-    console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });
   } finally {
     await session.close();
@@ -545,7 +534,6 @@ interactions.get("/profile-likes", authenticateToken_Middleware, async (req: any
       likes: likes,
     });
   } catch (error) {
-    console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });
   } finally {
     await session.close();
