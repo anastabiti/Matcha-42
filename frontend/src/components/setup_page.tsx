@@ -263,6 +263,8 @@ function Setup_page() {
       }
 
       // Upload images
+      //Return true if it finds even one file that isn't null
+    //turn false only if all files are null
       if (images_FILES.some((file) => file !== null)) {
         const new_data = new FormData();
         images_FILES.forEach((file, index) => {
