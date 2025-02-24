@@ -256,6 +256,7 @@ interactions.post("/view-profile", authenticateToken_Middleware, async (req: any
   const username = user.username;
   const { viewedUsername } = req.body;
 
+  console.log("Viewed Username: ", viewedUsername);
   const session = driver.session();
   try {
     const result = await session.run(

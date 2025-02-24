@@ -157,7 +157,7 @@ match.post("/potential-matches", authenticateToken_Middleware, async (req: any, 
           WHEN 'common_tags' THEN -commonTags  // Using negative to reverse the sort order for common tags
           WHEN 'distance' THEN distance
           WHEN 'age' THEN otherUser.age
-          WHEN 'fame' THEN otherUser.fame_rating
+          WHEN 'fame' THEN -otherUser.fame_rating
           ELSE distance
       END ASC
   

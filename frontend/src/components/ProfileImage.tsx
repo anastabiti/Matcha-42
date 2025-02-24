@@ -143,7 +143,7 @@ export const PhotoSection: React.FC<PhotoSectionProps> = ({
             onClick={() => setCurrentPhoto((prev) => (prev + 1) % validPhotos.length)}
             className="w-10 h-10 rounded-full bg-black/30 backdrop-blur-sm 
               flex items-center justify-center border border-white/10 
-              text-white/90 hover:bg-black/50 transition-all"
+              text-white/90 hover:bg-black/50 transition-all z-10"
           >
             <Camera className="w-5 h-5" />
           </button>

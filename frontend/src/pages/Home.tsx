@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Eye, Heart, History, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { Neo4jDateTime } from "../types/types";
+import DailyStats from "../components/DailyStats";
 
 type UserInteraction = {
   username: string;
@@ -93,10 +94,9 @@ const Home = () => {
     <button
       onClick={() => setActiveTab(id)}
       className={`flex items-center justify-between w-full p-4 rounded-xl transition-all
-        ${
-          isActive
-            ? "bg-[#e94057] text-white"
-            : "bg-[#2a2435] text-white/70 hover:bg-[#3a3445]"
+        ${isActive
+          ? "bg-[#e94057] text-white"
+          : "bg-[#2a2435] text-white/70 hover:bg-[#3a3445]"
         }`}
     >
       <div className="flex items-center space-x-3">
@@ -198,6 +198,15 @@ const Home = () => {
           </h1>
         </div>
 
+
+        {!loading && !error && (
+          <DailyStats
+            viewers={viewers}
+            likes={likes}
+            history={history}
+          />
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           {tabs.map((tab) => (
             <TabButton
@@ -230,14 +239,14 @@ const Home = () => {
           {((activeTab === "views" && viewers.length === 0) ||
             (activeTab === "likes" && likes.length === 0) ||
             (activeTab === "history" && history.length === 0)) && (
-            <div className="bg-[#2a2435] rounded-xl p-8 text-center">
-              <User className="w-12 h-12 text-[#e94057] mx-auto mb-4" />
-              <h3 className="text-white font-medium mb-2">
-                No {activeTab.replace("views", "profile views")} yet
-              </h3>
-              <p className="text-white/50">{getEmptyStateMessage(activeTab)}</p>
-            </div>
-          )}
+              <div className="bg-[#2a2435] rounded-xl p-8 text-center">
+                <User className="w-12 h-12 text-[#e94057] mx-auto mb-4" />
+                <h3 className="text-white font-medium mb-2">
+                  No {activeTab.replace("views", "profile views")} yet
+                </h3>
+                <p className="text-white/50">{getEmptyStateMessage(activeTab)}</p>
+              </div>
+            )}
         </div>
       </div>
       <div className="flex justify-center center"></div>

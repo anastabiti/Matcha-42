@@ -1,81 +1,5 @@
-// import { useEffect, useRef, useState } from 'react';
-// import { io, Socket } from 'socket.io-client';
-
-// interface UseSocketProps {
-//   currentUsername: string;
-// }
-
-// interface UserStatus {
-//   username: string;
-//   status: 'online' | 'offline';
-// }
-
-// export const useSocket = ({ currentUsername }: UseSocketProps) => {
-//   const [isConnected, setIsConnected] = useState(false);
-//   const [userStatuses, setUserStatuses] = useState<Map<string, 'online' | 'offline'>>(new Map());
-//   const socketRef = useRef<Socket | null>(null);
-
-//   useEffect(() => {
-//     // Initialize socket connection
-//     const socket = io(import.meta.env.VITE_BACKEND_IP, {
-//       withCredentials: true,
-//       transports: ['websocket']
-//     });
-//     socketRef.current = socket;
-
-//     socket.on('connect', () => {
-//       setIsConnected(true);
-//     });
-
-//     socket.on('disconnect', () => {
-//       setIsConnected(false);
-//     });
-
-//     // Handle initial online users list
-//     socket.on('onlineUsers', (users: UserStatus[]) => {
-//       const statusMap = new Map(users.map(user => [user.username, user.status]));
-//       setUserStatuses(statusMap);
-//     });
-
-//     // Handle individual user status updates
-//     socket.on('userStatus', ({ username, status }: UserStatus) => {
-//       setUserStatuses(prev => {
-//         const newMap = new Map(prev);
-//         newMap.set(username, status);
-//         return newMap;
-//       });
-//     });
-
-//     // Send heartbeat every 15 seconds
-//     const heartbeatInterval = setInterval(() => {
-//       if (socket.connected) {
-//         socket.emit('heartbeat');
-//       }
-//     }, 15000);
-
-//     return () => {
-//       clearInterval(heartbeatInterval);
-//       // socket.disconnect();
-//     };
-//   }, [currentUsername]);
-
-//   const getUserStatus = (username: string) => {
-//     if (!socketRef.current) return 'offline';
-//     socketRef.current.emit('getUserStatus', username);
-//     return userStatuses.get(username) || 'offline';
-//   };
-
-//   return {
-//     socket: socketRef.current,
-//     isConnected,
-//     getUserStatus,
-//     userStatuses
-//   };
-// };
-
-
-import { useEffect, useRef, useState } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { useEffect, useRef, useState } from "react";
+import { io, Socket } from "socket.io-client";
 
 interface UseSocketProps {
   currentUsername: string;
@@ -83,28 +7,32 @@ interface UseSocketProps {
 
 interface UserStatus {
   username: string;
-  status: 'online' | 'offline';
+  status: "online" | "offline";
   lastSeen?: number;
 }
 
 interface UserStatusState {
-  status: 'online' | 'offline';
+  status: "online" | "offline";
   lastSeen?: number | null;
 }
 
 export const useSocket = ({ currentUsername }: UseSocketProps) => {
   const [isConnected, setIsConnected] = useState(false);
-  const [userStatuses, setUserStatuses] = useState<Map<string, UserStatusState>>(new Map());
+  const [userStatuses, setUserStatuses] = useState<
+    Map<string, UserStatusState>
+  >(new Map());
   const socketRef = useRef<Socket | null>(null);
   const statusRequests = useRef<Set<string>>(new Set());
 
   const fetchLastSeen = async (username: string): Promise<number | null> => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/user-status/${username}`);
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_IP}/user-status/${username}`
+      );
       const data = await response.json();
       return data.lastSeen || null;
     } catch (error) {
-      console.error('Error fetching last seen:', error);
+      console.error("Error fetching last seen:", error);
       return null;
     }
   };
@@ -113,12 +41,12 @@ export const useSocket = ({ currentUsername }: UseSocketProps) => {
     if (!statusRequests.current.has(username)) {
       statusRequests.current.add(username);
       const lastSeen = await fetchLastSeen(username);
-      setUserStatuses(prev => {
+      setUserStatuses((prev) => {
         const newMap = new Map(prev);
         const currentStatus = newMap.get(username);
         newMap.set(username, {
-          status: currentStatus?.status || 'offline',
-          lastSeen: lastSeen
+          status: currentStatus?.status || "offline",
+          lastSeen: lastSeen,
         });
         return newMap;
       });
@@ -129,61 +57,63 @@ export const useSocket = ({ currentUsername }: UseSocketProps) => {
   useEffect(() => {
     const socket = io(import.meta.env.VITE_BACKEND_IP, {
       withCredentials: true,
-      transports: ['websocket']
+      transports: ["websocket"],
+      reconnection: true,
     });
     socketRef.current = socket;
 
-    socket.on('connect', () => {
+    socket.on("connect", () => {
       setIsConnected(true);
     });
 
-    socket.on('disconnect', () => {
+    socket.on("disconnect", () => {
       setIsConnected(false);
     });
 
-    socket.on('onlineUsers', (users: UserStatus[]) => {
-      setUserStatuses(prev => {
+    socket.on("onlineUsers", (users: UserStatus[]) => {
+      setUserStatuses((prev) => {
         const newMap = new Map(prev);
-        users.forEach(user => {
+        users.forEach((user) => {
           const currentStatus = newMap.get(user.username);
           newMap.set(user.username, {
             status: user.status,
-            lastSeen: currentStatus?.lastSeen || null
+            lastSeen: currentStatus?.lastSeen || null,
           });
         });
         return newMap;
       });
-      
+
       // Fetch last seen for offline users
-      users.filter(user => user.status === 'offline')
-           .forEach(user => updateUserStatus(user.username));
+      users
+        .filter((user) => user.status === "offline")
+        .forEach((user) => updateUserStatus(user.username));
     });
 
-    socket.on('userStatus', async ({ username, status }: UserStatus) => {
-      setUserStatuses(prev => {
+    socket.on("userStatus", async ({ username, status }: UserStatus) => {
+      setUserStatuses((prev) => {
         const newMap = new Map(prev);
         // const currentStatus = newMap.get(username);
         newMap.set(username, {
           status,
-          lastSeen: status === 'offline' ? Date.now() : null
+          lastSeen: status === "offline" ? Date.now() : null,
         });
         return newMap;
       });
 
-      if (status === 'offline') {
+      if (status === "offline") {
         updateUserStatus(username);
       }
     });
 
     const heartbeatInterval = setInterval(() => {
       if (socket.connected) {
-        socket.emit('heartbeat');
+        socket.emit("heartbeat");
       }
     }, 15000);
 
     return () => {
       clearInterval(heartbeatInterval);
-      socket.disconnect();
+      socket.removeAllListeners();
     };
   }, [currentUsername]);
 
@@ -193,13 +123,13 @@ export const useSocket = ({ currentUsername }: UseSocketProps) => {
       updateUserStatus(username);
     }
 
-    return userStatuses.get(username) || { status: 'offline', lastSeen: null };
+    return userStatuses.get(username) || { status: "offline", lastSeen: null };
   };
 
   return {
     socket: socketRef.current,
     isConnected,
     getUserStatus,
-    userStatuses
+    userStatuses,
   };
 };
