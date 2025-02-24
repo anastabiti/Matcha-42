@@ -128,16 +128,6 @@ const ProfileActions = ({ username }: { username: string }) => {
         </div>
       )}
 
-      {/* {(success || error) && (
-        <div className="absolute right-0 mt-2 w-64">
-          <Alert className={success ? 'bg-green-500/10 border-green-500/20' : 'bg-red-500/10 border-red-500/20'}>
-            <AlertTitle>{success ? 'Success' : 'Error'}</AlertTitle>
-            <AlertDescription className="text-sm">
-              {success || error}
-            </AlertDescription>
-          </Alert>
-        </div>
-      )} */}
     </div>
     
   );

@@ -42,7 +42,7 @@ const ProfilePage = (props: ProfilePageProps) => {
     isLiked: false,
     isMatched: false
   });
-  // const [currentPhoto, setCurrentPhoto] = useState(0);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -204,7 +204,6 @@ const ProfilePage = (props: ProfilePageProps) => {
         }));
       }
     } catch (error) {
-      // console.error("Error toggling like:", error);
     }
   };
 

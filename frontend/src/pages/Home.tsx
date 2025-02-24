@@ -15,12 +15,12 @@ type UserInteraction = {
 const parseNeo4jDateTime = (dateTime: Neo4jDateTime): Date => {
   return new Date(
     dateTime.year.low,
-    dateTime.month.low - 1, // JavaScript months are 0-based
+    dateTime.month.low - 1,
     dateTime.day.low,
     dateTime.hour.low,
     dateTime.minute.low,
     dateTime.second.low,
-    dateTime.nanosecond.low / 1000000 // Convert nanoseconds to milliseconds
+    dateTime.nanosecond.low / 1000000
   );
 };
 

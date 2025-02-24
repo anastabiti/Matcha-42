@@ -2,12 +2,19 @@ import { useState } from 'react';
 import { Filter, X } from 'lucide-react';
 import { FilterOptions } from '../types/types';
 
-
-
 type FilterDialogProps = {
     filters: FilterOptions;
     onFilterChange: (filters: FilterOptions) => void;
     suggestedTags?: string[];
+};
+
+type ValidationErrors = {
+    minAge?: string;
+    maxAge?: string;
+    minFame?: string;
+    maxFame?: string;
+    maxDistance?: string;
+    minCommonTags?: string;
 };
 
 export const FilterDialog = ({
@@ -26,8 +33,79 @@ export const FilterDialog = ({
         maxDistance: filters.maxDistance.toString(),
         minCommonTags: filters.minCommonTags.toString(),
     });
+    const [errors, setErrors] = useState<ValidationErrors>({});
+    const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
+
+    const validateField = (field: string, value: string): string | undefined => {
+        const numValue = Number(value);
+        
+        switch (field) {
+            case 'minAge':
+                if (numValue < 18) return 'Minimum age must be 18 or higher';
+                if (numValue > Number(inputValues.maxAge)) return 'Minimum age cannot exceed maximum age';
+                break;
+            case 'maxAge':
+                if (numValue > 100) return 'Maximum age cannot exceed 100';
+                if (numValue < Number(inputValues.minAge)) return 'Maximum age cannot be less than minimum age';
+                break;
+            case 'minFame':
+                if (numValue < 0) return 'Minimum fame cannot be negative';
+                if (numValue > Number(inputValues.maxFame)) return 'Minimum fame cannot exceed maximum fame';
+                break;
+            case 'maxFame':
+                if (numValue > 100) return 'Maximum fame cannot exceed 100';
+                if (numValue < Number(inputValues.minFame)) return 'Maximum fame cannot be less than minimum fame';
+                break;
+            case 'maxDistance':
+                if (numValue < 1) return 'Distance must be at least 1 km';
+                if (numValue > 20000) return 'Distance cannot exceed 20,000 km';
+                break;
+            case 'minCommonTags':
+                if (numValue < 0) return 'Minimum common tags cannot be negative';
+                if (numValue > 20) return 'Maximum common tags cannot exceed 20';
+                break;
+        }
+        return undefined;
+    };
+
+    const handleInputChange = (field: keyof typeof inputValues, value: string) => {
+        setTouchedFields(prev => new Set(prev).add(field));
+        setInputValues(prev => ({
+            ...prev,
+            [field]: value
+        }));
+
+        const error = validateField(field, value);
+        setErrors(prev => ({
+            ...prev,
+            [field]: error
+        }));
+
+        if (value !== '' && !error) {
+            const numValue = parseInt(value);
+            if (!isNaN(numValue)) {
+                setTempFilters(prev => ({
+                    ...prev,
+                    [field]: numValue
+                }));
+            }
+        }
+    };
 
     const handleApply = () => {
+        // Validate all fields before applying
+        const newErrors: ValidationErrors = {};
+        Object.entries(inputValues).forEach(([field, value]) => {
+            const error = validateField(field, value);
+            if (error) newErrors[field as keyof ValidationErrors] = error;
+        });
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            setTouchedFields(new Set(Object.keys(inputValues)));
+            return;
+        }
+
         const validatedFilters = {
             ...tempFilters,
             minAge: Math.max(18, Math.min(100, Number(inputValues.minAge) || 18)),
@@ -37,14 +115,6 @@ export const FilterDialog = ({
             maxDistance: Math.max(1, Math.min(20000, Number(inputValues.maxDistance) || 100)),
             minCommonTags: Math.max(0, Math.min(20, Number(inputValues.minCommonTags) || 0)),
         };
-
-        // Ensure min values don't exceed max values
-        if (validatedFilters.minAge > validatedFilters.maxAge) {
-            validatedFilters.minAge = validatedFilters.maxAge;
-        }
-        if (validatedFilters.minFame > validatedFilters.maxFame) {
-            validatedFilters.minFame = validatedFilters.maxFame;
-        }
 
         onFilterChange(validatedFilters);
         setIsOpen(false);
@@ -71,23 +141,8 @@ export const FilterDialog = ({
             maxDistance: '100',
             minCommonTags: '0',
         });
-    };
-
-    const handleInputChange = (field: keyof typeof inputValues, value: string) => {
-        setInputValues(prev => ({
-            ...prev,
-            [field]: value
-        }));
-
-        if (value !== '') {
-            const numValue = parseInt(value);
-            if (!isNaN(numValue)) {
-                setTempFilters(prev => ({
-                    ...prev,
-                    [field]: numValue
-                }));
-            }
-        }
+        setErrors({});
+        setTouchedFields(new Set());
     };
 
     const handleAddTag = (tag: string) => {
@@ -119,6 +174,29 @@ export const FilterDialog = ({
         !tempFilters.filterTags.includes(tag)
     );
 
+    const renderInputWithValidation = (
+        field: keyof typeof inputValues,
+        label: string,
+        props: React.InputHTMLAttributes<HTMLInputElement>
+    ) => (
+        <div>
+            <label className="text-white font-medium">{label}</label>
+            <div className="mt-2">
+                <input
+                    type="number"
+                    value={inputValues[field]}
+                    onChange={(e) => handleInputChange(field, e.target.value)}
+                    className={`w-full px-3 py-2 bg-[#3a3445] rounded-lg text-white 
+                        ${touchedFields.has(field) && errors[field] ? 'border border-red-500' : ''}`}
+                    {...props}
+                />
+                {touchedFields.has(field) && errors[field] && (
+                    <p className="text-red-500 text-sm mt-1">{errors[field]}</p>
+                )}
+            </div>
+        </div>
+    );
+
     return (
         <>
             <button
@@ -147,25 +225,37 @@ export const FilterDialog = ({
                             <div>
                                 <label className="text-white font-medium">Age Range</label>
                                 <div className="flex items-center gap-4 mt-2">
-                                    <input
-                                        type="number"
-                                        value={inputValues.minAge}
-                                        onChange={(e) => handleInputChange('minAge', e.target.value)}
-                                        className="w-24 px-3 py-2 bg-[#3a3445] rounded-lg text-white"
-                                        min="18"
-                                        max={tempFilters.maxAge}
-                                        placeholder="Min"
-                                    />
+                                    <div className="flex-1">
+                                        <input
+                                            type="number"
+                                            value={inputValues.minAge}
+                                            onChange={(e) => handleInputChange('minAge', e.target.value)}
+                                            className={`w-full px-3 py-2 bg-[#3a3445] rounded-lg text-white
+                                                ${touchedFields.has('minAge') && errors.minAge ? 'border border-red-500' : ''}`}
+                                            min="18"
+                                            max={tempFilters.maxAge}
+                                            placeholder="Min"
+                                        />
+                                        {touchedFields.has('minAge') && errors.minAge && (
+                                            <p className="text-red-500 text-sm mt-1">{errors.minAge}</p>
+                                        )}
+                                    </div>
                                     <span className="text-white">to</span>
-                                    <input
-                                        type="number"
-                                        value={inputValues.maxAge}
-                                        onChange={(e) => handleInputChange('maxAge', e.target.value)}
-                                        className="w-24 px-3 py-2 bg-[#3a3445] rounded-lg text-white"
-                                        min={tempFilters.minAge}
-                                        max="100"
-                                        placeholder="Max"
-                                    />
+                                    <div className="flex-1">
+                                        <input
+                                            type="number"
+                                            value={inputValues.maxAge}
+                                            onChange={(e) => handleInputChange('maxAge', e.target.value)}
+                                            className={`w-full px-3 py-2 bg-[#3a3445] rounded-lg text-white
+                                                ${touchedFields.has('maxAge') && errors.maxAge ? 'border border-red-500' : ''}`}
+                                            min={tempFilters.minAge}
+                                            max="100"
+                                            placeholder="Max"
+                                        />
+                                        {touchedFields.has('maxAge') && errors.maxAge && (
+                                            <p className="text-red-500 text-sm mt-1">{errors.maxAge}</p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
@@ -173,55 +263,53 @@ export const FilterDialog = ({
                             <div>
                                 <label className="text-white font-medium">Fame Rating</label>
                                 <div className="flex items-center gap-4 mt-2">
-                                    <input
-                                        type="number"
-                                        value={inputValues.minFame}
-                                        onChange={(e) => handleInputChange('minFame', e.target.value)}
-                                        className="w-24 px-3 py-2 bg-[#3a3445] rounded-lg text-white"
-                                        min="0"
-                                        max={tempFilters.maxFame}
-                                        placeholder="Min"
-                                    />
+                                    <div className="flex-1">
+                                        <input
+                                            type="number"
+                                            value={inputValues.minFame}
+                                            onChange={(e) => handleInputChange('minFame', e.target.value)}
+                                            className={`w-full px-3 py-2 bg-[#3a3445] rounded-lg text-white
+                                                ${touchedFields.has('minFame') && errors.minFame ? 'border border-red-500' : ''}`}
+                                            min="0"
+                                            max={tempFilters.maxFame}
+                                            placeholder="Min"
+                                        />
+                                        {touchedFields.has('minFame') && errors.minFame && (
+                                            <p className="text-red-500 text-sm mt-1">{errors.minFame}</p>
+                                        )}
+                                    </div>
                                     <span className="text-white">to</span>
-                                    <input
-                                        type="number"
-                                        value={inputValues.maxFame}
-                                        onChange={(e) => handleInputChange('maxFame', e.target.value)}
-                                        className="w-24 px-3 py-2 bg-[#3a3445] rounded-lg text-white"
-                                        min={tempFilters.minFame}
-                                        max="100"
-                                        placeholder="Max"
-                                    />
+                                    <div className="flex-1">
+                                        <input
+                                            type="number"
+                                            value={inputValues.maxFame}
+                                            onChange={(e) => handleInputChange('maxFame', e.target.value)}
+                                            className={`w-full px-3 py-2 bg-[#3a3445] rounded-lg text-white
+                                                ${touchedFields.has('maxFame') && errors.maxFame ? 'border border-red-500' : ''}`}
+                                            min={tempFilters.minFame}
+                                            max="100"
+                                            placeholder="Max"
+                                        />
+                                        {touchedFields.has('maxFame') && errors.maxFame && (
+                                            <p className="text-red-500 text-sm mt-1">{errors.maxFame}</p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Distance Section */}
-                            <div>
-                                <label className="text-white font-medium">Maximum Distance (km)</label>
-                                <input
-                                    type="number"
-                                    value={inputValues.maxDistance}
-                                    onChange={(e) => handleInputChange('maxDistance', e.target.value)}
-                                    className="w-full px-3 py-2 bg-[#3a3445] rounded-lg text-white mt-2"
-                                    min="1"
-                                    max="20000"
-                                    placeholder="Maximum distance"
-                                />
-                            </div>
+                            {renderInputWithValidation('maxDistance', 'Maximum Distance (km)', {
+                                min: "1",
+                                max: "20000",
+                                placeholder: "Maximum distance"
+                            })}
 
                             {/* Common Tags Section */}
-                            <div>
-                                <label className="text-white font-medium">Minimum Common Tags</label>
-                                <input
-                                    type="number"
-                                    value={inputValues.minCommonTags}
-                                    onChange={(e) => handleInputChange('minCommonTags', e.target.value)}
-                                    className="w-full px-3 py-2 bg-[#3a3445] rounded-lg text-white mt-2"
-                                    min="0"
-                                    max="20"
-                                    placeholder="Minimum common tags"
-                                />
-                            </div>
+                            {renderInputWithValidation('minCommonTags', 'Minimum Common Tags', {
+                                min: "0",
+                                max: "20",
+                                placeholder: "Minimum common tags"
+                            })}
 
                             {/* Interest Tags Section */}
                             <div>

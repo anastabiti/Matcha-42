@@ -114,6 +114,7 @@ match.post("/potential-matches", authenticateToken_Middleware, async (req: any, 
   AND otherUser.fame_rating <= $maxFame
   AND NOT (u)-[:LIKES]->(otherUser)
   AND NOT (u)-[:BLOCKED]->(otherUser)
+  AND NOT (u)-[:REPORTED]->(otherUser)
 
   // Calculate distance between users using point distance
   WITH u, otherUser,
