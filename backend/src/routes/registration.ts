@@ -10,17 +10,19 @@ import {
   validatePassword,
   validateUsername,
 } from "../validators/validate";
+import SMTPTransport from "nodemailer/lib/smtp-transport";
 
 export const transporter = nodemailer.createTransport({
-  service: "Gmail",
-  host: "smtp.gmail.com",
-  port: 465,
+  service: process.env.google_mail_service,
+  host: process.env.google_mail_host,
+  port: process.env.google_mail_port,
   secure: true,
   auth: {
     user: process.env.google_mail,
     pass: process.env.google_app_password,
-  },
-});
+  } ,
+}as SMTPTransport.Options);
+
 const registrationRouter = express.Router();
 
 /**************************************************************************************************************
@@ -106,7 +108,7 @@ registrationRouter.post(
           );
 
           const mailOptions = {
-            from: "anastabiti@gmail.com",
+            from: `${process.env.google_mail}`,
             to: db_user.email,
             subject: "Verify Your Email  💖",
             text: `Hi ${db_user.username},

@@ -78,7 +78,7 @@ email_change.patch(
             );
             if (add_hash_to_user_db.records.length > 0) {
               const mailOptions = {
-                from: "anastabiti@gmail.com",
+                from: `${process.env.google_mail}`,
                 to: new_email,
                 subject: "Verify Your New Email",
                 text: `Hi ${user.username},

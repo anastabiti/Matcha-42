@@ -4,6 +4,7 @@ import argon2 from "argon2";
 import nodemailer from "nodemailer";
 import { driver } from "../database";
 import { validateEmail, validatePassword, validateUsername } from "../validators/validate";
+import SMTPTransport from "nodemailer/lib/smtp-transport";
 const crypto = import("crypto");
 const authRouter = express.Router();
 
@@ -25,16 +26,16 @@ type User_jwt = {
   email: string;
   setup_done: boolean;
 };
-const transporter = nodemailer.createTransport({
-  service: "Gmail",
-  host: "smtp.gmail.com",
-  port: 465,
+export const transporter = nodemailer.createTransport({
+  service: process.env.google_mail_service,
+  host: process.env.google_mail_host,
+  port: process.env.google_mail_port,
   secure: true,
   auth: {
     user: process.env.google_mail,
     pass: process.env.google_app_password,
-  },
-});
+  } ,
+}as SMTPTransport.Options);
 
 /**************************************************************************************************************
  * Authentication Middleware: Verifies JWT token and ensures the user is logged in.
@@ -244,7 +245,7 @@ authRouter.post("/password_reset", validateEmail, async (req: Request, res: Resp
 
       if (res_.records.length > 0) {
         const mailOptions = {
-          from: "anastabiti@gmail.com",
+          from: `${process.env.google_mail}`,
           to: email,
           subject: "Reset Your password ,Matcha! 💖",
           text: `Hi ${email},
