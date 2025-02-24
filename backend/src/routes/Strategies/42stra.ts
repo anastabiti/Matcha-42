@@ -179,7 +179,6 @@ export const catchAuthErrors = (err: any, req: any, res: any, next: any) => {
   if (err instanceof TokenError) {
     return res.redirect(`${process.env.front_end_ip}/login?error=server_error`);
   }
-  // next(err);
 };
 
 forty_two_str.get(
