@@ -2,10 +2,10 @@ services:
   neo4j:
     image: neo4j:latest
     volumes:
-        - ~/$HOME/goinfre/neo4j/logs:/logs
-        - ~/$HOME/goinfre/neo4j/config:/config
-        - ~/$HOME/goinfre/neo4j/data:/data
-        - ~/$HOME/goinfre/neo4j/plugins:/plugins
+        - ~/goinfre/neo4j/logs:/logs
+        - ~/goinfre/neo4j/config:/config
+        - ~/goinfre/neo4j/data:/data
+        - ~/goinfre/neo4j/plugins:/plugins
     environment:
       - NEO4J_AUTH=${database_username}/${database_password}
     ports:

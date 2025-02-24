@@ -15,12 +15,12 @@ dotenv.config();
 
 async function populateNeo4jDatabase() {
   // Configuration
-  const NEO4J_URI = "neo4j://localhost:7687";
+  const NEO4J_URI = process.env.database_URL;
   const NEO4J_USER = process.env.database_username;
   const NEO4J_PASSWORD = process.env.database_password
   const TOTAL_USERS = 500
 
-  
+
   const CITIES = {
     Khouribga: { x: -6.9081, y: 32.877 },
     Casa: { x: -7.5898, y: 33.5731 },
@@ -184,13 +184,22 @@ async function populateNeo4jDatabase() {
   };
 
   const getRandomPhoto = function (gender) {
-    // console.log(PHOTOS[gender].length , " PHOTOS[gender].length 0>>.")
+    // console.log(Math.floor(Math.random() * PHOTOS[gender].length))
     return PHOTOS[gender][Math.floor(Math.random() * PHOTOS[gender].length)];
   };
-  const generateInterests = () =>
-    faker.helpers.arrayElements(INTERESTS, { min: 5, max: 10 });
-  const getRandomCity = () => faker.helpers.objectKey(CITIES);
-  const generateUsername = () => faker.internet.username();
+  function generateUsername() {
+    return faker.internet.username();
+  }
+
+  function generateInterests() {
+    return faker.helpers.arrayElements(INTERESTS, { min: 5, max: 10 });
+  }
+
+  function getRandomCity() {
+    return faker.helpers.objectKey(CITIES);
+  }
+
+
 
   // Neo4j connection
   const driver = neo4j.driver(
@@ -243,7 +252,7 @@ async function populateNeo4jDatabase() {
         verified: true,
         is_logged: false,
         fame_rating: faker.number.int({ min: 0, max: 800 }),
-        lastSeen:Date.now()
+        lastSeen: Date.now()
       };
 
       // Create user node
