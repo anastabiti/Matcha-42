@@ -107,8 +107,8 @@ async function likeUser() {
     }
 }
 
-	const handleProfileClick = (username: string) => {
-		console.log(username)
+	const handleProfileClick = () => {
+		// console.log(username)
 		setIsProfileOpen(true);
 	};
 
@@ -218,7 +218,7 @@ async function likeUser() {
 													transition={{ duration: 0.3 }}
 													className="absolute inset-0 cursor-pointer"
 													style={{ zIndex: profiles.length - index }}
-													onClick={() => handleProfileClick(profile.username)}
+													onClick={() => handleProfileClick()}
 												>
 													<ProfileCard
 														profile={profile}
@@ -256,7 +256,7 @@ async function likeUser() {
 												{profiles[currentIndex].preview.bio}
 											</p>
 											<button
-												onClick={() => handleProfileClick(profiles[currentIndex].username)}
+												onClick={() => handleProfileClick()}
 												className="mt-2 text-[#e94057] font-medium hover:underline"
 											>
 												View Full Profile
@@ -266,7 +266,7 @@ async function likeUser() {
 											<div className="flex items-center justify-between mb-3">
 												<h3 className="text-lg font-semibold text-white">Interests</h3>
 												<button
-													onClick={() => handleProfileClick(profiles[currentIndex].username)}
+													onClick={() => handleProfileClick()}
 													className="text-[#e94057] text-sm font-medium hover:underline"
 												>
 													View all
