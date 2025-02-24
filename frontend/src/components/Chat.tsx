@@ -143,7 +143,7 @@ const Chat = () => {
             style={{ scrollSnapAlign: "end" }}
           >
             <p className="text-xs sm:text-sm text-white">{msg.sender}</p>
-            <p className="break-words whitespace-normal text-orange-300 text-sm sm:text-base">
+            <p className="break-words whitespace-normal text-gray-50 ext-base">
               {msg.content}
             </p>
           </div>
